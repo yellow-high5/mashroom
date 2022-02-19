@@ -37,6 +37,14 @@ module.exports = {
         start_url: '/',
       },
     },
+    'gatsby-plugin-root-import',
+    {
+      resolve: '@chakra-ui/gatsby-plugin',
+      options: {
+        resetCSS: true,
+        isUsingColorMode: true,
+      },
+    },
     {
       resolve: `gatsby-plugin-mdx`,
       options: {
