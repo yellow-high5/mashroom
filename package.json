@@ -1,0 +1,32 @@
+{
+  "name": "mashroom",
+  "version": "1.0.0",
+  "private": true,
+  "description": "mashroom",
+  "author": "yoshinori.matsuzaki",
+  "keywords": [
+    "gatsby"
+  ],
+  "scripts": {
+    "develop": "gatsby develop",
+    "start": "gatsby develop",
+    "build": "gatsby build",
+    "serve": "gatsby serve",
+    "clean": "gatsby clean"
+  },
+  "dependencies": {
+    "@mdx-js/mdx": "v1",
+    "@mdx-js/react": "v1",
+    "gatsby": "^4.7.2",
+    "gatsby-plugin-image": "^2.7.0",
+    "gatsby-plugin-manifest": "^4.7.0",
+    "gatsby-plugin-mdx": "^3.7.1",
+    "gatsby-plugin-react-helmet": "^5.7.0",
+    "gatsby-plugin-sharp": "^4.7.0",
+    "gatsby-source-filesystem": "^4.7.0",
+    "gatsby-transformer-sharp": "^4.7.0",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
+    "react-helmet": "^6.1.0"
+  }
+}
