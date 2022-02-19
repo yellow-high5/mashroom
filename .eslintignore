@@ -1,4 +1,6 @@
 .eslintrc.js
 .prettierrc.js
+.lintstagedrc.js
 gatsby-config.js
 gatsby-node.js
+src/__generated__/*

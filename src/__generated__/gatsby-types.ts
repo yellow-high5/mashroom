@@ -233,6 +233,10 @@ declare namespace GatsbyTypes {
     readonly siteMetadata: Maybe<SiteSiteMetadata>;
     readonly port: Maybe<Scalars['Int']>;
     readonly host: Maybe<Scalars['String']>;
+    readonly polyfill: Maybe<Scalars['Boolean']>;
+    readonly pathPrefix: Maybe<Scalars['String']>;
+    readonly jsxRuntime: Maybe<Scalars['String']>;
+    readonly trailingSlash: Maybe<Scalars['String']>;
     readonly id: Scalars['ID'];
     readonly parent: Maybe<Node>;
     readonly children: ReadonlyArray<Node>;
@@ -697,6 +701,10 @@ declare namespace GatsbyTypes {
     siteMetadata: Maybe<SiteSiteMetadataFilterInput>;
     port: Maybe<IntQueryOperatorInput>;
     host: Maybe<StringQueryOperatorInput>;
+    polyfill: Maybe<BooleanQueryOperatorInput>;
+    pathPrefix: Maybe<StringQueryOperatorInput>;
+    jsxRuntime: Maybe<StringQueryOperatorInput>;
+    trailingSlash: Maybe<StringQueryOperatorInput>;
     id: Maybe<StringQueryOperatorInput>;
     parent: Maybe<NodeFilterInput>;
     children: Maybe<NodeFilterListInput>;
@@ -1664,6 +1672,10 @@ declare namespace GatsbyTypes {
     | 'siteMetadata.siteUrl'
     | 'port'
     | 'host'
+    | 'polyfill'
+    | 'pathPrefix'
+    | 'jsxRuntime'
+    | 'trailingSlash'
     | 'id'
     | 'parent.id'
     | 'parent.parent.id'
@@ -1792,6 +1804,10 @@ declare namespace GatsbyTypes {
     readonly siteMetadata: Maybe<SiteSiteMetadataFilterInput>;
     readonly port: Maybe<IntQueryOperatorInput>;
     readonly host: Maybe<StringQueryOperatorInput>;
+    readonly polyfill: Maybe<BooleanQueryOperatorInput>;
+    readonly pathPrefix: Maybe<StringQueryOperatorInput>;
+    readonly jsxRuntime: Maybe<StringQueryOperatorInput>;
+    readonly trailingSlash: Maybe<StringQueryOperatorInput>;
     readonly id: Maybe<StringQueryOperatorInput>;
     readonly parent: Maybe<NodeFilterInput>;
     readonly children: Maybe<NodeFilterListInput>;
