@@ -8,9 +8,9 @@
     "gatsby"
   ],
   "scripts": {
-    "dev": "gatsby develop",
-    "build": "gatsby build",
-    "serve": "gatsby serve",
+    "dev": "yarn type:check && gatsby develop",
+    "build": "yarn type:check && gatsby build",
+    "serve": "yarn type:check && gatsby serve",
     "clean": "gatsby clean",
     "format": "prettier --check \"./**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
     "format:fix": "prettier --write \"./**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",

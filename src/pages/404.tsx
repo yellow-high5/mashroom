@@ -1,5 +1,5 @@
-import * as React from 'react';
 import { Link } from 'gatsby';
+import React from 'react';
 
 // styles
 const pageStyles = {

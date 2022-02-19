@@ -20,16 +20,29 @@ module.exports = {
       },
       __key: 'pages',
     },
-    'gatsby-plugin-typegen',
+    {
+      resolve: 'gatsby-plugin-typegen',
+      options: {
+        outputPath: `src/__generated__/gatsby-types.d.ts`,
+      },
+    },
     'gatsby-plugin-image',
     'gatsby-plugin-react-helmet',
     {
       resolve: 'gatsby-plugin-manifest',
       options: {
         icon: 'src/assets/logo.png',
+        name: 'm@shroom',
+        short_name: 'm@shroom',
+        start_url: '/',
       },
     },
-    'gatsby-plugin-mdx',
+    {
+      resolve: `gatsby-plugin-mdx`,
+      options: {
+        extensions: [`.mdx`, `.md`],
+      },
+    },
     'gatsby-plugin-sharp',
     'gatsby-transformer-sharp',
   ],
