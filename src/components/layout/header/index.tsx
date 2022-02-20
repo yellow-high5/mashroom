@@ -18,13 +18,16 @@ const Header: React.FC<FlexProps> = (props) => {
       py={2}
       borderBottom="1px"
       borderBottomColor="gray.500"
+      justifyContent="center"
       {...props}
     >
-      <LogoLink />
+      <Flex flexGrow={1} maxW="62em">
+        <LogoLink />
 
-      <Spacer />
+        <Spacer />
 
-      <HeaderMenu />
+        <HeaderMenu />
+      </Flex>
     </Flex>
   );
 };

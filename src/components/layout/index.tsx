@@ -28,7 +28,8 @@ const Layout: React.FC<Props> = ({ children }) => {
       >
         <Header />
       </SlideFade>
-      <Grid templateColumns="repeat(4, 1fr)" gap={4} pt={28}>
+
+      <Grid templateColumns="repeat(4, 1fr)" gap={4} maxW="62em" pt={28} m="auto">
         <GridItem colSpan={[4, 4, 3, 3]}>
           <Center height="100vh">{children}</Center>
         </GridItem>
@@ -36,6 +37,7 @@ const Layout: React.FC<Props> = ({ children }) => {
           <Sidebar />
         </GridItem>
       </Grid>
+
       <Footer />
     </ChakraProvider>
   );
