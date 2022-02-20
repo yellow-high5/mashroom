@@ -1,12 +1,11 @@
-import { Flex, Tag, Text } from '@chakra-ui/react';
+import { Flex, FlexProps, Tag, Text } from '@chakra-ui/react';
+import SideHeading from 'components/common/side-heading';
 import React from 'react';
 
-const ArticleTagList = () => {
+const ArticleTagList: React.FC<FlexProps> = (props) => {
   return (
-    <Flex flexDir="column" alignItems="center" m={4}>
-      <Text fontWeight="bold" mb={4}>
-        記事タグ
-      </Text>
+    <Flex flexDir="column" alignItems="center" {...props}>
+      <SideHeading>記事タグ</SideHeading>
       <Flex wrap="wrap" justifyContent="center">
         {[
           'Web開発',
@@ -17,8 +16,16 @@ const ArticleTagList = () => {
           'ANGLAB',
           'CG活',
         ].map((name) => (
-          <Tag key={name} size="sm" variant="solid" m={1}>
-            {name}
+          <Tag
+            key={name}
+            size="sm"
+            variant="outline"
+            m={1}
+            p={2}
+            cursor="pointer"
+            _hover={{ bg: 'gray.500', color: 'white' }}
+          >
+            <Text fontWeight="bold">{name}</Text>
           </Tag>
         ))}
       </Flex>

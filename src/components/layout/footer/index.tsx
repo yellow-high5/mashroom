@@ -1,26 +1,29 @@
-import { Flex, Spacer, Text } from '@chakra-ui/react';
+import { Flex, FlexProps, Heading, Spacer, useColorMode } from '@chakra-ui/react';
 import React from 'react';
-// import { IoLogoGithub, IoSunny } from 'react-icons/io5';
+import { IoMoon, IoSunny } from 'react-icons/io5';
 
-const Footer = () => {
+const Footer: React.FC<FlexProps> = (props) => {
+  const { colorMode, toggleColorMode } = useColorMode();
+
   return (
     <Flex
       as="nav"
       wrap="wrap"
       px={8}
       py={6}
-      borderTop="1px solid #adadad"
+      borderTop="1px"
+      borderTopColor="gray.500"
       alignItems="center"
-      // {...props}
+      {...props}
     >
-      {/* <Box display="flex" alignItems="center">
-        <IoSunny />
-        <IoLogoGithub />
-      </Box> */}
-
+      {colorMode === 'light' ? (
+        <IoMoon onClick={toggleColorMode} cursor="pointer" color="yellow.200" />
+      ) : (
+        <IoSunny onClick={toggleColorMode} cursor="pointer" color="yellow.400" />
+      )}
       <Spacer />
 
-      <Text>2022 © m@shroom. m@sh All Rights Reserved.</Text>
+      <Heading fontSize="xs">2022 © m@shroom. m@sh All Rights Reserved.</Heading>
     </Flex>
   );
 };
