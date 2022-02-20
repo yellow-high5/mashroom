@@ -1,4 +1,4 @@
-import { Box, Flex, FlexProps, Text } from '@chakra-ui/react';
+import { AspectRatio, Box, Flex, FlexProps, Text } from '@chakra-ui/react';
 import SideHeading from 'components/common/side-heading';
 import { StaticImage } from 'gatsby-plugin-image';
 import React from 'react';
@@ -8,13 +8,15 @@ const AuthorIntro: React.FC<FlexProps> = (props) => {
     <Flex flexDir="column" alignItems="center" {...props}>
       <SideHeading>ライター</SideHeading>
       <Flex flexDir={{ md: 'column' }} alignItems="center">
-        <StaticImage
-          layout="fixed"
-          src="../../../assets/avatar.jpeg"
-          width={180}
-          quality={95}
-          alt="avatar"
-        />
+        <AspectRatio ratio={1} w={{ base: 120, md: 180 }}>
+          <StaticImage
+            layout="fullWidth"
+            src="../../../assets/avatar.jpeg"
+            quality={95}
+            alt="avatar"
+            style={{ borderRadius: '50%' }}
+          />
+        </AspectRatio>
         <Box ml={{ base: 6, md: 0 }}>
           <Text fontWeight="bold" mt={4} mb={2}>
             yellow-high5
