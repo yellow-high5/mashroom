@@ -12,7 +12,7 @@ const SideHeading: React.FC<HeadingProps> = (props) => {
         alignSelf: 'center',
         bg: 'gray.200',
         content: '"\\a0"',
-        height: '1px',
+        height: '0.5px',
         flexGrow: 1,
         mr: 4,
       }}
@@ -20,7 +20,7 @@ const SideHeading: React.FC<HeadingProps> = (props) => {
         alignSelf: 'center',
         bg: 'gray.200',
         content: '"\\a0"',
-        height: '1px',
+        height: '0.5px',
         flexGrow: 1,
         ml: 4,
       }}

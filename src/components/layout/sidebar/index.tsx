@@ -7,7 +7,7 @@ import AuthorIntro from './author-intro';
 const Sidebar: React.FC<BoxProps> = (props) => {
   return (
     <Box textAlign="center" {...props}>
-      <AuthorIntro mx={4} my={16} />
+      <AuthorIntro mx={4} my={8} />
       <ArticleTagList mx={4} my={16} />
       <AuthorMusic mx={4} my={16} />
     </Box>
