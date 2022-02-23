@@ -82,7 +82,10 @@ const BlogCard = () => {
                 lineHeight="tight"
                 as="h4"
                 isTruncated
-                _groupHover={{ color: 'yellow.400' }}
+                _groupHover={{
+                  bgGradient: 'linear(to-r, yellow.300, yellow.500)',
+                  bgClip: 'text',
+                }}
                 _before={{
                   bg: grayColor,
                   content: '"\\a0"',

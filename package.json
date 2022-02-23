@@ -35,12 +35,16 @@
     "@mdx-js/mdx": "v1",
     "@mdx-js/react": "v1",
     "@n8tb1t/use-scroll-position": "^2.0.3",
+    "@types/react-calendar-heatmap": "^1.6.3",
+    "@types/react-helmet": "^6.1.5",
     "framer-motion": "^6.2.6",
     "gatsby": "^4.7.2",
     "react": "^17.0.1",
+    "react-calendar-heatmap": "^1.8.1",
     "react-dom": "^17.0.1",
     "react-helmet": "^6.1.0",
-    "react-icons": "^4.3.1"
+    "react-icons": "^4.3.1",
+    "swr": "^1.2.2"
   },
   "devDependencies": {
     "@chakra-ui/gatsby-plugin": "^2.0.3",

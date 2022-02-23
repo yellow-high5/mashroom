@@ -11,7 +11,7 @@ const ArticleTagList: React.FC<FlexProps> = (props) => {
           'Web開発',
           'サーバーサイド',
           'インフラ構築',
-          '実装ネタ帳',
+          '創作ネタ帳',
           'コラム',
           'ANGLAB',
           'CG活',

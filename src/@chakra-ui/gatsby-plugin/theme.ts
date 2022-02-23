@@ -5,8 +5,13 @@ const config = {
   useSystemColorMode: false,
 };
 
+const shadows = {
+  outline: 'none',
+};
+
 const theme = extendTheme({
   config,
+  shadows,
 });
 
 export default theme;
