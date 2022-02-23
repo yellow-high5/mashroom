@@ -19,7 +19,9 @@ const BlogCard = () => {
     title: 'ANGLab -カワハギ攻略への道-',
     tag: 'ANGLAB',
   };
+
   const grayColor = useColorModeValue('gray.800', 'gray.200');
+  const shadowColor = useColorModeValue('rgba(0,0,0,.25)', 'rgb(255, 255, 255, .25)');
 
   return (
     <SlideFade
@@ -29,10 +31,9 @@ const BlogCard = () => {
         exit: { delay: 0.4 },
       }}
     >
-      <Link to="/profile">
+      <Link to="/profile" role="group">
         <Box
           as="article"
-          role="group"
           maxW={{
             base: 'md',
             lg: 'xs',
@@ -41,7 +42,7 @@ const BlogCard = () => {
           borderRadius="lg"
           overflow="hidden"
           cursor="pointer"
-          _hover={{ borderColor: grayColor }}
+          _hover={{ boxShadow: `1px 1px 4px ${shadowColor}` }}
           display={{
             base: 'flex',
             lg: 'block',
