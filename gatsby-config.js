@@ -1,7 +1,7 @@
 module.exports = {
   siteMetadata: {
     title: `mashroom`,
-    siteUrl: `https://www.yourdomain.tld`,
+    siteUrl: `https://mashroom.dev`,
   },
   plugins: [
     {
