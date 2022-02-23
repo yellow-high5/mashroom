@@ -1,5 +1,5 @@
 import theme from '@chakra-ui/gatsby-plugin/theme';
-import { ChakraProvider, Grid, GridItem, SlideFade } from '@chakra-ui/react';
+import { ChakraProvider, Grid, GridItem } from '@chakra-ui/react';
 import { useScrollPosition } from '@n8tb1t/use-scroll-position';
 import Footer from 'components/layout/footer';
 import Header from 'components/layout/header';
@@ -19,15 +19,7 @@ const Layout: React.FC<Props> = ({ children }) => {
 
   return (
     <ChakraProvider theme={theme}>
-      <SlideFade
-        in={showHeader}
-        transition={{
-          enter: { delay: 0.2 },
-          exit: { delay: 0.2 },
-        }}
-      >
-        <Header />
-      </SlideFade>
+      <Header display={showHeader ? 'block' : 'none'} />
 
       <Grid templateColumns="repeat(4, 1fr)" gap={4} maxW="62em" pt={28} m="auto">
         <GridItem colSpan={[4, 4, 3, 3]}>{children}</GridItem>

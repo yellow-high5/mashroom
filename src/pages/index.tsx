@@ -4,7 +4,7 @@ import Layout from 'components/layout';
 import React from 'react';
 
 const IndexPage = () => {
-  const article_page_size = useBreakpointValue({ base: 8, lg: 6 });
+  const article_page_size = useBreakpointValue({ base: 7, lg: 6 });
 
   return (
     <Layout>
