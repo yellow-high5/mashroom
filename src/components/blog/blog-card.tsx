@@ -15,7 +15,7 @@ import { IoTimeOutline } from 'react-icons/io5';
 
 const BlogCard = () => {
   const article = {
-    thumbnail: '../../assets/thumbnail-sample.png',
+    thumbnail: '../../assets/sample-blog-thumbnail.png',
     title: 'ANGLab -カワハギ攻略への道-',
     tag: 'ANGLAB',
   };
@@ -50,7 +50,7 @@ const BlogCard = () => {
           alignItems="center"
         >
           <Box position="relative">
-            <StaticImage src="../../assets/thumbnail-sample.png" alt={article.title} />
+            <StaticImage src="../../assets/sample-blog-thumbnail.png" alt={article.title} />
             <HStack
               display={{ base: 'none', lg: 'block' }}
               position="absolute"

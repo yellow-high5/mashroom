@@ -63,7 +63,6 @@ const ProfilePage = () => {
                   key={tab.title}
                   _selected={{
                     color: `${tab.iconColor}`,
-                    // bgColor: 'yellow.400',
                     bgGradient: 'linear(to-r, yellow.300, yellow.500)',
                   }}
                 >
@@ -72,7 +71,7 @@ const ProfilePage = () => {
               ))}
             </TabList>
 
-            <TabPanels border="1px solid whites">
+            <TabPanels>
               {PROFILE_TAB.map((tab) => (
                 <TabPanel key={tab.title}>{tab.content}</TabPanel>
               ))}
