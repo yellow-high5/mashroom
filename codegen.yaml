@@ -32,3 +32,16 @@ generates:
     #   - typescript-react-apollo
     # config:
     #   withHooks: true
+  # ./src/types/YOUR_CMS-types.d.ts:
+  #   schema: ./graphql/YOUR_SCHEMA
+  #   documents:
+  #     - ./src/**/CMS_NAME-*.{ts,tsx}
+  #   plugins:
+  #     - add:
+  #         content:
+  #           - 'declare namespace Github {'
+  #     - add:
+  #         placement: 'append'
+  #         content: '}'
+  #     - typescript
+  #     - typescript-operations
