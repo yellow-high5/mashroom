@@ -63,7 +63,6 @@
     "gatsby-plugin-react-helmet": "^5.7.0",
     "gatsby-plugin-root-import": "^2.0.8",
     "gatsby-plugin-sharp": "^4.7.0",
-    "gatsby-plugin-typegen": "^2.2.4",
     "gatsby-source-filesystem": "^4.7.0",
     "gatsby-transformer-sharp": "^4.7.0",
     "husky": "^7.0.0",

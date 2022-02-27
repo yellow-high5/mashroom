@@ -20,12 +20,6 @@ module.exports = {
       },
       __key: 'pages',
     },
-    {
-      resolve: 'gatsby-plugin-typegen',
-      options: {
-        outputPath: `src/__generated__/gatsby-types.d.ts`,
-      },
-    },
     'gatsby-plugin-image',
     'gatsby-plugin-react-helmet',
     {
