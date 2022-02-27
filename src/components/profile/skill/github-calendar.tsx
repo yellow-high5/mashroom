@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { gql, useQuery } from '@apollo/client';
 import { Box, Flex, Icon, Link, Text } from '@chakra-ui/react';
 import React from 'react';
@@ -6,8 +5,8 @@ import CalendarHeatmap from 'react-calendar-heatmap';
 import 'react-calendar-heatmap/dist/styles.css';
 import { IoLogoGithub } from 'react-icons/io5';
 
-const CONTRIBUTION_CALENDAR = gql`
-  query ($userName: String!) {
+const contributionCalendarQuery = gql`
+  query ContributionCalendar($userName: String!) {
     user(login: $userName) {
       contributionsCollection {
         contributionCalendar {
@@ -25,13 +24,15 @@ const CONTRIBUTION_CALENDAR = gql`
 `;
 
 const GithubCalendar = () => {
-  const { loading, error, data } = useQuery(CONTRIBUTION_CALENDAR, {
-    variables: { userName: 'yellow-high5' },
-  });
+  const { loading, error, data } = useQuery<Github.ContributionCalendarQuery>(
+    contributionCalendarQuery,
+    {
+      variables: { userName: 'yellow-high5' },
+    },
+  );
 
-  const calendar = data?.user.contributionsCollection.contributionCalendar.weeks.flatMap(
-    (con: any) =>
-      con.contributionDays.map((i: any) => ({ date: i.date, count: i.contributionCount })),
+  const calendar = data?.user?.contributionsCollection?.contributionCalendar?.weeks?.flatMap(
+    (con) => con.contributionDays.map((i) => ({ date: i.date, count: i.contributionCount })),
   );
 
   return (

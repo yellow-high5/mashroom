@@ -1,0 +1,34 @@
+# documentsの指定方法を綺麗にしたい
+# yarn devをしないとyarn generate:typeできない(gatsby-plugin-typegenを使うしかないのか？)
+# withHooks: trueを指定するとサイズオーバーのエラー
+generates:
+  ./src/types/gatsby-types.d.ts:
+    schema: http://localhost:8000/___graphql
+    documents:
+      - ./src/**/logo-link.tsx
+      - ./node_modules/gatsby*/!(node_modules)/**/*.js
+    plugins:
+      - add:
+          content:
+            - 'declare namespace Gatsby {'
+      - add:
+          placement: 'append'
+          content: '}'
+      - typescript
+      - typescript-operations
+  ./src/types/github-api-types.d.ts:
+    schema: ./graphql/github.docs.graphql
+    documents:
+      - ./src/**/github-*.{ts,tsx}
+    plugins:
+      - add:
+          content:
+            - 'declare namespace Github {'
+      - add:
+          placement: 'append'
+          content: '}'
+      - typescript
+      - typescript-operations
+    #   - typescript-react-apollo
+    # config:
+    #   withHooks: true

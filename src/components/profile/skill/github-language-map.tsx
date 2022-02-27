@@ -3,7 +3,7 @@ import React from 'react';
 import { IoCodeSlashOutline } from 'react-icons/io5';
 import { Cell, Legend, Pie, PieChart } from 'recharts';
 
-const LanguageChart = () => {
+const GithubLanguageMap = () => {
   const data = [
     { name: 'Typescript', value: 400 },
     { name: 'Go', value: 300 },
@@ -50,4 +50,4 @@ const LanguageChart = () => {
   );
 };
 
-export default LanguageChart;
+export default GithubLanguageMap;

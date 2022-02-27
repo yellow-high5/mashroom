@@ -3,4 +3,4 @@
 .lintstagedrc.js
 gatsby-config.js
 gatsby-node.js
-src/__generated__/*
+src/types/*

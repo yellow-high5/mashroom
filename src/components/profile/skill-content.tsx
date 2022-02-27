@@ -1,7 +1,7 @@
 import { ApolloClient, ApolloProvider, InMemoryCache } from '@apollo/client';
 import { Box } from '@chakra-ui/react';
 import GithubCalendar from 'components/profile/skill/github-calendar';
-import LanguageChart from 'components/profile/skill/language-chart';
+import GithubLanguageMap from 'components/profile/skill/github-language-map';
 import React from 'react';
 import 'react-calendar-heatmap/dist/styles.css';
 
@@ -15,7 +15,7 @@ const SkillContent = () => {
   return (
     <ApolloProvider client={client}>
       <Box p={8}>
-        <LanguageChart />
+        <GithubLanguageMap />
         <GithubCalendar />
       </Box>
     </ApolloProvider>
