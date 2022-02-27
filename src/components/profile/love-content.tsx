@@ -1,5 +1,6 @@
 import { Box, chakra, Heading, Text } from '@chakra-ui/react';
 import React from 'react';
+import { Helmet } from 'react-helmet';
 
 const LoveContent = () => {
   return (
@@ -29,6 +30,9 @@ const LoveContent = () => {
           data-pin-scale-height="240"
         />
       </Box>
+      <Helmet>
+        <script async defer src="//assets.pinterest.com/js/pinit.js" />
+      </Helmet>
     </Box>
   );
 };

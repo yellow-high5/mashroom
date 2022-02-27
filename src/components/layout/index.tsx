@@ -5,7 +5,6 @@ import Footer from 'components/layout/footer';
 import Header from 'components/layout/header';
 import Sidebar from 'components/layout/sidebar';
 import React, { useState } from 'react';
-import { Helmet } from 'react-helmet';
 
 type Props = {
   children: React.ReactNode;
@@ -30,10 +29,6 @@ const Layout: React.FC<Props> = ({ children }) => {
       </Grid>
 
       <Footer />
-
-      <Helmet>
-        <script async defer src="//assets.pinterest.com/js/pinit.js"></script>
-      </Helmet>
     </ChakraProvider>
   );
 };
