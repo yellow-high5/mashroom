@@ -23962,4 +23962,9 @@ export type ContributionCalendarQueryVariables = Exact<{
 
 export type ContributionCalendarQuery = { __typename?: 'Query', user?: { __typename?: 'User', contributionsCollection: { __typename?: 'ContributionsCollection', contributionCalendar: { __typename?: 'ContributionCalendar', totalContributions: number, weeks: Array<{ __typename?: 'ContributionCalendarWeek', contributionDays: Array<{ __typename?: 'ContributionCalendarDay', contributionCount: number, date: any }> }> } } } | null };
 
+export type LanguageStatsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type LanguageStatsQuery = { __typename?: 'Query', user?: { __typename?: 'User', repositories: { __typename?: 'RepositoryConnection', nodes?: Array<{ __typename?: 'Repository', name: string, languages?: { __typename?: 'LanguageConnection', edges?: Array<{ __typename?: 'LanguageEdge', size: number, node: { __typename?: 'Language', name: string, color?: string | null } } | null> | null } | null } | null> | null } } | null };
+
 }

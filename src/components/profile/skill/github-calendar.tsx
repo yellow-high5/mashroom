@@ -2,8 +2,8 @@ import { gql, useQuery } from '@apollo/client';
 import { Box, Flex, Icon, Link, Text } from '@chakra-ui/react';
 import React from 'react';
 import CalendarHeatmap from 'react-calendar-heatmap';
-import 'react-calendar-heatmap/dist/styles.css';
 import { IoLogoGithub } from 'react-icons/io5';
+import './github-calendar.css';
 
 const contributionCalendarQuery = gql`
   query ContributionCalendar($userName: String!) {
@@ -50,13 +50,10 @@ const GithubCalendar = () => {
             endDate={new Date(calendar[calendar.length - 1].date)}
             values={calendar}
             classForValue={(value) => {
-              if (!value) {
-                return 'color-empty';
-              }
               if (value.count > 4) {
-                return `color-github-4`;
+                return `color-scale-4`;
               }
-              return `color-github-${value.count}`;
+              return `color-scale-${value.count}`;
             }}
           />
         )}
