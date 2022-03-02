@@ -8,18 +8,34 @@ module.exports = {
       resolve: 'gatsby-source-filesystem',
       options: {
         name: 'assets',
-        path: './src/assets/',
+        path: `${__dirname}/src/assets/`,
       },
       __key: 'assets',
     },
     {
       resolve: 'gatsby-source-filesystem',
       options: {
-        name: 'pages',
-        path: './src/pages/',
+        name: 'blog',
+        path: `${__dirname}/content/blog`,
       },
-      __key: 'pages',
+      __key: 'blog',
     },
+    // {
+    //   resolve: 'gatsby-source-filesystem',
+    //   options: {
+    //     name: 'works',
+    //     path: `${__dirname}/content/works`,
+    //   },
+    //   __key: 'works',
+    // },
+    // {
+    //   resolve: 'gatsby-source-filesystem',
+    //   options: {
+    //     name: 'profile',
+    //     path: `${__dirname}/content/profile`,
+    //   },
+    //   __key: 'profile',
+    // },
     'gatsby-plugin-image',
     'gatsby-plugin-react-helmet',
     {

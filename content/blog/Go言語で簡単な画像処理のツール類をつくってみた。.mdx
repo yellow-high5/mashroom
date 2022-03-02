@@ -1,0 +1,253 @@
+---
+date: 2020-07-26T22:44:38.000+00:00
+title: Go言語で簡単な画像処理のツール類をつくってみた。
+thumbnail: https://i2.wp.com/www.mushroom-blog.com/wp-content/uploads/2020/08/golang.png?resize=360%2C238&ssl=1
+tag:
+  - サーバーサイド
+---
+
+Go 言語初学者です。普段の生息界隈は JS/TS+Java ですが、サーバーサイド言語の処理をもっと得意になりたいという理由から、今年から Go 言語に挑戦しています。挑戦理由は「モダン, マルチスレッド, コンテナ関連での活躍」が挙げられます。
+
+やはり、実際に何かを作って習得していくスタイルが自分には合っているので、今回は「画像処理」をテーマに、CLI としても API としても使えるツール[yellow-high5/pictar](https://github.com/yellow-high5/pictar)を作ってみました。画像処理といっても CNN を使って画像認識させるような高度なものではないです。
+
+
+
+## Go 標準の image パッケージ
+
+まずは[Go 標準の image パッケージ](https://golang.org/pkg/image/)がどんな仕組みになっているか簡単に確認してみました。
+
+### [Point](https://golang.org/pkg/image/#Point), [Rectangle](https://golang.org/pkg/image/#Rectangle)
+
+座標点 Point は int の X と Y で構成されていて、長方形領域 Rectangle は Point の Min と Max で構成されています。
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/122992/6adeb0cc-1d7c-f1c7-00b4-62965a545332.png)
+
+### [Color](https://golang.org/pkg/image/color/)
+
+- Alpha...透明度
+- CMYK...シアン、マゼンタ、イエロー、ブラック(Key Plate)で示した色の表現方法
+- RGB...レッド、グリーン、ブルーで示した色の表現方法
+- Gray..グレースケールは RGB だと３つの値全てが同じ値になります。
+
+### [image.NRGBA](https://golang.org/pkg/image/#NRGBA)
+
+この構造体では画像を`Pix`で**Red,Green,Blue,Alpha を繰り返す１次元配列**として扱います。`Stride`とは**画像の横一列分のサイズ**を表しています。
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/122992/d97b9064-3d9e-d0c3-0513-eb11cebe175a.png)
+
+## imaging ライブラリを読んでみる
+
+画像処理が専門領域ではない人間には、難しい計算式を理解できないのでライブラリを使用します。今回は[disintegration/imaging](https://github.com/disintegration/imaging/)を利用します。ソース自体も簡潔にまとまっていて、とても読みやすいです。機能としては以下のようなことができます。
+
+### 画像処理
+
+- adjust(調整)...グレースケール、反転、コントラスト、サチュレーション
+- convolution(畳み込み)...3x3 圧縮、5x5 圧縮
+- effects...ぼかし、シャープ
+- histogram(正規化されたヒストグラム)...256(16x16)の配列に明るさを表現する
+- resize...サイズ変更、切り抜き、スケール変更(fit)、サムネイル化
+- transform...反転(Flip)、転置(Transpose)、回転(Rotate)
+
+### 補助ユーティリティ
+
+- io...画像読み込み、画像を開く、画像書き込み、画像保存、画像の向き(EXIF フラグ)の読み取り、変換、修正
+- scanner...長方形で指定された領域を読み込む
+- tools...新規画像作成、コピー、ペースト、透過
+- utils...parallel(並列処理)、その他ユーティリティ
+
+> #### 番外編：画像処理の用語集
+>
+> ツールを作るには、画像処理の用語をある程度理解しておく必要があると感じたので、知識を整理しておきます
+>
+> - [HSV 色空間](https://ja.wikipedia.org/wiki/HSV%E8%89%B2%E7%A9%BA%E9%96%93)...色相(Hue)、彩度(Saturation)、明度(Value)の３つからなる成分空間。原色の加減法混合で決まる RGB 空間より直感的でわかりやすいらしいです。
+> - [HLS 色空間](https://ja.wikipedia.org/wiki/HLS%E8%89%B2%E7%A9%BA%E9%96%93)...色相(Hue)、輝度(Lightness)、彩度(Saturation)の３つからなる成分空間。HSV 空間と似ています。
+> - [彩度](https://ja.wikipedia.org/wiki/%E5%BD%A9%E5%BA%A6)...高いと画像の色が濃くなり、低いと画像の色が薄くなるイメージ。
+> - [コントラスト](https://ja.wikipedia.org/wiki/%E3%82%B3%E3%83%B3%E3%83%88%E3%83%A9%E3%82%B9%E3%83%88#%E5%86%99%E7%9C%9F%E6%A9%9F%E3%80%81%E6%98%A0%E5%83%8F%E6%A9%9F%E5%99%A8)...高いと画像の明暗差がはっきりし、低いとぼんやりするイメージ。
+> - [明度](https://en.wikipedia.org/wiki/Brightness)...高いと白っぽくなり、低いと黒っぽくなるイメージ。
+> - [ガンマ補正](https://ja.wikipedia.org/wiki/%E3%82%AC%E3%83%B3%E3%83%9E%E5%80%A4)...素直な比例関係ではなく、人間の視覚特性に合わせた RGB の補正方法。
+> - [ガウシアンぼかし](https://ja.wikipedia.org/wiki/%E3%82%AC%E3%82%A6%E3%82%B7%E3%82%A2%E3%83%B3%E3%81%BC%E3%81%8B%E3%81%97)...シグマ値がぼかす量にあたる。
+> - [シグモイド関数](https://ja.wikipedia.org/wiki/%E3%82%B7%E3%82%B0%E3%83%A2%E3%82%A4%E3%83%89%E9%96%A2%E6%95%B0)...DeepLearning では、「この画像に書かれている数字は 1 である確率」を算出するのにお馴染みの関数でしたが、画像処理ではコントラストを調整するのに使われているようです。
+
+### 並行処理
+
+[disintegration/imaging](https://github.com/disintegration/imaging/)では、画像を処理する際に並行処理を利用しています。これにより比較的早い処理ができるようです。画像処理の速度について計測している方がいらっしゃったので、詳しく知りたい人はこちらを参考にすると良いかと思います。
+
+> [OpenCV, GoCV, Go 言語における画像処理のパフォーマンスの比較 - ZOZO Technologies TECH BLOG](https://techblog.zozo.com/entry/imageproc_golang)
+
+では、このライブラリでは goroutine でどのような並行処理が施されているのでしょうか。ヒントは以下の parallel 関数にありました。
+
+
+
+```go:imaging/utils.go
+// parallel processes the data in separate goroutines.
+func parallel(start, stop int, fn func(<-chan int)) {
+	count := stop - start
+	if count < 1 {
+		return
+	}
+
+	procs := runtime.GOMAXPROCS(0)
+	limit := int(atomic.LoadInt64(&maxProcs))
+	if procs > limit && limit > 0 {
+		procs = limit
+	}
+	if procs > count {
+		procs = count
+	}
+
+	c := make(chan int, count)
+	for i := start; i < stop; i++ {
+		c <- i
+	}
+	close(c)
+
+	var wg sync.WaitGroup
+	for i := 0; i < procs; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			fn(c)
+		}()
+	}
+	wg.Wait()
+}
+```
+
+**count**は、実行する必要のある処理の数です。画像処理の例だと画素数や画像横一列分などがこれにあたります。
+**procs**は、同時実行させる処理の数です。(デフォルトは CPU の数になっています。**limit**で同時処理する goroutine の数を指定した場合は limit が採用されます。)
+
+チャネルに count 数の入力値を送信しておき、procs 数の goroutine がチャネルから入力値を受信し、渡された関数で並列的に処理させます。
+
+以下に[imaging.FlipH](https://godoc.org/github.com/disintegration/imaging#FlipH)(画像の左右を反転させる処理)がどのような過程で並行処理して出力するのかを表した絵を描いてみました。
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/122992/23ac7924-78b3-9bbc-5205-62c5a6f2cb50.png)
+
+```go:上の絵を実現しているコード
+func FlipH(img image.Image) *image.NRGBA {
+	src := newScanner(img)
+	dstW := src.w
+	dstH := src.h
+	rowSize := dstW * 4
+	dst := image.NewNRGBA(image.Rect(0, 0, dstW, dstH))
+    // 画像の高さの数だけ並行処理の仕事をさせる
+	parallel(0, dstH, func(ys <-chan int) {
+        // １行分の画素群を反転させる
+		for dstY := range ys {
+            // 反転時の場所に各画素を配置
+			i := dstY * dst.Stride
+			srcY := dstY
+			src.scan(0, srcY, src.w, srcY+1, dst.Pix[i:i+rowSize])
+			reverse(dst.Pix[i : i+rowSize])
+		}
+	})
+	return dst
+}
+```
+
+
+
+## cobra で CLI ツール
+
+これらのライブラリをラップして CLI を[cobra](https://github.com/spf13/cobra)を使って作成していきます。
+まずは CLI をデザインする場合はそのコマンドで実行するサブコマンドとオプションを洗い出しておきましょう。さらに、オプションはグローバルで適用できるようにするのかも考慮しておくと良いです。
+
+基本的にデザインパターンでいうところのビルダーパターンで作成しています。デザインの参考としては cobra の実績でも取り扱われていますが、[Hugo](https://gohugo.io/)を模してみました。
+
+> [hugo/commands GitHub](https://github.com/gohugoio/hugo/tree/master/commands)
+
+Hugo ではサブコマンドを定義するときは以下のように定義します。
+
+```go:「hoge」というサブコマンドを定義する場合
+package commands
+
+
+//構造体でオプションを定義している
+type hogeCmd struct {
+  *baseBuilderCmd
+
+  /*オプションを書き込んでいる*/
+  ...
+}
+
+// コマンドビルダーでオプションを返している
+func (b *commandsBuilder) newHogeCmd() *hogeCmd {
+  // オプションの空インタフェースを定義
+  cc := &hogeCmd{}
+
+  // cobraでコマンド定義
+  cmd := &cobra.Command{
+		Use:   "hoge",
+		Short: "Short Description",
+		Long: `Long Description`,
+    RunE: func(cmd *cobra.Command, args []string) error {...},
+	}
+  // サブサブコマンドがあれば、定義
+  cmd.AddCommand(...)
+
+  // オプションをフラグとして定義
+  cmd.Flags().StringVarp(...)
+
+  // ビルダーを登録しておく
+  cc.baseBuilderCmd = b.newBuilderBasicCmd(cmd)
+
+  return cc
+}
+```
+
+コマンドビルダーに必要なサブコマンドを追加していけば完成していきます。コマンドビルダーの設計については[このファイル](https://github.com/gohugoio/hugo/blob/master/commands/commands.go)を見るとよく理解できます。
+
+
+
+## Gin で画像処理サーバー
+
+画像を http で POST すると、画像を加工してオブジェクトストレージ(今回は S3)に保存するという機能を作成しました。加工内容は設定ファイルから読み込む仕組みです。アプリでプロフィール画像の登録やサムネイル作成などに使える機能を想定して実装しました。
+
+### Gin のロジック
+
+Go 製の Web フレームワークである[Gin の GoDoc](https://godoc.org/github.com/gin-gonic/gin)を読んで大雑把に絵にしました。かなり端折ってしまっていますが、簡略化するとこんな感じかと。処理を HandlerFunc(ミドルウェア)でつないで、HTTP リクエストから HTTP レスポンスを返すロジックを作成しているようです。
+
+↓ イメージ
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/122992/66cb82fb-7a7a-94fb-7ac5-701df1aa966f.png)
+
+- **Engine**...フレームワークのインスタンス(`gin.Default()`あるいは`gin.New()`で生成される)
+- **Context**...最も重要な部分。受け取ったリクエストからレスポンスを返すまでの情報を保持する。
+- **HandlerFunc**...処理ロジック(D ファイル処理からロギングまで多様な処理を記述できる)
+- **HandlersChain**...処理ロジックを集めた配列。一連の処理の流れを作るチェーン。
+- **RouterGroup**...処理ロジックと URI のエンドポイントを繋ぐ
+
+HTTP 処理をミドルウェアチェーンで表現するあたりは、Node.js の Express とよく似てます。
+
+### S3 へのファイルアップロード
+
+脱線しましたが、本題のファイルアップロードの処理に話を戻します。処理の流れは大まかに 3 ステップ。
+
+1. HTTP リクエストボディで指定されたクライアントからの画像を読み込みサーバーのファイルシイステムへ保存。
+2. 読み込んだファイルを imaging ライブラリで加工処理する。
+3. 加工処理を施した画像ファイルを S3 へアップロードして、成功ステータスを返す。
+
+Go へのファイルアップロードについては以下を参考にしました。詳細な設定を行う場合は[Amazon Web Services - Go SDK](https://docs.aws.amazon.com/sdk-for-go/api/)を参考にしてください。
+
+> [Go 言語(golang)で S3 へファイルをアップロードする \| Developers.IO](https://dev.classmethod.jp/articles/golang-write-s3/)
+
+[viper](https://github.com/spf13/viper)を使えば、オブジェクトストレージの接続設定や画像の保存名など詳細設定をの設定ファイル(config.json など)に外出しすることも可能です。
+
+
+
+## まとめ
+
+調べていくうちに Gin の実績でも紹介されている Go 製の画像処理サーバーが見つかりました。
+
+> - [GitHub - thoas/picfit: An image resizing server written in Go](https://github.com/thoas/picfit)
+> - [Introduction to picfit, an image resizing server written in Go \| by Florent Messa | Medium](https://medium.com/@thoas/introduction-to-picfit-an-image-resizing-server-written-in-go-c8320c017d41)
+
+こちらの方が私のような初心者なんちゃってツールより流石によく設計されています。サービス実装で作るときは遠慮なくこちらを使おうと思いました。自分で作ろうとしていたものの解が見つかると学習がより深まります。
+
+
+
+
+
+とりあえずは、Go の標準パッケージや並行処理を使いこなせるようになるのが自分の課題だと感じました。Go のパッケージ類は見通しがよく、あまり疲れないのでしばらく鍛錬できそうです。
+
+
+
+

@@ -1,0 +1,246 @@
+---
+date: 2020-09-12T22:44:38.000+00:00
+title: RESTful API設計のベストプラクティス　-Web API the Good Partsまとめ-
+thumbnail: https://i0.wp.com/www.mushroom-blog.com/wp-content/uploads/2020/09/web-api-the-good-parts.png?zoom=2&resize=360%2C238&ssl=1
+tag:
+  - Web開発
+  - サーバーサイド
+---
+
+RESTful API 設計の仕事を担うことになったので、復習も兼ねて[O'Reilly Japan - Web API: The Good Parts](https://www.oreilly.co.jp/books/9784873116860/)の内容をまとめて振り返られるようにしました。後半は HTTP の仕様について多く触れる感じになってしまいましたが、参考になればぜひ。
+
+> ##### 💡 色々な API
+>
+> [カテゴリ別 API 一覧](https://www.programmableweb.com/category-api)
+
+## 👉 エンドポイント設計
+
+エンドポイントの命名規則としては以下を守るようにする。
+
+- 複数形の名詞を利用する
+- スペースやエンコードを必要とする文字を使わない(パーセントエンコーディングが入らないようにする)
+- 単語をつなげる場合はハイフン(またはアンダーバー)を利用する
+
+また、ドメインには`https://example.api.com`のように`api`を入れた方が良い。
+
+データの整合性や複数 API コールを減らすためにも、設計者は「**1 スクリーン 1API コール、1 セーブ 1API コール**」を心がけるようにする。
+
+### クエリパラメータと URI パスの設計
+
+**パラメータが一意なリソースを表現する場合は URI パスを指定**、**省略可能なパラメータの場合はクエリパラメータ**を指定するようにする。
+
+### Grant Type(認証フロー)
+
+> [Application Grant Types](https://auth0.com/docs/applications/application-grant-types)
+
+OAuth2.0 には認証フローが４種類定められていて、それらを**Grant Type**と呼ぶ。
+
+- Resource Owner Password Credentials
+- Authorization Code
+- Implicit
+- Client Credentials
+
+> OAuth...外部サイト(Facebook, Google, Slack etc...)からアクセストークンをもらったユーザーからアクセストークンをもらい、ユーザー情報を取得する標準化されたしくみ。
+>
+> ![22e5f8d7.png](attachments/673bae9a.png)
+>
+> ```text: 取得したステータスコードとアクセストークンのイメージ
+> HTTP/1.1 200 OK
+> Content-Type: application/json
+> Cache-Control: no-store
+> Pragma: no-cache
+>
+> {
+>   "access_token": "b77yz37w7kzy8v5fuga6zz93",
+>   "token_type": "bearer",
+>   "expires_in": 2629743,
+>   "refresh_token": "tGzv3JQkD0XG5Qx2TlKWIA"
+> }
+>
+> ```
+
+## 👉 レスポンスデータ設計
+
+レスポンスデータの設計者は以下を心がける。
+
+- すべての API でできる限り多くのデータを返す
+- 利用者に取得する項目を選択させる(取得する項目のレスポンスグループを使うなど)
+- エンベロープは冗長になるので使うべきではない
+- データは階層化せずにフラットにする
+- レスポンス全体は配列ではなく、オブジェクトに包んで記述する
+
+### エラー表現
+
+設計者は、できるだけ**クライアントに対してエラーの詳細な内容を返す**ようにする。レスポンスヘッダーにエラーメッセージを表現する場合もあるが、**レスポンスボディにエラーメッセージを格納する**方が一般的。
+
+エラー詳細情報に入れるフィールドは以下を検討すると良い。
+
+- エラーコード(API 提供側独自のコード)
+- 詳細情報へのリンク
+
+```json:エラー時のレスポンスボディの例
+{
+  "error": {
+    "code": 2013,
+    "message": "Bad authentication token",
+    "info": "https://docs.example.com/api/v1/authentication"
+  }
+}
+```
+
+### ステータスコード一覧
+
+- **GET, DELETE には基本的にリクエストボディを持たせない**
+- **4xx 系統はレスポンスボティにエラーの情報を含ませておく**
+
+> - [HTTP レスポンスステータスコード - HTTP \| MDN](https://developer.mozilla.org/ja/docs/Web/HTTP/Status)
+> - [GitHub API v3 \| GitHub Developer Guide](https://developer.github.com/v3/)
+
+以下はあくまで実装するステータスコードについての目安。
+
+認証(どのメソッドも共通)については、
+
+- 認証が失敗した場合は、**401(UnAuthorized)**
+- 回数制限を超えて認証試行の禁止になった場合は、**403(Forbidden)** あるいは **429(Too Many Requests)**
+
+その他エラーについては、
+
+- 不適切なリクエストボディや不適切なコンテンツタイプを指定した場合は、**400(Bad Request)**
+- 指定したリソースが見つからない場合は、**404(Not Found)**
+- リソースが既に存在するまたはリソースがロックされている場合は、**409(Conflict)**
+
+| メソッド(成否) | ステータスコード                                            |
+| -------------- | ----------------------------------------------------------- |
+| GET(成功)      | **200**(OK)                                                 |
+| GET(失敗)      | **404**(Not Found)                                          |
+| POST(成功)     | **201**(Created)                                            |
+| POST(失敗)     | **400**(Bad Request), **409**(Conflict)                     |
+| PUT(成功)      | **204**(No Content)                                         |
+| PUT(失敗)      | **400**(Bad Request), **404**(Not Found), **409**(Conflict) |
+| DELETE(成功)   | **204**(No Content)                                         |
+| DELETE(失敗)   | **404**(Not Found), **409**(Conflict)                       |
+
+### リダイレクトについて
+
+> [HTTP のリダイレクト - HTTP \| MDN](https://developer.mozilla.org/ja/docs/Web/HTTP/Redirections)
+
+### メディアタイプ・コンテンツの指定　
+
+主に以下の２つのヘッダを利用して、指定する。
+
+- **Content-Type**...リクエストならリクエストボディに指定したメディアタイプ、レスポンスならレスポンスとして返すメディアタイプを表す。
+- **Accept**...クライアントが「どんなメディアを受入可能か」サーバーに伝える。
+
+`Content-Type`に指定できる代表的なメディアタイプについては以下の通り。
+| メディアタイプ | データ形式 |
+| ------------------------ | ------------------------- |
+| text/plain | プレーンテキスト |
+| text/html | HTML ファイル |
+| application/xml | XML ファイル |
+| text/css | CSS ファイル |
+| application/javascript | Javascript |
+| application/json | JSON ファイル |
+| application/rss+xml | RSS フィード |
+| application/atom+xml | Atom フィールド |
+| application/octet-stream | バイナリデータ |
+| application/zip | zip ファイル |
+| image/jpeg | JPEG 画像 |
+| image/png | PNG 画像 |
+| image/svg+xml | SVG 画像 |
+| multipart/form-data | Web サイトのフォームデータ |
+| video/mp4 | MP4 動画ファイル |
+| application/vnd.ms-excel | Excel ファイル |
+
+## 👉 キャッシュ
+
+ここでの API のキャッシュについては、「**サーバーへのアクセス頻度や通信量を減らすためクライアント側で一度取得した情報を保存しておき、再び必要になった時にその保存しておいた情報を利用する**」ことを意味する。ただし、プロキシがきちんとキャッシュを管理しておかないと、古い情報をユーザーへ提供してしまうリスクがある。クライアントがキャッシュの期限を決める場合もあるが、**基本的にはサーバー側のレスポンスで「どのようにキャッシュするか」をきちんと明示する**。
+
+> [HTTP キャッシュ - HTTP \| MDN](https://developer.mozilla.org/ja/docs/Web/HTTP/Caching) > [HTTP キャッシュ  \|  Web Fundamentals  |  Google Developers](https://developers.google.com/web/fundamentals/performance/optimizing-content-efficiency/http-caching?hl=ja)
+
+HTTP で用意されているキャッシュについてのヘッダーは以下の 3 つ。
+
+- **Cash-Control**...max-age(データの有効期間)、no-cache(検証モデルによる確認を促す)、no-store(データをキャッシュしない)などが指定可能。
+- **Expires**...特定日時にデータ更新されることが分かっているデータ向けで、更新日時を指定しておく。
+- **Vary**...URI 以外の情報(たとえばクッキーや認証情報)によってコンテンツを変更する場合に使用する。
+
+HTTP のキャッシュパターンには、「キャッシュの有効期限を決めておき、期限が切れたら再度アクセスして情報を取得する」**期限切れモデル(Expiration Model)** と「キャッシュが最新の状態かを問い合わせて、データが更新されていたら情報を取得する」 **検証モデル(Validation Model)** が存在する。
+
+### 期限切れモデル(Expiration Model)
+
+以下の２パターンで実装することが多い。
+
+```text:期限切れを絶対時間で指定する
+Expires: Fri, 01 Jan 2020 00:00:00 GMT
+```
+
+```text:経過時間で期限を決める
+Cash-Control: max-age=3600
+```
+
+Expires と Cash-Control を**同時指定すると、Cash-Control が優先される**ので注意。
+
+### 検証モデル(Validation Model)
+
+転送するデータ量が大きいほど効果が高い。条件付きリクエストを送り、更新されていた時のみデータを返し、更新されていなかったら **304(Not Modified)** をステータスとして返す。条件付きリクエストを送信するには以下の２つをリクエストヘッダーとして指定する。
+
+- **Last-Modified**...最終更新日付。
+- **If-Modified-Since**...最終更新日付を使う場合につける。
+- **ETag**...特定のリソースのバージョンを表す識別子(Entity Tag の略)。Etag の生成はサーバーに任される。
+- **If-None-Match**...エンティティタグを使う場合につける。
+
+## 👉CORS
+
+CORS とは、「**同一オリジンポリシーのセキュリティ仕様を回避して、異なるオリジン間でデータアクセスを行うための仕様**」のこと。
+
+> [オリジン間リソース共有 (CORS) - HTTP \| MDN](https://developer.mozilla.org/ja/docs/Web/HTTP/CORS)
+
+```text: オリジンとは？
+https://example.com:8080
+(スキーム)://(ホスト):(ポート番号)
+
+=> つまり、オリジンはスキーム、ホスト、ポート番号の組み合わせ。
+```
+
+### プリフライトリクエスト
+
+プリフライトリクエストとは、「**異なるオリジン間でリクエストを行う前に、そのリクエストが受け入れられるのかを確認する**」こと。CORS によって確かにリクエスト結果の読み取りはできないが、リクエスト送信自体は可能となるのでセキュリティ上設けられている。HTTP メソッドの**OPTION**を使う。
+
+```text:プリフライトリクエストの例
+OPTIONS /v1/users/123 HTTP/1.1
+Host: api.example.com
+Accept: application/json
+Origin: https://www.example.com
+Access-Control-Request-Method: GET
+Access-Control-Request-Headers: X-RequestId
+```
+
+## 👉 セキュリティ
+
+HTTPS を必ず使う。HTTPS によって、**URI のパス、クエリ文字列、(リクエストとレスポンスの)ヘッダとボディ**が暗号化される。中継サーバーから送られる SSL サーバ証明書が偽物でないかを確かめる。そうでなければ中間者攻撃によって盗聴される危険がある。
+
+### API 攻撃
+
+| 攻撃              | 内容                                                                                                                                                                                      | 対応策                                                                                                                   |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| XSS               | クライアント側にスクリプトを実行させてページの書き換えやセッションハイジャックなどの認証情報を奪う攻撃。入力フォームや URL パラメータに脆弱性が生まれやすい。                             | まずは`Content-Type` に application/json を指定する。モダンなフロントフレームワークでは XSS 対策されているものもある。   |
+| CSRF(XSRF)        | オンラインサービスを利用するユーザーがログイン状態を保持したまま悪意のある第三者の作成した URL などをクリックした場合などに、本人が意図しない形で情報・リクエストを送信されてしまうこと。 | まずはサーバー側のデータが変化するアクセスに GET メソッドを使用しないこと。CSRF トークンや特別なリクエストヘッダの使用。 |
+| JSON ハイジャック | API から JSON で送られてくる情報を悪意のある第三者が盗み取ること。同一オリジンポリシーが `<script>` 要素には適用さないため起こる。                                                        | JSON を`<script>` 要素 では読み込めないようにする。JSON を Javascript として解釈不能にする。                             |
+
+これらの攻撃に備えて、各ブラウザで利用されるいくつかの RFC 公式ではない、セキュリティヘッダー(「X-」から始まるのは独自のセキュリティヘッダー)が存在する。
+
+- X-Content-Type-Options
+- X-XSS-Protection
+- X-Frame-Option
+- Content-Security-Policy
+- Strict-Transport-Security
+- Public-Key-Pins
+
+### リクエスト制限
+
+大量アクセスによる問題を解決するための方法として、**レートリミット**を設けてアクセス数を制限する。**ユーザーの識別方法**と**リミット値の設定**が肝となる。ステータスコードには**403(Forbidden)** あるいは **429(Too Many Requests)** を使う。
+
+以下のような方法でレートリミットをユーザーに知らせることが一般的。
+
+- レスポンスヘッダにレートリミットを渡す(X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset...)
+- レートリミットを知る専用のエンドポイントを作成し、各エンドポイントのレートリミットをレスポンスに返す
+- ドキュメントに記載する

@@ -1,0 +1,81 @@
+---
+date: 2021-01-25T22:44:38.000+00:00
+title: とある開発者がOpenshiftを知った
+thumbnail: https://i0.wp.com/www.mushroom-blog.com/wp-content/uploads/2021/04/%E3%82%B9%E3%82%AF%E3%83%AA%E3%83%BC%E3%83%B3%E3%82%B7%E3%83%A7%E3%83%83%E3%83%88-2021-04-19-23.56.46.png?zoom=2&resize=360%2C238&ssl=1
+tag:
+  - インフラ構築
+---
+
+[Openshift](https://docs.google.com/presentation/d/1E53dTRTv4kO01cndYj-sY4fLET1RXmoyXc4GiKLhJ3s/edit#slide=id.gaa3a0b12b9_0_160)
+
+担当したプロジェクトで Openshift を触らせてもらったので、「CloudNative 時代」というキーワードにも触れながら、Openshift についてまとめておこうと思います。
+
+## コンピュータリソース近代史
+
+Openshift の話をする前にコンピュータリソースの歴史を簡単に振り返ります。
+
+結局、現代のコンピュータインフラは「**リソースの最適化と抽象化**」のパフォーマンス合戦だと私は思います。  
+このおかげでアプリ開発者はとても早くアプリを開発・構築してユーザーの元へリリースできるようになりました。  
+大きく分けると４つの時代か存在します。
+
+![b202979c.png](attachments/b202979c.png)
+
+##### ・物理マシン時代
+
+ハードウェアの設定から、OS のインストールにさらにはその手順のマニュアル化。この時代を生きた人は間違いなくコンピュータの低レベルのレイヤーまで理解していたに違いない？
+
+##### ・VM 時代前期
+
+ハイパーバイザーの登場により、仮想マシンがサーバー上に簡単に建設できる時代に。今まで未使用だった CPU やメモリを余すことなく使用できるように。VMWare が仮想化ソフトを販売してブイブイ言わせていた時代ですね。私も前職で VMotion とか勉強したなー
+
+##### ・VM 時代後期(クラウド時代)
+
+仮想マシンがインターネット経由で提供される時代。ここからサーバーを購入せずとも、複雑なアプリサービスを提供できるようになりました。AWS は Amazon のドル箱！
+
+##### ・CloudNative 時代
+
+OS 単位からアプリ単位で抽象化できるようになったコンテナ時代。ここからインフラ構築はますますアプリに寄り添ったモノへと進化します。
+
+### CloudNative 時代が見据えるモノ
+
+CloudNative 時代の背景には「DevOps」という考え方の影響があります。
+DevOps とは、**“新たな機能を追加する”をミッションとする開発者と“安定してシステムを稼働する”をミッションとする運用者が開発手法やツールを用いて密接に連携すること**です。
+この DevOps という考え方が、IaC(Infrastructure as Code)やインフラの自動化などソフトウェア開発のプラクティスを、インフラ管理にも応用しようという流れが出てきました。CI/CD もこの DevOps から生まれた重要なキーワードですね。
+
+- 継続的インテグレーション(CI = Continuous Integration)...ソースコードのビルドとテストの自動化
+- 継続的デリバリー(CD = Continuous Delivery)...すべての変更に対していつでもリリース可能な状態を保証
+
+こう言った背景が、**それまでの時代のインフラ側から寄せたアプローチと異なり、アプリ側を主体としたインフラの最適解**、つまり CloudNative へと発展します。Docker や Kubernetes などはその最適化を導くための手段です。現在では[CNCF](https://www.cncf.io/)が世界的に主導して OSS 主要プロジェクトの管理や足並みの調整に尽力しています。ありきたりですが、CloudNative であることの優位性は以下の通りです。
+
+- 素早く、安定したビルド~デプロイをイメージ化
+- インフラのベストプラクティスをコード化(IaC=Infrastructure as Code)して管理
+- ダッシュボード管理などインフラの抽象化による開発者体験の向上
+
+> 💡CloudNative の最新 OSS 動向
+> [CNCF Cloud Native Interactive Landscape](https://landscape.cncf.io/)
+
+## そして、Openshift。
+
+シンプルに説明すると、Openshift とは「**Kubernetes プラスアルファ**」です。つまり Openshift のコアは Kubernetes に過ぎません。そのコアである Kubernetes に加えて認証機能などのユーザー管理やモニタリング機能を追加として提供しているコンテナプラットフォームなのです。開発者が Openshift を選択する上で受ける恩恵は、以下の２点です。
+
+- 開発者にとって Kubernetes を使いやすくする(開発エクスペリエンス向上)
+- OSS として変更の激しい Kubernetes に追従する
+
+> [Red Hat の視点：Kubernetes](https://www.redhat.com/ja/topics/containers/kubernetes-approach)
+
+オンプレで Kubernetes を構築する猛者もいるかもしれませんが、多くの場合、Kubernetes を導入するにはマネージドされたサービスが必要です。その一つの手段として Openshift が存在します。他にも GKE や AKS も選択肢として考えられます。私の担当プロジェクトでは Openshift が既に他のプロジェクトで採用実績があり、構築されていたのでそれを利用することになりました。
+
+以下のように Openshift では NameSpace という単位でプロジェクトを管理しており、白色の Kubernetes 機能を補う形で青色の Openshift の機能が存在しています。
+
+![82ef71f4.png](attachments/82ef71f4.png)
+
+実際のプロジェクトでは、Github 上のリポジトリが develop にマージされたタイミングで、ソースコードをビルドしてコンテナイメージを生成して Openshift 環境にデプロイされるようなパイプラインを構築しました。また、Kubernetes ではリソースの割り当てを yaml ファイルにマニフェストファイルとして記載していますが、Opensfhit 上でもコンソールから yaml ファイルを簡単に編集できるようになっています。
+Web コンソール上にログの出力や Pod の状態を反映したモニタリング情報が載っています。たまに自動化したデプロイパイプラインが失敗したときは、Web コンソールから手動でデプロイを行うことも簡単です。
+
+<br />
+<br />
+Openshiftについては、O'ReillyのPDF版で「[Opensfhift for
+Developers](https://assets.openshift.com/hubfs/pdfs/OpenShift_for_Developers_Red_Hat.pdf?hsLang=en-us)」が公開されています。オール英語ですが、チュートリアルの前のイントロダクションやコンセプトを読むだけで勉強になります。
+私自身Openshiftの構築作業を担当したわけではないですが、開発者として利用した限り、必要な情報を可視化できたり、ソースコードから自動でビルド・デプロイを実行してくれるのは便利に感じました。
+<br />
+<br />

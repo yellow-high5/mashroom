@@ -8,17 +8,20 @@ import {
   Text,
   useColorModeValue,
 } from '@chakra-ui/react';
+import dayjs from 'dayjs';
 import { Link } from 'gatsby';
-import { StaticImage } from 'gatsby-plugin-image';
 import React from 'react';
 import { IoTimeOutline } from 'react-icons/io5';
 
-const BlogCard = () => {
-  const article = {
-    thumbnail: '../../assets/sample-blog-thumbnail.png',
-    title: 'ANGLab -カワハギ攻略への道-',
-    tag: 'ANGLAB',
-  };
+type Props = {
+  title?: string;
+  thumbnail?: string | null;
+  tag?: (string | null)[] | null;
+  date?: string | null;
+};
+
+const BlogCard: React.FC<Props> = (props: Props) => {
+  const { title, thumbnail, tag, date } = props;
 
   const grayColor = useColorModeValue('gray.800', 'gray.200');
   const shadowColor = useColorModeValue('rgba(0,0,0,.25)', 'rgb(255, 255, 255, .25)');
@@ -50,19 +53,22 @@ const BlogCard = () => {
           alignItems="center"
         >
           <Box position="relative">
-            <StaticImage src="../../assets/sample-blog-thumbnail.png" alt={article.title} />
+            {/* 画像がない場合は大体を用意しておく */}
+            {thumbnail && <img src={thumbnail} alt="thumbnail" />}
             <HStack
-              display={{ base: 'none', lg: 'block' }}
+              display={{ base: 'none', lg: 'flex' }}
               position="absolute"
               top={1}
               left={2}
               wrap="wrap"
             >
-              <Tag size="sm" variant="solid" border="1px solid white" px={2} py={1} m={1}>
-                <Text fontSize="small" fontWeight="bold">
-                  {article.tag}
-                </Text>
-              </Tag>
+              {tag?.map((t, i) => (
+                <Tag key={i} size="sm" variant="solid" border="1px solid white" px={2} py={1} m={1}>
+                  <Text fontSize="small" fontWeight="bold">
+                    {t}
+                  </Text>
+                </Tag>
+              ))}
             </HStack>
           </Box>
 
@@ -70,12 +76,13 @@ const BlogCard = () => {
             <HStack>
               <HStack>
                 <Icon boxSize={4} as={IoTimeOutline} cursor="pointer" />
-                <Text fontSize="xs">12/01 2021</Text>
+                <Text fontSize="xs">{dayjs(date).format('MM/DD YYYY')}</Text>
               </HStack>
             </HStack>
 
             <Box>
               <Heading
+                w={240}
                 mt={2}
                 fontSize="md"
                 fontWeight="semibold"
@@ -94,24 +101,27 @@ const BlogCard = () => {
                   mr: 2,
                 }}
               >
-                {article.title}
+                {title}
               </Heading>
             </Box>
 
             <HStack wrap="wrap">
-              <Tag
-                display={{ base: 'block', lg: 'none' }}
-                size="sm"
-                variant="solid"
-                border="1px solid white"
-                px={2}
-                py={1}
-                m={1}
-              >
-                <Text fontSize="x-small" fontWeight="bold">
-                  {article.tag}
-                </Text>
-              </Tag>
+              {tag?.map((t, i) => (
+                <Tag
+                  key={i}
+                  display={{ base: 'flex', lg: 'none' }}
+                  size="sm"
+                  variant="solid"
+                  border="1px solid white"
+                  px={2}
+                  py={1}
+                  m={1}
+                >
+                  <Text fontSize="x-small" fontWeight="bold">
+                    {t}
+                  </Text>
+                </Tag>
+              ))}
             </HStack>
           </Box>
         </Box>

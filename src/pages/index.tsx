@@ -1,22 +1,28 @@
-import { Center, Grid, GridItem, useBreakpointValue } from '@chakra-ui/react';
+import { Center, Grid, GridItem } from '@chakra-ui/react';
 import BlogCard from 'components/blog/blog-card';
 import Layout from 'components/layout';
+import { useBlogList } from 'hooks';
 import React from 'react';
 
 const IndexPage = () => {
-  const article_page_size = useBreakpointValue({ base: 7, lg: 6 });
+  //const limit = useBreakpointValue({ base: 7, lg: 6 });
+
+  const blogList = useBlogList();
 
   return (
     <Layout>
       <Center>
         <Grid templateColumns="repeat(2, 1fr)" gap={4} pt={8} m="auto">
-          {Array(article_page_size)
-            .fill('')
-            .map((_, i) => (
-              <GridItem key={i} colSpan={[2, 2, 2, 1]}>
-                <BlogCard />
-              </GridItem>
-            ))}
+          {blogList.map((item, index) => (
+            <GridItem key={`${index}`} colSpan={[2, 2, 2, 1]}>
+              <BlogCard
+                title={item.node.frontmatter?.title}
+                tag={item.node.frontmatter?.tag}
+                thumbnail={item.node.frontmatter?.thumbnail}
+                date={item.node.frontmatter?.date}
+              />
+            </GridItem>
+          ))}
         </Grid>
       </Center>
     </Layout>

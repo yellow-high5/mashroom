@@ -1,0 +1,229 @@
+---
+date: 2021-08-27T22:44:38.000+00:00
+title: APIモックライブラリで学ぶService Worker
+thumbnail: https://i2.wp.com/www.mushroom-blog.com/wp-content/uploads/2021/08/%E3%82%B9%E3%82%AF%E3%83%AA%E3%83%BC%E3%83%B3%E3%82%B7%E3%83%A7%E3%83%83%E3%83%88-2021-08-27-22.52.13.png?zoom=2&resize=360%2C238&ssl=1
+tag:
+  - Web開発
+---
+
+Service Worker という存在について、ライブラリを通してではありますが、具体的に仕事の実装で取り組む機会がありました。
+ちょうど開発チーム内の勉強会とタイミングが良かったので、記事として残しておこうと思います。
+
+Service Worker を学ぶ機会となったライブラリというのが、**Mock Service Worker(MSW)** です。
+
+> [MSW – Seamless API mocking library for browser and Node \| Mock Service Worker](https://mswjs.io/)
+
+API をモックするライブラリで、特徴としては Service Worker を利用するため API モックのためにプロセスを立てる必要がないこと、実際のクライアントが送った通信(req/res)の内容をコンソールから詳細に見れることなどが挙げられます。モックの API 定義は Express ライクで[mswjs/data](https://github.com/mswjs/data)を使えば動的なシナリオも再現できます。
+担当しているプロジェクトでは、アプリのデザインやフロントエンドを先に固めて後からバックエンドを構築して接続するという形で進めており、バックエンドの API が完成するまでの間 API のハンドリングを実装するための一時的な存在として MSW が採用されることになりました。フロントだけで完結してアプリ開発を進められる上に、必要な API の洗い出しとバックエンド開発者へフロントが本当に必要な API 依頼を丁寧にできるので良い選択をしたと感じています。
+
+## Service Worker の概要
+
+そもそも Service Worker とはどういった存在なのか、まずは MDN のドキュメントを参考にしてみます。
+
+> [Service Worker API - Web APIs \| MDN](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API)
+> Web アプリケーション、ブラウザー、およびネットワーク（使用可能な場合）の間に配置される **「プロキシサーバー」** として機能する。
+> ネットワークリクエストを傍受し、ネットワークが利用可能かどうかに基づいて適切なアクションを実行し、リッチなオフライン体験を実現する。
+> ネイティブアプリしかできなかったプッシュ通知やバックグラウンド同期が可能になった。
+>
+> - アプリが動作するための Javascript とは別スレッドで動く(=アプリへ干渉しない)
+> - 拡張可能 Web として Plugable に設計されている
+> - Local Storage, DOM, window へのアクセスは制限されている
+> - セキュリティ上(中間者攻撃)の理由から HTTPS のみで動作可能
+
+Service Worker は「たとえネットワークがオフラインになっても俺がお前のそばにいて支えるぜ」みたいなブラウザの裏方的存在かと思います。
+用途としては、ネットワークリクエストの処理、事前データのプリロード、バックグラウンド同期、プッシュ通知などを実現する際に利用されることが多いようです。
+
+![5e13e933.png](:storage/2a5fdc4c-ac06-4244-9b50-ab8ffdba0f72/5e13e933.png)
+
+Service Worker 以外にも Web Worker や Shared Worker といったものも存在しており、これらすべて本スレッドとは別のスレッドでバックグラウンド実行される Worker 群です。その中でも Service Worker は Web 上で快適なオフライン体験を実現する目的として実装されているようです。
+
+| Worker の種類  | 説明                                                                                                                                                                     |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Web Worker     | 物理演算や大量のテキスト処理などメインスレッドで捌くには負荷の高い計算を並列的に実行させることができる。ページが閉じられたり移動すると終了する。                         |
+| Shared Worker  | 表示されているページ間で Worker を共有することができるのでページ間通信が可能になる。WebSocket 接続などで用いられるケースもあるっぽい。ただ Service Worker の方が上位互換 |
+| Service Worker | オフラインでのユーザーエクスペリエンスを実現するために設計されている。ページの有無に関わらず任意のタイミングで起動・終了することができる。                               |
+
+## Service Worker のライフサイクル
+
+> [Service Worker のライフサイクル  \|  Web Fundamentals  |  Google Developers](https://developers.google.com/web/fundamentals/primers/service-workers/lifecycle?hl=ja) > [Service worker の使用 - Web API \| MDN](https://developer.mozilla.org/ja/docs/Web/API/Service_Worker_API/Using_Service_Workers#basic_architecture)
+
+![](https://developers.google.com/web/fundamentals/primers/service-workers/images/sw-lifecycle.png?hl=ja)
+
+実際に Service Worker を実装するための大まかな手順です。
+
+1. Service Worker 専用の設定ファイルを読み込む(Install)
+2. 古い Service Worker の制御が終わるまで待機(Waiting)
+3. 古い Service Worker を削除して新しい Service Worker を起動する(Activate)
+4. Service Worker でイベントをインターセプト(Fetch/Message)
+5. Service Worker 内部でイベントを処理する
+6. Service Worker を終了する(Terminate)
+
+## MSW での Service Worker
+
+### `mockingServiceWorker.js`を読む
+
+MSW では[ドキュメントの手順](https://mswjs.io/docs/getting-started/integrate/browser)通りに実行すると、`npx msw init <PUBLIC_DIR> --save`で任意のディレクトリに Service Worker の設定ファイルが格納されます。
+これが**クライアント側で Service Worker を使うためにセットアップしているファイルの正体**です。具体的な中身は[こちら](https://github.com/mswjs/msw/blob/master/src/mockServiceWorker.js)です。この中身を少して見ていくことにします。
+
+#### ・install, activate イベント
+
+MSW では`install`イベントで Service Worker の待機状態をスキップしています。これは Service Worker がインストールされるとすぐにアクティベート状態へ移行することを意味しています。
+そして、`activate`イベントで`self.clients.claim()`によりクライアントを Service Worker の制御下に置いています。
+
+これだけで MSW 用の Service Worker のセットアップ完了です。
+
+```js
+self.addEventListener('install', function () {
+  return self.skipWaiting();
+});
+
+self.addEventListener('activate', async function (event) {
+  return self.clients.claim();
+});
+```
+
+#### ・message イベント
+
+ここではクライアントから Service Worker へメッセージを受信したときの挙動が書かれており、MSW(モックサーバー)との接続状態を制御しています。
+具体的には５つのイベントが用意されています。
+
+- KEEPALIVE_REQUEST...クライアントとの常時接続([Keep-Alive](https://developer.mozilla.org/ja/docs/Web/HTTP/Headers/Keep-Alive))状態にする
+- INTEGRITY_CHECK_REQUEST...イベントを送信したクライアントの整合性を確認している
+- MOCK_ACTIVATE...MSW を有効化する
+- MOCK_DEACTIVATE...MSW を無効化する
+- CLIENT_CLOSED...クライアントとの接続を切断する
+
+```js
+self.addEventListener('message', async function (event) {
+  const clientId = event.source.id
+
+  ...
+
+  switch (event.data) {
+    case 'KEEPALIVE_REQUEST': ...
+
+    case 'INTEGRITY_CHECK_REQUEST': ...
+
+    case 'MOCK_ACTIVATE': ...
+
+    case 'MOCK_DEACTIVATE': ...
+
+    case 'CLIENT_CLOSED': ...
+
+    }
+  }
+})
+```
+
+#### ・fetch イベント
+
+ここでは実際にクライアントのネットワーク通信をインターセプトして、MSW で用意したレスポンスを返すようにしています。
+[respondWith](https://developer.mozilla.org/ja/docs/Web/API/FetchEvent/respondWith)メソッドを使って独自で定義したレスポンス(=MSW ライブラリを使って定義したモックの内容)を返却しています。ここでいうと handleRequest メソッドがクライアントのリクエストから独自定義のレスポンスを返している部分にあたります。
+
+```js
+self.addEventListener('fetch', function (event) {
+  const { request } = event
+  const accept = request.headers.get('accept') || ''
+
+  ...
+
+  const requestId = uuidv4()
+  // ブラウザのネットワークリクエストをインターセプト
+  return event.respondWith(
+    // MSWで定義したレスポンスを返している
+    handleRequest(event, requestId).catch((error) => {
+      ...
+    }),
+  )
+})
+```
+
+#### ライブラリのソース構成を見てみる
+
+ServiceWorker の設定ファイルを確認したので、次に設定ファイルをクライアントに提供するために MSW がライブラリとしてどのように働いているかをざっくり見ていくことにします。(graphql の説明は対象外です)
+
+```
+ src
+  ├── context                 // https://mswjs.io/docs/api/context
+  ├── handlers                // https://mswjs.io/docs/basics/request-handler
+  ├── native
+  ├── node
+  ├── setupWorker             // ⭐️ Service Workerを振る舞いを決めている本体
+  |     ├── start
+  |     ├── stop
+  |     ├── glossary.ts
+  |     └── setupWorker.ts
+  ├── utils
+  ├── graphql.ts
+  ├── index.ts
+  ├── mockServiceWorker.js    // クライアント側のService Worker用設定ファイルのテンプレート
+  ├── response.ts             // https://mswjs.io/docs/api/response
+  ├── rest.ts                 // https://mswjs.io/docs/api/rest
+  ├── sharedOptions.ts
+  └── typeUtils.ts
+```
+
+`context`フォルダ、`handlers`フォルダ、`rest.ts`や`rest.ts`にはモックサーバーを Express 風に書けるためのロジックが仕込まれています。開発アプリ内で MSW を使うときはここのロジックを使ってモックの定義を書いています。中身を見ると大体 HTTP の仕様に沿った内容を提供しているのかなと思います。
+先ほど見た Service Worker 用設定ファイルの`mockServiceWorker.js`が存在していて`src`フォルダと同階層にある`cli`フォルダの中がここを参照して MSW のコマンドラインからこのファイルを提供できるようにしてくれているみたいです。
+そして一番の肝が、`setupWorker`フォルダです。ここが実際に MSW が提供する Service Worker をどのように動かしているかを表現したファイル群がある場所です。
+
+#### setupWorker の中身
+
+MSW が[ServiceWorker を開始を表現しているソース](https://github.com/mswjs/msw/blob/master/src/setupWorker/start/createStartHandler.ts)をもとに Service Worker の起動について言語化してみます。
+
+MSW では Service Worker のインスタンスを生成するためのコンテキストが存在します。これは Service Worker の状態を扱うオブジェクトと言ってもいいかもしれません。この中にモックサーバーの挙動を示した handler などが渡ります。
+
+```js
+SetupWorkerInternalContext {
+  startOptions?: StartOptions
+  worker: ServiceWorker | null
+  registration: ServiceWorkerRegistration | null
+  requestHandlers: RequestHandler[] // ←定義したモックサーバーの挙動はここで渡されている
+  emitter: StrictEventEmitter<WorkerLifecycleEventsMap>
+  keepAliveInterval?: number
+  workerChannel: {...}
+  events: {...}
+}
+```
+
+`window.addEventListener`と同様に Service Worker にもイベントリスナーをアタッチすることができます。
+コンテキストの中には`workerChannel`というイベントリスナーを持っており、Service Worker はクライアントとイベントベースでやりとりするようにしています。
+以下が MSW で定義しているイベント群です。
+
+```js
+// Service Worker => クライアント
+export interface ServiceWorkerIncomingEventsMap {
+  MOCKING_ENABLED: boolean
+  INTEGRITY_CHECK_RESPONSE: string
+  KEEPALIVE_RESPONSE: never
+  REQUEST: ServiceWorkerIncomingRequest
+  RESPONSE: ServiceWorkerIncomingResponse
+}
+
+// クライアント => Service Worker
+type ServiceWorkerOutgoingEventTypes =
+  | 'MOCK_ACTIVATE'
+  | 'MOCK_DEACTIVATE'
+  | 'INTEGRITY_CHECK_REQUEST'
+  | 'KEEPALIVE_REQUEST'
+  | 'CLIENT_CLOSED'
+```
+
+> [Servie Worker のメッセージイベントの例](https://developer.mozilla.org/ja/docs/Web/API/ServiceWorkerGlobalScope/message_event)
+
+これらのイベント群を用いて起動するまでに以下のような手順を踏んでいます。結論的にはクライアント側の`mockingServiceWorker.js`と同様の処理が含まれています。
+
+1. 起動以前に接続されていたイベントリスナーを削除
+2. クライアントからの接続要求(イベントリスナーを作成)
+3. クライアントの整合性を確かめる(INTEGRITY_CHECK)
+4. モックを有効化
+5. クライアントと ServiceWorker(モックサーバー)の接続を持続させる(KEEPALIVE)
+
+起動と接続までの手順はシンプルなように見えますが、ソースコードを読むとクライアントと ServiceWorker どっちのイベントを扱って処理しているのか混乱しそうになるのでここまでにします。実際に Service Worker やクライアントの更新の部分は複雑でイベントリスナーのリークが起きたりする issue もありました。
+
+<br />
+<br />
+<br />
+
+実際に「ServiceWorker を自分で書いて実装したぜ」というわけではなく、ライブラリが生成した Service Worker から学ぶという内容でしたので、「Service Worker ってさ、」と説得力を持って話せるまでには至っていませんが、実例から切り取って自分の中で仕組みの部分を理解に落とし込めたのは有意義でした。
+現在のプロジェクトで、Web アプリの通知やステータスの更新周りを強化するような実装において Service Worker が使える機会あれば Service Worker の定義に取り組んでみたいなと思いました。
