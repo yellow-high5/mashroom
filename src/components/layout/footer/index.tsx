@@ -1,6 +1,6 @@
-import { Flex, FlexProps, Heading, Spacer, useColorMode } from '@chakra-ui/react';
+import { Flex, FlexProps, Heading, Link, Spacer, useColorMode } from '@chakra-ui/react';
 import React from 'react';
-import { IoMoon, IoSunny } from 'react-icons/io5';
+import { IoGitBranch, IoMoon, IoSunny } from 'react-icons/io5';
 
 const Footer: React.FC<FlexProps> = (props) => {
   const { colorMode, toggleColorMode } = useColorMode();
@@ -19,13 +19,18 @@ const Footer: React.FC<FlexProps> = (props) => {
     >
       <Flex flexGrow={1} maxW="62em" alignItems="center">
         {colorMode === 'light' ? (
-          <IoMoon onClick={toggleColorMode} cursor="pointer" color="yellow.200" />
+          <IoMoon onClick={toggleColorMode} cursor="pointer" />
         ) : (
-          <IoSunny onClick={toggleColorMode} cursor="pointer" color="yellow.400" />
+          <IoSunny onClick={toggleColorMode} cursor="pointer" />
         )}
         <Spacer />
 
-        <Heading fontSize="xs">2022 © m@shroom. m@sh All Rights Reserved.</Heading>
+        <Heading fontSize="xs" mr={1}>
+          2022 designed & written by m@sh.
+        </Heading>
+        <Link href="https://github.com/yellow-high5" isExternal>
+          <IoGitBranch cursor="pointer" />
+        </Link>
       </Flex>
     </Flex>
   );

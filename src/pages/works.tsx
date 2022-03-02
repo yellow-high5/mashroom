@@ -5,7 +5,7 @@ import React from 'react';
 
 const WORK_TAB = [
   { kind: 'All', number: 12 },
-  { kind: 'Program', number: 4 },
+  { kind: 'Web', number: 4 },
   { kind: 'CG-Work', number: 7 },
   { kind: 'Illust', number: 1 },
 ];
@@ -20,6 +20,9 @@ const WorksPage = () => {
               <Tab
                 key={tab.kind}
                 fontWeight="bold"
+                _active={{
+                  bgColor: 'none',
+                }}
                 _selected={{
                   bgGradient: 'linear(to-r, yellow.300, yellow.500)',
                   bgClip: 'text',

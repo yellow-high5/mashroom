@@ -1,3 +1,4 @@
+import { Center } from '@chakra-ui/react';
 import Layout from 'components/layout';
 import React from 'react';
 
@@ -5,13 +6,9 @@ import React from 'react';
 const NotFoundPage = () => {
   return (
     <Layout>
-      <h1>PAGE NOT FOUND</h1>
-      <p>
-        Sorry{' '}
-        <span role="img" aria-label="Pensive emoji">
-          😔
-        </span>{' '}
-      </p>
+      <Center height="640px">
+        <h1>PAGE NOT FOUND</h1>
+      </Center>
     </Layout>
   );
 };
