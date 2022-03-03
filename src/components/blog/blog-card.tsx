@@ -1,5 +1,6 @@
 import {
   Box,
+  chakra,
   Heading,
   HStack,
   Icon,
@@ -14,6 +15,7 @@ import React from 'react';
 import { IoTimeOutline } from 'react-icons/io5';
 
 type Props = {
+  slug?: string | null;
   title?: string;
   thumbnail?: string | null;
   tag?: (string | null)[] | null;
@@ -21,7 +23,7 @@ type Props = {
 };
 
 const BlogCard: React.FC<Props> = (props: Props) => {
-  const { title, thumbnail, tag, date } = props;
+  const { slug, title, thumbnail, tag, date } = props;
 
   const grayColor = useColorModeValue('gray.800', 'gray.200');
   const shadowColor = useColorModeValue('rgba(0,0,0,.25)', 'rgb(255, 255, 255, .25)');
@@ -34,7 +36,7 @@ const BlogCard: React.FC<Props> = (props: Props) => {
         exit: { delay: 0.4 },
       }}
     >
-      <Link to="/profile" role="group">
+      <Link to={`/blog/${slug}`} role="group">
         <Box
           as="article"
           maxW={{
@@ -54,7 +56,7 @@ const BlogCard: React.FC<Props> = (props: Props) => {
         >
           <Box position="relative">
             {/* 画像がない場合は大体を用意しておく */}
-            {thumbnail && <img src={thumbnail} alt="thumbnail" />}
+            {thumbnail && <chakra.img src={thumbnail} alt="thumbnail" />}
             <HStack
               display={{ base: 'none', lg: 'flex' }}
               position="absolute"

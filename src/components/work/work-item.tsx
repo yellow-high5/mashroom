@@ -38,6 +38,7 @@ const WorkItem = () => {
           >
             <StaticImage
               src="../../assets/sample-work-thumbnail.png"
+              width={240}
               alt={work.title}
               style={{ borderRadius: '50%', overflow: 'hidden' }}
             />

@@ -42,6 +42,7 @@
     "@mdx-js/mdx": "v1",
     "@mdx-js/react": "v1",
     "@n8tb1t/use-scroll-position": "^2.0.3",
+    "@types/mdx-js__react": "^1.5.5",
     "@types/react-calendar-heatmap": "^1.6.3",
     "@types/react-helmet": "^6.1.5",
     "dayjs": "^1.10.8",

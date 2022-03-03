@@ -5,7 +5,7 @@ import { IoHelpCircle } from 'react-icons/io5';
 const INTERVIEW_LIST = [
   { question: '職業は？', answer: 'エンジニアやってます。' },
   { question: 'どの世代？', answer: '1995年生まれ。ゆとり世代末期。' },
-  { question: '出身は？', answer: '兵庫県宝塚出身。大学から関東へ移住。' },
+  { question: '出身は？', answer: '兵庫県宝塚出身。今は東京。' },
   { question: '趣味は？', answer: '釣り、ウィスキー、湯巡り' },
   { question: 'あなたを表す言葉は？', answer: '楽観的、愚直、たまに神経質' },
   {
