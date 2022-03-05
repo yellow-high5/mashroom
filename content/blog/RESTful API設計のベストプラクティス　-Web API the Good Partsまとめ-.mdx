@@ -13,7 +13,7 @@ RESTful API 設計の仕事を担うことになったので、復習も兼ね�
 >
 > [カテゴリ別 API 一覧](https://www.programmableweb.com/category-api)
 
-## 👉 エンドポイント設計
+## エンドポイント設計
 
 エンドポイントの命名規則としては以下を守るようにする。
 
@@ -56,10 +56,9 @@ OAuth2.0 には認証フローが４種類定められていて、それらを**
 >   "expires_in": 2629743,
 >   "refresh_token": "tGzv3JQkD0XG5Qx2TlKWIA"
 > }
->
 > ```
 
-## 👉 レスポンスデータ設計
+## レスポンスデータ設計
 
 レスポンスデータの設計者は以下を心がける。
 
@@ -132,26 +131,27 @@ OAuth2.0 には認証フローが４種類定められていて、それらを**
 - **Accept**...クライアントが「どんなメディアを受入可能か」サーバーに伝える。
 
 `Content-Type`に指定できる代表的なメディアタイプについては以下の通り。
-| メディアタイプ | データ形式 |
-| ------------------------ | ------------------------- |
-| text/plain | プレーンテキスト |
-| text/html | HTML ファイル |
-| application/xml | XML ファイル |
-| text/css | CSS ファイル |
-| application/javascript | Javascript |
-| application/json | JSON ファイル |
-| application/rss+xml | RSS フィード |
-| application/atom+xml | Atom フィールド |
-| application/octet-stream | バイナリデータ |
-| application/zip | zip ファイル |
-| image/jpeg | JPEG 画像 |
-| image/png | PNG 画像 |
-| image/svg+xml | SVG 画像 |
-| multipart/form-data | Web サイトのフォームデータ |
-| video/mp4 | MP4 動画ファイル |
-| application/vnd.ms-excel | Excel ファイル |
 
-## 👉 キャッシュ
+| メディアタイプ           | データ形式                 |
+| ------------------------ | -------------------------- |
+| text/plain               | プレーンテキスト           |
+| text/html                | HTML ファイル              |
+| application/xml          | XML ファイル               |
+| text/css                 | CSS ファイル               |
+| application/javascript   | Javascript                 |
+| application/json         | JSON ファイル              |
+| application/rss+xml      | RSS フィード               |
+| application/atom+xml     | Atom フィールド            |
+| application/octet-stream | バイナリデータ             |
+| application/zip          | zip ファイル               |
+| image/jpeg               | JPEG 画像                  |
+| image/png                | PNG 画像                   |
+| image/svg+xml            | SVG 画像                   |
+| multipart/form-data      | Web サイトのフォームデータ |
+| video/mp4                | MP4 動画ファイル           |
+| application/vnd.ms-excel | Excel ファイル             |
+
+## キャッシュ
 
 ここでの API のキャッシュについては、「**サーバーへのアクセス頻度や通信量を減らすためクライアント側で一度取得した情報を保存しておき、再び必要になった時にその保存しておいた情報を利用する**」ことを意味する。ただし、プロキシがきちんとキャッシュを管理しておかないと、古い情報をユーザーへ提供してしまうリスクがある。クライアントがキャッシュの期限を決める場合もあるが、**基本的にはサーバー側のレスポンスで「どのようにキャッシュするか」をきちんと明示する**。
 
@@ -188,7 +188,7 @@ Expires と Cash-Control を**同時指定すると、Cash-Control が優先さ�
 - **ETag**...特定のリソースのバージョンを表す識別子(Entity Tag の略)。Etag の生成はサーバーに任される。
 - **If-None-Match**...エンティティタグを使う場合につける。
 
-## 👉CORS
+## CORS
 
 CORS とは、「**同一オリジンポリシーのセキュリティ仕様を回避して、異なるオリジン間でデータアクセスを行うための仕様**」のこと。
 
@@ -214,7 +214,7 @@ Access-Control-Request-Method: GET
 Access-Control-Request-Headers: X-RequestId
 ```
 
-## 👉 セキュリティ
+## セキュリティ
 
 HTTPS を必ず使う。HTTPS によって、**URI のパス、クエリ文字列、(リクエストとレスポンスの)ヘッダとボディ**が暗号化される。中継サーバーから送られる SSL サーバ証明書が偽物でないかを確かめる。そうでなければ中間者攻撃によって盗聴される危険がある。
 

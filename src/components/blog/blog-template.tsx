@@ -14,7 +14,7 @@ import {
 } from '@chakra-ui/react';
 import { MDXProvider } from '@mdx-js/react';
 import { useScrollPosition } from '@n8tb1t/use-scroll-position';
-import { Paragraph } from 'components/blog/blog-components';
+import blogComponents from 'components/blog/blog-components';
 import Footer from 'components/layout/footer';
 import Header from 'components/layout/header';
 import { graphql } from 'gatsby';
@@ -51,15 +51,11 @@ const BlogTemplate: React.FC<Props> = ({ data }) => {
       <Header display={showHeader ? 'flex' : 'none'} />
 
       <Grid templateColumns="repeat(4, 1fr)" gap={4} maxW="62em" pt={28} m="auto">
-        <GridItem colSpan={[4, 4, 3, 3]}>
-          <MDXProvider
-            components={{
-              p: Paragraph,
-            }}
-          >
+        <GridItem colSpan={[4, 4, 3, 3]} pb={32}>
+          <MDXProvider components={blogComponents}>
             <Box m={6}>
-              <VStack mb={6}>
-                <HStack mb={2}>
+              <VStack mb={12}>
+                <HStack mb={4}>
                   <HStack>
                     <Icon boxSize={4} as={IoTimeOutline} cursor="pointer" />
                     <Text fontSize="xs">{data.mdx?.frontmatter?.date}</Text>
@@ -70,9 +66,7 @@ const BlogTemplate: React.FC<Props> = ({ data }) => {
                     <Text fontSize="xs">12min</Text>
                   </HStack>
                 </HStack>
-                <Heading size="lg" pl={4}>
-                  {data.mdx?.frontmatter?.title}
-                </Heading>
+                <blogComponents.h1>{data.mdx?.frontmatter?.title}</blogComponents.h1>
               </VStack>
 
               {data.mdx && <MDXRenderer>{data.mdx.body}</MDXRenderer>}
@@ -80,7 +74,7 @@ const BlogTemplate: React.FC<Props> = ({ data }) => {
           </MDXProvider>
         </GridItem>
         <GridItem colSpan={[4, 4, 1, 1]}>
-          <Box mt={4} p={4}>
+          <Box mt={4} p={4} display={{ base: 'none', md: 'block' }}>
             <Heading mb={6} size="sm">
               Index
             </Heading>

@@ -21,6 +21,7 @@ API をモックするライブラリで、特徴としては Service Worker を
 そもそも Service Worker とはどういった存在なのか、まずは MDN のドキュメントを参考にしてみます。
 
 > [Service Worker API - Web APIs \| MDN](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API)
+>
 > Web アプリケーション、ブラウザー、およびネットワーク（使用可能な場合）の間に配置される **「プロキシサーバー」** として機能する。
 > ネットワークリクエストを傍受し、ネットワークが利用可能かどうかに基づいて適切なアクションを実行し、リッチなオフライン体験を実現する。
 > ネイティブアプリしかできなかったプッシュ通知やバックグラウンド同期が可能になった。
@@ -142,7 +143,7 @@ self.addEventListener('fetch', function (event) {
 
 ServiceWorker の設定ファイルを確認したので、次に設定ファイルをクライアントに提供するために MSW がライブラリとしてどのように働いているかをざっくり見ていくことにします。(graphql の説明は対象外です)
 
-```
+```:ソースの構成
  src
   ├── context                 // https://mswjs.io/docs/api/context
   ├── handlers                // https://mswjs.io/docs/basics/request-handler
