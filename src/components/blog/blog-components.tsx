@@ -1,6 +1,7 @@
 import {
   Box,
   BoxProps,
+  Code,
   CodeProps,
   Divider,
   DividerProps,
@@ -29,7 +30,7 @@ import {
 import React from 'react';
 import SyntaxHighlighter from 'react-syntax-highlighter/dist/esm/default-highlight';
 import { tomorrowNightBlue } from 'react-syntax-highlighter/dist/esm/styles/hljs';
-import { getFileIcon } from 'utils/icon';
+import { getFileIcon } from 'utils/format';
 
 const Wrapper: React.FC<BoxProps> = (props) => {
   return <Box {...props} />;
@@ -47,6 +48,7 @@ const Heading2: React.FC<HeadingProps> = (props) => {
   return (
     <Heading
       as="h2"
+      id={props.children as string}
       fontSize="1.25rem"
       lineHeight={1.8}
       borderLeft="0.5rem solid"
@@ -89,7 +91,7 @@ const BlockQuote: React.FC<BoxProps> = (props) => {
   const bgColor = useColorModeValue('gray.100', 'gray.700');
   return (
     <Box
-      borderLeft="4px"
+      borderLeft="12px solid #D69E2E"
       borderRadius={8}
       boxShadow="1px 1px 4px #E2E8F0"
       bgColor={bgColor}
@@ -160,6 +162,10 @@ const CodeContent: React.FC<CodeProps> = ({ className, ...props }) => {
   );
 };
 
+const InlineCode: React.FC<CodeProps> = (props) => {
+  return <Code fontSize="0.75rem" fontWeight={600} px={2} mx={1} {...props} />;
+};
+
 const Break: React.FC<DividerProps> = (props) => {
   return <Divider {...props} />;
 };
@@ -200,6 +206,7 @@ export default {
   td: Td,
   pre: Pre,
   code: CodeContent,
+  inlineCode: InlineCode,
   hr: Break,
   a: LinkText,
   img: ImageContent,

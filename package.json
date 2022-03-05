@@ -48,6 +48,7 @@
     "@types/react-syntax-highlighter": "^13.5.2",
     "framer-motion": "^6.2.6",
     "gatsby": "^4.7.2",
+    "gatsby-plugin-anchor-links": "^1.2.1",
     "graphql": "^16.3.0",
     "react": "^17.0.1",
     "react-calendar-heatmap": "^1.8.1",

@@ -15,3 +15,11 @@ export const getFileIcon = (language?: string): IconType => {
   } as Record<string, IconType>;
   return icons[language] || IoDocumentText;
 };
+
+export const getMinutesToRead = (wc?: number | null): string => {
+  if (!wc) {
+    return '- min';
+  }
+
+  return `${Math.round((wc * 14) / 400)} min`;
+};

@@ -13,8 +13,9 @@ Service Worker を学ぶ機会となったライブラリというのが、**Moc
 
 > [MSW – Seamless API mocking library for browser and Node \| Mock Service Worker](https://mswjs.io/)
 
-API をモックするライブラリで、特徴としては Service Worker を利用するため API モックのためにプロセスを立てる必要がないこと、実際のクライアントが送った通信(req/res)の内容をコンソールから詳細に見れることなどが挙げられます。モックの API 定義は Express ライクで[mswjs/data](https://github.com/mswjs/data)を使えば動的なシナリオも再現できます。
-担当しているプロジェクトでは、アプリのデザインやフロントエンドを先に固めて後からバックエンドを構築して接続するという形で進めており、バックエンドの API が完成するまでの間 API のハンドリングを実装するための一時的な存在として MSW が採用されることになりました。フロントだけで完結してアプリ開発を進められる上に、必要な API の洗い出しとバックエンド開発者へフロントが本当に必要な API 依頼を丁寧にできるので良い選択をしたと感じています。
+API をモックするライブラリで、特徴としては Service Worker を利用するため API モックのためにプロセスを立てる必要がないこと、実際のクライアントが送った通信(req/res)の内容をコンソールから詳細に見れることなどが挙げられます。モックの API 定義は Express ライクで[mswjs/data](https://github.com/mswjs/data)を使えば動的なシナリオも再現できます。テスト用途で使われている例もありました。
+
+担当しているプロジェクトでは、アプリのデザインやフロントエンドを先に固めてからバックエンドを構築して接続するという形で進めており、バックエンドの API が完成するまでの間 API のハンドリングを実装するための一時的な存在として MSW が採用されることになりました。フロントだけで完結してアプリ開発を進められる上に、必要な API の洗い出しとバックエンド開発者へフロントが本当に必要な API 依頼を丁寧にできるので良い選択をしたと感じています。
 
 ## Service Worker の概要
 
@@ -46,9 +47,11 @@ Service Worker 以外にも Web Worker や Shared Worker といったものも�
 
 ## Service Worker のライフサイクル
 
-> [Service Worker のライフサイクル  \|  Web Fundamentals  |  Google Developers](https://developers.google.com/web/fundamentals/primers/service-workers/lifecycle?hl=ja) > [Service worker の使用 - Web API \| MDN](https://developer.mozilla.org/ja/docs/Web/API/Service_Worker_API/Using_Service_Workers#basic_architecture)
-
 ![](https://developers.google.com/web/fundamentals/primers/service-workers/images/sw-lifecycle.png?hl=ja)
+
+> - [Service Worker のライフサイクル | Web Fundamentals | Google Developers](https://developers.google.com/web/fundamentals/primers/service-workers/lifecycle?hl=ja)
+>
+> - [Service worker の使用 - Web API \| MDN](https://developer.mozilla.org/ja/docs/Web/API/Service_Worker_API/Using_Service_Workers#basic_architecture)
 
 実際に Service Worker を実装するための大まかな手順です。
 
@@ -61,7 +64,7 @@ Service Worker 以外にも Web Worker や Shared Worker といったものも�
 
 ## MSW での Service Worker
 
-### `mockingServiceWorker.js`を読む
+### mockServiceWorker.js を読む
 
 MSW では[ドキュメントの手順](https://mswjs.io/docs/getting-started/integrate/browser)通りに実行すると、`npx msw init <PUBLIC_DIR> --save`で任意のディレクトリに Service Worker の設定ファイルが格納されます。
 これが**クライアント側で Service Worker を使うためにセットアップしているファイルの正体**です。具体的な中身は[こちら](https://github.com/mswjs/msw/blob/master/src/mockServiceWorker.js)です。この中身を少して見ていくことにします。
@@ -73,7 +76,7 @@ MSW では`install`イベントで Service Worker の待機状態をスキップ
 
 これだけで MSW 用の Service Worker のセットアップ完了です。
 
-```js
+```js:msw/src/mockServiceWorker.js
 self.addEventListener('install', function () {
   return self.skipWaiting();
 });
@@ -94,7 +97,7 @@ self.addEventListener('activate', async function (event) {
 - MOCK_DEACTIVATE...MSW を無効化する
 - CLIENT_CLOSED...クライアントとの接続を切断する
 
-```js
+```js:msw/src/mockServiceWorker.js
 self.addEventListener('message', async function (event) {
   const clientId = event.source.id
 
@@ -121,7 +124,7 @@ self.addEventListener('message', async function (event) {
 ここでは実際にクライアントのネットワーク通信をインターセプトして、MSW で用意したレスポンスを返すようにしています。
 [respondWith](https://developer.mozilla.org/ja/docs/Web/API/FetchEvent/respondWith)メソッドを使って独自で定義したレスポンス(=MSW ライブラリを使って定義したモックの内容)を返却しています。ここでいうと handleRequest メソッドがクライアントのリクエストから独自定義のレスポンスを返している部分にあたります。
 
-```js
+```js:msw/src/mockServiceWorker.js
 self.addEventListener('fetch', function (event) {
   const { request } = event
   const accept = request.headers.get('accept') || ''
@@ -174,7 +177,7 @@ MSW が[ServiceWorker を開始を表現しているソース](https://github.co
 
 MSW では Service Worker のインスタンスを生成するためのコンテキストが存在します。これは Service Worker の状態を扱うオブジェクトと言ってもいいかもしれません。この中にモックサーバーの挙動を示した handler などが渡ります。
 
-```js
+```ts:src/setupWorker/start/createStartHandler.ts
 SetupWorkerInternalContext {
   startOptions?: StartOptions
   worker: ServiceWorker | null
@@ -191,7 +194,7 @@ SetupWorkerInternalContext {
 コンテキストの中には`workerChannel`というイベントリスナーを持っており、Service Worker はクライアントとイベントベースでやりとりするようにしています。
 以下が MSW で定義しているイベント群です。
 
-```js
+```ts:src/setupWorker/glossary
 // Service Worker => クライアント
 export interface ServiceWorkerIncomingEventsMap {
   MOCKING_ENABLED: boolean

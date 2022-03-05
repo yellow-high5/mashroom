@@ -3,11 +3,15 @@ import {
   Box,
   chakra,
   ChakraProvider,
+  Flex,
   Grid,
   GridItem,
   Heading,
   HStack,
   Icon,
+  List,
+  ListIcon,
+  ListItem,
   Spacer,
   Text,
   VStack,
@@ -18,9 +22,11 @@ import blogComponents from 'components/blog/blog-components';
 import Footer from 'components/layout/footer';
 import Header from 'components/layout/header';
 import { graphql } from 'gatsby';
+import { AnchorLink } from 'gatsby-plugin-anchor-links';
 import { MDXRenderer } from 'gatsby-plugin-mdx';
 import React, { useState } from 'react';
-import { IoStopwatchOutline, IoTimeOutline } from 'react-icons/io5';
+import { IoLinkOutline, IoStopwatchOutline, IoTimeOutline } from 'react-icons/io5';
+import { getMinutesToRead } from 'utils/format';
 
 export const getBlogData = graphql`
   query BlogData($slug: String!) {
@@ -30,6 +36,14 @@ export const getBlogData = graphql`
         title
         thumbnail
         date(formatString: "YYYY/MM/DD")
+      }
+      timeToRead
+      headings(depth: h2) {
+        value
+      }
+      slug
+      wordCount {
+        words
       }
     }
   }
@@ -63,7 +77,7 @@ const BlogTemplate: React.FC<Props> = ({ data }) => {
                   <Spacer />
                   <HStack>
                     <Icon boxSize={4} as={IoStopwatchOutline} cursor="pointer" />
-                    <Text fontSize="xs">12min</Text>
+                    <Text fontSize="xs">{getMinutesToRead(data.mdx?.wordCount?.words)}</Text>
                   </HStack>
                 </HStack>
                 <blogComponents.h1>{data.mdx?.frontmatter?.title}</blogComponents.h1>
@@ -74,13 +88,39 @@ const BlogTemplate: React.FC<Props> = ({ data }) => {
           </MDXProvider>
         </GridItem>
         <GridItem colSpan={[4, 4, 1, 1]}>
-          <Box mt={4} p={4} display={{ base: 'none', md: 'block' }}>
-            <Heading mb={6} size="sm">
-              Index
-            </Heading>
+          <Box
+            mt={4}
+            ml={4}
+            p={4}
+            display={{ base: 'none', md: 'block' }}
+            position="fixed"
+            top={!showHeader ? 0 : undefined}
+          >
             {data.mdx?.frontmatter?.thumbnail && (
-              <chakra.img src={data.mdx.frontmatter.thumbnail} width="100%" />
+              <chakra.img
+                src={data.mdx.frontmatter.thumbnail}
+                width="240px"
+                mb={6}
+                borderRadius={4}
+              />
             )}
+            <Box ml={4}>
+              <Heading size="sm">Index</Heading>
+              <List mt={4} spacing={4}>
+                {data.mdx?.headings?.map((heading, index) => (
+                  <ListItem key={`index-${index}`}>
+                    <Flex>
+                      <ListIcon as={IoLinkOutline} />
+                      <AnchorLink to={`#${heading?.value}`}>
+                        <Text fontSize="xs" _hover={{ color: 'yellow.400' }}>
+                          {heading?.value}
+                        </Text>
+                      </AnchorLink>
+                    </Flex>
+                  </ListItem>
+                ))}
+              </List>
+            </Box>
           </Box>
         </GridItem>
       </Grid>
