@@ -16,7 +16,7 @@ const IndexPage = () => {
           {blogList.map((item, index) => (
             <GridItem key={`${index}`} colSpan={[2, 2, 2, 1]}>
               <BlogCard
-                slug={item.node.slug}
+                slug={item.node.id}
                 title={item.node.frontmatter?.title}
                 tag={item.node.frontmatter?.tag}
                 thumbnail={item.node.frontmatter?.thumbnail}

@@ -12,7 +12,7 @@ module.exports.createPages = async ({ graphql, actions }) => {
       allMdx {
         edges {
           node {
-            slug
+            id
           }
         }
       }
@@ -22,9 +22,9 @@ module.exports.createPages = async ({ graphql, actions }) => {
   response.data.allMdx.edges.forEach((edge) => {
     createPage({
       component: blogTemplate,
-      path: `/blog/${edge.node.slug}`,
+      path: `/blog/${edge.node.id}`,
       context: {
-        slug: edge.node.slug,
+        slug: edge.node.id,
       },
     });
   });

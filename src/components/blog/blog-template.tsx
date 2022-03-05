@@ -21,6 +21,7 @@ import { useScrollPosition } from '@n8tb1t/use-scroll-position';
 import blogComponents from 'components/blog/blog-components';
 import Footer from 'components/layout/footer';
 import Header from 'components/layout/header';
+import AuthorIntro from 'components/layout/sidebar/author-intro';
 import { graphql } from 'gatsby';
 import { AnchorLink } from 'gatsby-plugin-anchor-links';
 import { MDXRenderer } from 'gatsby-plugin-mdx';
@@ -30,7 +31,7 @@ import { getMinutesToRead } from 'utils/format';
 
 export const getBlogData = graphql`
   query BlogData($slug: String!) {
-    mdx(slug: { eq: $slug }) {
+    mdx(id: { eq: $slug }) {
       body
       frontmatter {
         title
@@ -65,9 +66,9 @@ const BlogTemplate: React.FC<Props> = ({ data }) => {
       <Header display={showHeader ? 'flex' : 'none'} />
 
       <Grid templateColumns="repeat(4, 1fr)" gap={4} maxW="62em" pt={28} m="auto">
-        <GridItem colSpan={[4, 4, 3, 3]} pb={32}>
+        <GridItem colSpan={[4, 4, 3, 3]}>
           <MDXProvider components={blogComponents}>
-            <Box m={6}>
+            <Box m={6} pb={32}>
               <VStack mb={12}>
                 <HStack mb={4}>
                   <HStack>
@@ -86,6 +87,7 @@ const BlogTemplate: React.FC<Props> = ({ data }) => {
               {data.mdx && <MDXRenderer>{data.mdx.body}</MDXRenderer>}
             </Box>
           </MDXProvider>
+          <AuthorIntro mb={16} isFlex />
         </GridItem>
         <GridItem colSpan={[4, 4, 1, 1]}>
           <Box
