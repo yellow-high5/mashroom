@@ -17,7 +17,6 @@ import { useScrollPosition } from '@n8tb1t/use-scroll-position';
 import { Paragraph } from 'components/blog/blog-components';
 import Footer from 'components/layout/footer';
 import Header from 'components/layout/header';
-import dayjs from 'dayjs';
 import { graphql } from 'gatsby';
 import { MDXRenderer } from 'gatsby-plugin-mdx';
 import React, { useState } from 'react';
@@ -30,7 +29,7 @@ export const getBlogData = graphql`
       frontmatter {
         title
         thumbnail
-        date
+        date(formatString: "YYYY/MM/DD")
       }
     }
   }
@@ -63,9 +62,7 @@ const BlogTemplate: React.FC<Props> = ({ data }) => {
                 <HStack mb={2}>
                   <HStack>
                     <Icon boxSize={4} as={IoTimeOutline} cursor="pointer" />
-                    <Text fontSize="xs">
-                      {dayjs(data.mdx?.frontmatter?.date).format('YYYY/MM/DD')}
-                    </Text>
+                    <Text fontSize="xs">{data.mdx?.frontmatter?.date}</Text>
                   </HStack>
                   <Spacer />
                   <HStack>

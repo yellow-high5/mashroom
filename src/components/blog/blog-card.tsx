@@ -9,7 +9,6 @@ import {
   Text,
   useColorModeValue,
 } from '@chakra-ui/react';
-import dayjs from 'dayjs';
 import { Link } from 'gatsby';
 import React from 'react';
 import { IoTimeOutline } from 'react-icons/io5';
@@ -78,7 +77,7 @@ const BlogCard: React.FC<Props> = (props: Props) => {
             <HStack>
               <HStack>
                 <Icon boxSize={4} as={IoTimeOutline} cursor="pointer" />
-                <Text fontSize="xs">{dayjs(date).format('MM/DD YYYY')}</Text>
+                <Text fontSize="xs">{date}</Text>
               </HStack>
             </HStack>
 

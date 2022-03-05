@@ -19,9 +19,9 @@ const Footer: React.FC<FlexProps> = (props) => {
     >
       <Flex flexGrow={1} maxW="62em" alignItems="center">
         {colorMode === 'light' ? (
-          <IoMoon onClick={toggleColorMode} cursor="pointer" />
-        ) : (
           <IoSunny onClick={toggleColorMode} cursor="pointer" />
+        ) : (
+          <IoMoon onClick={toggleColorMode} cursor="pointer" />
         )}
         <Spacer />
 

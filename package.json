@@ -45,7 +45,6 @@
     "@types/mdx-js__react": "^1.5.5",
     "@types/react-calendar-heatmap": "^1.6.3",
     "@types/react-helmet": "^6.1.5",
-    "dayjs": "^1.10.8",
     "framer-motion": "^6.2.6",
     "gatsby": "^4.7.2",
     "graphql": "^16.3.0",

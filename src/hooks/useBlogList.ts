@@ -8,7 +8,7 @@ const useBlogList = () => {
           node {
             id
             frontmatter {
-              date
+              date(formatString: "MM/DD YYYY")
               tag
               thumbnail
               title

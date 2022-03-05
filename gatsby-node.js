@@ -1,5 +1,7 @@
 const path = require('path');
 
+// ファイルシステムAPIに置き換えれるかもしれない
+// https://www.gatsbyjs.com/docs/reference/routing/file-system-route-api
 module.exports.createPages = async ({ graphql, actions }) => {
   const { createPage } = actions;
 
