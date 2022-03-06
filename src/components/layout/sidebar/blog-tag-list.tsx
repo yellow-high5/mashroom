@@ -1,7 +1,7 @@
 import { Flex, FlexProps, Tag, Text } from '@chakra-ui/react';
 import SideHeading from 'components/common/side-heading';
 import { navigate } from 'gatsby';
-import useBlogTagList from 'hooks/useBlogTagList';
+import { useBlogTagList } from 'hooks';
 import React, { useContext } from 'react';
 import { SearchBlogContext } from 'store/serach-blog-store';
 

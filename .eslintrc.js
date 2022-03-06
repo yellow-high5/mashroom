@@ -42,7 +42,7 @@ module.exports = {
     'react/react-in-jsx-scope': 'off',
     'prefer-template': 'error',
     'no-console': 'warn',
-    'no-restricted-imports': 'error',
+    'no-restricted-imports': ['error', { patterns: ['hooks/*'] }],
     'import/no-unresolved': 'error',
   },
 };

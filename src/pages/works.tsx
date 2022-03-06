@@ -1,8 +1,7 @@
 import { Center, Grid, GridItem, Tab, TabList, TabPanel, TabPanels, Tabs } from '@chakra-ui/react';
 import Layout from 'components/layout';
 import WorkItem from 'components/work/work-item';
-import useWorkList from 'hooks/useWorkList';
-import useWorkTabList from 'hooks/useWorkTabList';
+import { useWorkList, useWorkTabList } from 'hooks';
 import React from 'react';
 import { Helmet } from 'react-helmet';
 
