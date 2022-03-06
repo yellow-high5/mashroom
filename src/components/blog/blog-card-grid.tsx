@@ -21,6 +21,8 @@ const BlogCardGrid: React.FC<Props> = (props: Props) => {
   useEffect(() => {
     if (props.initialTag) {
       dispatch({ type: 'filter', tag: props.initialTag });
+    } else {
+      dispatch({ type: 'clear' });
     }
   }, [props.initialTag]);
   const filterTag = state.tag;
@@ -39,7 +41,7 @@ const BlogCardGrid: React.FC<Props> = (props: Props) => {
       {filterTag && (
         <GridItem colSpan={2} mb={4}>
           <Flex justifyContent="center">
-            <Heading size="sm" textAlign="center">{`🔍 Searched by "${filterTag}"`}</Heading>
+            <Heading size="sm" textAlign="center">{`🔍 記事タグ: "${filterTag}"`}</Heading>
             <IconButton
               aria-label="clear"
               icon={<Icon as={IoCloseOutline} />}

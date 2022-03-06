@@ -26,7 +26,7 @@ const Footer: React.FC<FlexProps> = (props) => {
         <Spacer />
 
         <Heading fontSize="xs" mr={1}>
-          2022 designed & written by m@sh.
+          {`${new Date().getFullYear().toString()} developed & written by m@sh.`}
         </Heading>
         <Link href="https://github.com/yellow-high5" isExternal>
           <IoGitBranch cursor="pointer" />
