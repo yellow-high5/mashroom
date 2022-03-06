@@ -1,10 +1,10 @@
-import theme from '@chakra-ui/gatsby-plugin/theme';
-import { ChakraProvider, Grid, GridItem } from '@chakra-ui/react';
+import { Grid, GridItem } from '@chakra-ui/react';
 import { useScrollPosition } from '@n8tb1t/use-scroll-position';
 import Footer from 'components/layout/footer';
 import Header from 'components/layout/header';
 import Sidebar from 'components/layout/sidebar';
 import React, { useState } from 'react';
+import AppProvider from 'store';
 
 type Props = {
   children: React.ReactNode;
@@ -18,7 +18,7 @@ const Layout: React.FC<Props> = ({ children }) => {
   }, []);
 
   return (
-    <ChakraProvider theme={theme}>
+    <AppProvider>
       <Header display={showHeader ? 'flex' : 'none'} />
 
       <Grid templateColumns="repeat(4, 1fr)" gap={4} maxW="62em" pt={28} m="auto">
@@ -29,7 +29,7 @@ const Layout: React.FC<Props> = ({ children }) => {
       </Grid>
 
       <Footer />
-    </ChakraProvider>
+    </AppProvider>
   );
 };
 

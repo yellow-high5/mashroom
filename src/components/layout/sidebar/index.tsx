@@ -1,14 +1,14 @@
 import { Box, BoxProps } from '@chakra-ui/react';
-import ArticleTagList from 'components/layout/sidebar/article-tag-list';
+import AuthorIntro from 'components/layout/sidebar/author-intro';
 import AuthorMusic from 'components/layout/sidebar/author-music';
+import BlogTagList from 'components/layout/sidebar/blog-tag-list';
 import React from 'react';
-import AuthorIntro from './author-intro';
 
 const Sidebar: React.FC<BoxProps> = (props) => {
   return (
     <Box textAlign="center" {...props}>
       <AuthorIntro mx={4} my={8} />
-      <ArticleTagList mx={4} my={16} />
+      <BlogTagList mx={4} my={16} />
       <AuthorMusic mx={4} my={16} />
     </Box>
   );
