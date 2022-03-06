@@ -16,6 +16,7 @@ import LoveContent from 'components/profile/love-content';
 import SkillContent from 'components/profile/skill-content';
 import WhoContent from 'components/profile/who-content';
 import React, { useState } from 'react';
+import { Helmet } from 'react-helmet';
 import { IoHeart, IoPersonCircle, IoTerminal } from 'react-icons/io5';
 
 const PROFILE_TAB = [
@@ -32,6 +33,8 @@ const ProfilePage = () => {
 
   return (
     <Layout>
+      <Helmet title="プロフィール" />
+
       <SlideFade
         in
         transition={{

@@ -26,6 +26,7 @@ import { graphql } from 'gatsby';
 import { AnchorLink } from 'gatsby-plugin-anchor-links';
 import { MDXRenderer } from 'gatsby-plugin-mdx';
 import React, { useState } from 'react';
+import { Helmet } from 'react-helmet';
 import { IoLinkOutline, IoStopwatchOutline, IoTimeOutline } from 'react-icons/io5';
 import { getMinutesToRead } from 'utils/format';
 
@@ -63,6 +64,8 @@ const BlogTemplate: React.FC<Props> = ({ data }) => {
 
   return (
     <ChakraProvider theme={theme}>
+      <Helmet title={data.mdx?.frontmatter?.title} />
+
       <Header display={showHeader ? 'flex' : 'none'} />
 
       <Grid templateColumns="repeat(4, 1fr)" gap={4} maxW="62em" pt={28} m="auto">

@@ -2,6 +2,7 @@ import { Center, Grid, GridItem, Tab, TabList, TabPanel, TabPanels, Tabs } from 
 import Layout from 'components/layout';
 import WorkItem from 'components/work/work-item';
 import React from 'react';
+import { Helmet } from 'react-helmet';
 
 const WORK_TAB = [
   { kind: 'All', number: 12 },
@@ -13,6 +14,8 @@ const WORK_TAB = [
 const WorksPage = () => {
   return (
     <Layout>
+      <Helmet title="作品" />
+
       <Center>
         <Tabs colorScheme="yellow" w="100%" mx={4}>
           <TabList>

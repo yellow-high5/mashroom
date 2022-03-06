@@ -42,6 +42,7 @@ const BlogCard: React.FC<Props> = (props: Props) => {
             base: 'md',
             lg: 'xs',
           }}
+          m="auto"
           borderWidth="1px"
           borderRadius="lg"
           overflow="hidden"
