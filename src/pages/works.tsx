@@ -39,9 +39,7 @@ const WorksPage = () => {
               <TabPanel key={i}>
                 <Grid templateColumns="repeat(6, 1fr)" gap={4} pt={8} m="auto">
                   {workList
-                    // .filter((work) => {
-                    //   work.node.frontmatter?.tag?.includes(tab);
-                    // })
+                    .filter((work) => work.node.frontmatter?.tag?.includes(tab))
                     .map((work, j) => (
                       <GridItem key={j} colSpan={[3, 3, 3, 2]}>
                         <WorkItem frontmatter={work.node.frontmatter} />
