@@ -4,13 +4,12 @@ title: Go言語で簡単な画像処理のツール類をつくってみた。
 thumbnail: https://i2.wp.com/www.mushroom-blog.com/wp-content/uploads/2020/08/golang.png?resize=360%2C238&ssl=1
 tag:
   - サーバーサイド
+  - 実装ネタ帳
 ---
 
 Go 言語初学者です。普段の生息界隈は JS/TS+Java ですが、サーバーサイド言語の処理をもっと得意になりたいという理由から、今年から Go 言語に挑戦しています。挑戦理由は「モダン, マルチスレッド, コンテナ関連での活躍」が挙げられます。
 
 やはり、実際に何かを作って習得していくスタイルが自分には合っているので、今回は「画像処理」をテーマに、CLI としても API としても使えるツール[yellow-high5/pictar](https://github.com/yellow-high5/pictar)を作ってみました。画像処理といっても CNN を使って画像認識させるような高度なものではないです。
-
-
 
 ## Go 標準の image パッケージ
 
@@ -75,8 +74,6 @@ Go 言語初学者です。普段の生息界隈は JS/TS+Java ですが、サ�
 > [OpenCV, GoCV, Go 言語における画像処理のパフォーマンスの比較 - ZOZO Technologies TECH BLOG](https://techblog.zozo.com/entry/imageproc_golang)
 
 では、このライブラリでは goroutine でどのような並行処理が施されているのでしょうか。ヒントは以下の parallel 関数にありました。
-
-
 
 ```go:imaging/utils.go
 // parallel processes the data in separate goroutines.
@@ -144,8 +141,6 @@ func FlipH(img image.Image) *image.NRGBA {
 }
 ```
 
-
-
 ## cobra で CLI ツール
 
 これらのライブラリをラップして CLI を[cobra](https://github.com/spf13/cobra)を使って作成していきます。
@@ -196,8 +191,6 @@ func (b *commandsBuilder) newHogeCmd() *hogeCmd {
 
 コマンドビルダーに必要なサブコマンドを追加していけば完成していきます。コマンドビルダーの設計については[このファイル](https://github.com/gohugoio/hugo/blob/master/commands/commands.go)を見るとよく理解できます。
 
-
-
 ## Gin で画像処理サーバー
 
 画像を http で POST すると、画像を加工してオブジェクトストレージ(今回は S3)に保存するという機能を作成しました。加工内容は設定ファイルから読み込む仕組みです。アプリでプロフィール画像の登録やサムネイル作成などに使える機能を想定して実装しました。
@@ -231,8 +224,6 @@ Go へのファイルアップロードについては以下を参考にしま�
 
 [viper](https://github.com/spf13/viper)を使えば、オブジェクトストレージの接続設定や画像の保存名など詳細設定をの設定ファイル(config.json など)に外出しすることも可能です。
 
-
-
 ## まとめ
 
 調べていくうちに Gin の実績でも紹介されている Go 製の画像処理サーバーが見つかりました。
@@ -242,12 +233,4 @@ Go へのファイルアップロードについては以下を参考にしま�
 
 こちらの方が私のような初心者なんちゃってツールより流石によく設計されています。サービス実装で作るときは遠慮なくこちらを使おうと思いました。自分で作ろうとしていたものの解が見つかると学習がより深まります。
 
-
-
-
-
 とりあえずは、Go の標準パッケージや並行処理を使いこなせるようになるのが自分の課題だと感じました。Go のパッケージ類は見通しがよく、あまり疲れないのでしばらく鍛錬できそうです。
-
-
-
-

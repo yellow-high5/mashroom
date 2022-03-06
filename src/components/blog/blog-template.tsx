@@ -16,6 +16,7 @@ import { Helmet } from 'react-helmet';
 export const getBlogData = graphql`
   query BlogData($slug: String!) {
     mdx(id: { eq: $slug }) {
+      id
       body
       frontmatter {
         title
@@ -26,7 +27,6 @@ export const getBlogData = graphql`
       headings(depth: h2) {
         value
       }
-      slug
       wordCount {
         words
       }
@@ -68,6 +68,7 @@ const BlogTemplate: React.FC<Props> = ({ data }) => {
         </GridItem>
         <GridItem colSpan={[4, 4, 1, 1]}>
           <BlogIndex
+            slug={data.mdx?.id}
             frontmatter={data.mdx?.frontmatter}
             headings={data.mdx?.headings}
             mt={4}

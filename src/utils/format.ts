@@ -44,3 +44,7 @@ export const getMinutesToRead = (wc?: number | null): string => {
 
   return `${Math.round((wc * 14) / 400)} min`;
 };
+
+export const sanitizeBlogIndex = (title: string): string => {
+  return title.replace(/\s+/g, '');
+};

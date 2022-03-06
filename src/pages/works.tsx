@@ -14,7 +14,7 @@ const WORK_TAB = [
 const WorksPage = () => {
   return (
     <Layout>
-      <Helmet title="作品" />
+      <Helmet title="m@shroom" />
 
       <Center>
         <Tabs colorScheme="yellow" w="100%" mx={4}>

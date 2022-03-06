@@ -33,7 +33,7 @@ const ProfilePage = () => {
 
   return (
     <Layout>
-      <Helmet title="プロフィール" />
+      <Helmet title="m@shroom" />
 
       <SlideFade
         in

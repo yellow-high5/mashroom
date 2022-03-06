@@ -3469,7 +3469,7 @@ export type BlogDataQueryVariables = Exact<{
 }>;
 
 
-export type BlogDataQuery = { __typename?: 'Query', mdx?: { __typename?: 'Mdx', body: string, timeToRead?: number | null, slug?: string | null, frontmatter?: { __typename?: 'MdxFrontmatter', title: string, thumbnail?: string | null, date?: any | null } | null, headings?: Array<{ __typename?: 'MdxHeadingMdx', value?: string | null } | null> | null, wordCount?: { __typename?: 'MdxWordCount', words?: number | null } | null } | null };
+export type BlogDataQuery = { __typename?: 'Query', mdx?: { __typename?: 'Mdx', id: string, body: string, timeToRead?: number | null, frontmatter?: { __typename?: 'MdxFrontmatter', title: string, thumbnail?: string | null, date?: any | null } | null, headings?: Array<{ __typename?: 'MdxHeadingMdx', value?: string | null } | null> | null, wordCount?: { __typename?: 'MdxWordCount', words?: number | null } | null } | null };
 
 export type BlogListQueryVariables = Exact<{ [key: string]: never; }>;
 

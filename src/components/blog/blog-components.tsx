@@ -30,7 +30,7 @@ import {
 import React from 'react';
 import SyntaxHighlighter from 'react-syntax-highlighter/dist/esm/default-highlight';
 import { tomorrowNightBlue } from 'react-syntax-highlighter/dist/esm/styles/hljs';
-import { getFileIcon } from 'utils/format';
+import { getFileIcon, sanitizeBlogIndex } from 'utils/format';
 
 const Wrapper: React.FC<BoxProps> = (props) => {
   return <Box {...props} />;
@@ -48,7 +48,7 @@ const Heading2: React.FC<HeadingProps> = (props) => {
   return (
     <Heading
       as="h2"
-      id={props.children as string}
+      id={sanitizeBlogIndex(props.children as string)}
       fontSize="1.25rem"
       lineHeight={1.8}
       borderLeft="0.5rem solid"

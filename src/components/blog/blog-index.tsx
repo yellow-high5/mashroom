@@ -12,25 +12,19 @@ import {
 import { AnchorLink } from 'gatsby-plugin-anchor-links';
 import React from 'react';
 import { IoLinkOutline } from 'react-icons/io5';
+import { sanitizeBlogIndex } from 'utils/format';
 
 type Props = {
+  slug?: string | null;
   frontmatter?: Gatsby.MdxFrontmatter | null;
   headings?: (Gatsby.MdxHeadingMdx | null)[] | null;
 } & BoxProps;
 
 const BlogIndex: React.FC<Props> = (props: Props) => {
-  const { frontmatter, headings, ...boxProps } = props;
+  const { slug, frontmatter, headings, ...boxProps } = props;
 
   return (
-    <Box
-      // mt={4}
-      // ml={4}
-      // p={4}
-      // display={{ base: 'none', md: 'block' }}
-      // position="fixed"
-      // top={!showHeader ? 0 : undefined}
-      {...boxProps}
-    >
+    <Box {...boxProps}>
       {frontmatter?.thumbnail && (
         <chakra.img src={frontmatter.thumbnail} width="240px" mb={6} borderRadius={4} />
       )}
@@ -41,8 +35,8 @@ const BlogIndex: React.FC<Props> = (props: Props) => {
             <ListItem key={`index-${index}`}>
               <Flex>
                 <ListIcon as={IoLinkOutline} />
-                <AnchorLink to={`#${heading?.value}`}>
-                  <Text fontSize="xs" _hover={{ color: 'yellow.400' }}>
+                <AnchorLink to={`/blog/${slug}#${sanitizeBlogIndex(heading?.value as string)}`}>
+                  <Text fontSize="xs" _hover={{ color: 'yellow.400', textDecoration: 'underline' }}>
                     {heading?.value}
                   </Text>
                 </AnchorLink>
