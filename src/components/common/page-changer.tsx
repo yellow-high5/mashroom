@@ -13,7 +13,7 @@ const PageChanger: React.FC<Props> = (props: Props) => {
   const { page, onChange, skip, total } = props;
 
   return (
-    <HStack px={4}>
+    <HStack px={8}>
       <Button
         leftIcon={<IoCaretBackCircle />}
         size="sm"

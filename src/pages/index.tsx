@@ -10,7 +10,6 @@ type LocationState = {
 };
 
 const IndexPage: React.FC<{ location?: LocationState }> = ({ location }) => {
-  //const limit = useBreakpointValue({ base: 7, lg: 6 });
   return (
     <Layout>
       <Helmet title="m@shroom" />

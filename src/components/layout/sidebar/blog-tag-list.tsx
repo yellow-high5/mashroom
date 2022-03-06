@@ -1,10 +1,13 @@
 import { Flex, FlexProps, Tag, Text } from '@chakra-ui/react';
 import SideHeading from 'components/common/side-heading';
 import { navigate } from 'gatsby';
+import useTagList from 'hooks/useTagList';
 import React, { useContext } from 'react';
 import { SearchBlogContext } from 'store/serach-blog-store';
 
 const BlogTagList: React.FC<FlexProps> = (props) => {
+  const tagList = useTagList();
+
   const { state, dispatch } = useContext(SearchBlogContext);
 
   const isSelected = (name: string): boolean => {
@@ -24,15 +27,7 @@ const BlogTagList: React.FC<FlexProps> = (props) => {
     <Flex flexDir="column" alignItems="center" {...props}>
       <SideHeading>記事タグ</SideHeading>
       <Flex wrap="wrap" justifyContent="center">
-        {[
-          'Web開発',
-          'サーバーサイド',
-          'インフラ構築',
-          '創作ネタ帳',
-          'コラム',
-          'ANGLab',
-          'CG活',
-        ].map((name) => (
+        {tagList.map((name) => (
           <Tag
             key={name}
             size="sm"
