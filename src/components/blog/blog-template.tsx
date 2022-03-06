@@ -1,34 +1,17 @@
 import theme from '@chakra-ui/gatsby-plugin/theme';
-import {
-  Box,
-  chakra,
-  ChakraProvider,
-  Flex,
-  Grid,
-  GridItem,
-  Heading,
-  HStack,
-  Icon,
-  List,
-  ListIcon,
-  ListItem,
-  Spacer,
-  Text,
-  VStack,
-} from '@chakra-ui/react';
+import { Box, ChakraProvider, Grid, GridItem } from '@chakra-ui/react';
 import { MDXProvider } from '@mdx-js/react';
 import { useScrollPosition } from '@n8tb1t/use-scroll-position';
 import blogComponents from 'components/blog/blog-components';
+import BlogHeading from 'components/blog/blog-heading';
+import BlogIndex from 'components/blog/blog-index';
 import Footer from 'components/layout/footer';
 import Header from 'components/layout/header';
 import AuthorIntro from 'components/layout/sidebar/author-intro';
 import { graphql } from 'gatsby';
-import { AnchorLink } from 'gatsby-plugin-anchor-links';
 import { MDXRenderer } from 'gatsby-plugin-mdx';
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
-import { IoLinkOutline, IoStopwatchOutline, IoTimeOutline } from 'react-icons/io5';
-import { getMinutesToRead } from 'utils/format';
 
 export const getBlogData = graphql`
   query BlogData($slug: String!) {
@@ -72,20 +55,11 @@ const BlogTemplate: React.FC<Props> = ({ data }) => {
         <GridItem colSpan={[4, 4, 3, 3]}>
           <MDXProvider components={blogComponents}>
             <Box m={6} pb={32}>
-              <VStack mb={12}>
-                <HStack mb={4}>
-                  <HStack>
-                    <Icon boxSize={4} as={IoTimeOutline} cursor="pointer" />
-                    <Text fontSize="xs">{data.mdx?.frontmatter?.date}</Text>
-                  </HStack>
-                  <Spacer />
-                  <HStack>
-                    <Icon boxSize={4} as={IoStopwatchOutline} cursor="pointer" />
-                    <Text fontSize="xs">{getMinutesToRead(data.mdx?.wordCount?.words)}</Text>
-                  </HStack>
-                </HStack>
-                <blogComponents.h1>{data.mdx?.frontmatter?.title}</blogComponents.h1>
-              </VStack>
+              <BlogHeading
+                frontmatter={data.mdx?.frontmatter}
+                wordCount={data.mdx?.wordCount}
+                mb={12}
+              />
 
               {data.mdx && <MDXRenderer>{data.mdx.body}</MDXRenderer>}
             </Box>
@@ -93,40 +67,16 @@ const BlogTemplate: React.FC<Props> = ({ data }) => {
           <AuthorIntro mx={4} mb={16} isFlex />
         </GridItem>
         <GridItem colSpan={[4, 4, 1, 1]}>
-          <Box
+          <BlogIndex
+            frontmatter={data.mdx?.frontmatter}
+            headings={data.mdx?.headings}
             mt={4}
             ml={4}
             p={4}
             display={{ base: 'none', md: 'block' }}
             position="fixed"
             top={!showHeader ? 0 : undefined}
-          >
-            {data.mdx?.frontmatter?.thumbnail && (
-              <chakra.img
-                src={data.mdx.frontmatter.thumbnail}
-                width="240px"
-                mb={6}
-                borderRadius={4}
-              />
-            )}
-            <Box ml={4}>
-              <Heading size="sm">Index</Heading>
-              <List mt={4} spacing={4}>
-                {data.mdx?.headings?.map((heading, index) => (
-                  <ListItem key={`index-${index}`}>
-                    <Flex>
-                      <ListIcon as={IoLinkOutline} />
-                      <AnchorLink to={`#${heading?.value}`}>
-                        <Text fontSize="xs" _hover={{ color: 'yellow.400' }}>
-                          {heading?.value}
-                        </Text>
-                      </AnchorLink>
-                    </Flex>
-                  </ListItem>
-                ))}
-              </List>
-            </Box>
-          </Box>
+          />
         </GridItem>
       </Grid>
 
