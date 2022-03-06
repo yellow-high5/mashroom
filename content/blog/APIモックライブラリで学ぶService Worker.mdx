@@ -146,7 +146,7 @@ self.addEventListener('fetch', function (event) {
 
 ServiceWorker の設定ファイルを確認したので、次に設定ファイルをクライアントに提供するために MSW がライブラリとしてどのように働いているかをざっくり見ていくことにします。(graphql の説明は対象外です)
 
-```:ソースの構成
+```shell:ソースの構成
  src
   ├── context                 // https://mswjs.io/docs/api/context
   ├── handlers                // https://mswjs.io/docs/basics/request-handler

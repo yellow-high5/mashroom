@@ -89,9 +89,11 @@ const ThematicBreak: React.FC = () => {
 
 const BlockQuote: React.FC<BoxProps> = (props) => {
   const bgColor = useColorModeValue('gray.100', 'gray.700');
+  const borderColor = useColorModeValue('yellow.500', 'yellow.400');
   return (
     <Box
-      borderLeft="12px solid #D69E2E"
+      borderLeft="12px solid"
+      borderColor={borderColor}
       borderRadius={8}
       boxShadow="1px 1px 4px #E2E8F0"
       bgColor={bgColor}
@@ -125,7 +127,8 @@ const Pre: React.FC<BoxProps> = (props) => {
 
 const CodeContent: React.FC<CodeProps> = ({ className, ...props }) => {
   const match = /language-(\w+)/.exec(className || '');
-  const language = match ? match[1] : 'text';
+  const language = match ? match[1] : undefined;
+  const fileIcon = getFileIcon(language);
   const fileName = className?.split(':')?.[1];
 
   return (
@@ -140,7 +143,7 @@ const CodeContent: React.FC<CodeProps> = ({ className, ...props }) => {
           borderBottom="1px"
           maxW="fit-content"
         >
-          <Icon color="white" boxSize={4} as={getFileIcon(language)} mr={1} />
+          {fileIcon && <Icon color="white" boxSize={4} as={fileIcon} mr={1} />}
           <Text color="white" fontSize="0.75rem">
             {fileName}
           </Text>
@@ -171,7 +174,8 @@ const Break: React.FC<DividerProps> = (props) => {
 };
 
 const LinkText: React.FC<LinkProps> = (props) => {
-  return <Link color="yellow.400" isExternal {...props} />;
+  const linkColor = useColorModeValue('yellow.500', 'yellow.400');
+  return <Link color={linkColor} isExternal {...props} />;
 };
 
 const ImageContent: React.FC<ImageProps> = (props) => {

@@ -15,9 +15,9 @@ import {
   SiTypescript,
 } from 'react-icons/si';
 
-export const getFileIcon = (language?: string): IconType => {
+export const getFileIcon = (language?: string): IconType | undefined => {
   if (!language) {
-    return IoDocumentText;
+    return undefined;
   }
 
   const icons = {

@@ -87,7 +87,7 @@ const BlogTemplate: React.FC<Props> = ({ data }) => {
               {data.mdx && <MDXRenderer>{data.mdx.body}</MDXRenderer>}
             </Box>
           </MDXProvider>
-          <AuthorIntro mb={16} isFlex />
+          <AuthorIntro mx={4} mb={16} isFlex />
         </GridItem>
         <GridItem colSpan={[4, 4, 1, 1]}>
           <Box
