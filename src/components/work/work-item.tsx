@@ -1,17 +1,24 @@
-import { AspectRatio, Box, SlideFade, Text } from '@chakra-ui/react';
+import {
+  AspectRatio,
+  Box,
+  BoxProps,
+  chakra,
+  ScaleFade,
+  Text,
+  useColorModeValue,
+} from '@chakra-ui/react';
 import { Link } from 'gatsby';
-import { StaticImage } from 'gatsby-plugin-image';
 import React from 'react';
 
-const WorkItem = () => {
-  const work = {
-    thumbnail: '',
-    title: 'ミスドセット',
-    kind: 'CG-Work',
-  };
+type Props = { frontmatter?: Gatsby.MdxFrontmatter | null } & BoxProps;
+
+const WorkItem: React.FC<Props> = (props: Props) => {
+  const { frontmatter } = props;
+
+  const shadowColor = useColorModeValue('black', 'white');
 
   return (
-    <SlideFade
+    <ScaleFade
       in
       transition={{
         enter: { delay: 0.4 },
@@ -28,21 +35,26 @@ const WorkItem = () => {
         position="relative"
       >
         <Link to="/profile" role="group">
-          <AspectRatio
-            ratio={1}
-            cursor="pointer"
-            w={180}
-            _groupHover={{
-              opacity: 0.5,
-            }}
-          >
-            <StaticImage
-              src="../../assets/sample-work-thumbnail.png"
-              width={240}
-              alt={work.title}
-              style={{ borderRadius: '50%', overflow: 'hidden' }}
-            />
-          </AspectRatio>
+          {frontmatter?.thumbnail && (
+            <AspectRatio
+              ratio={1}
+              cursor="pointer"
+              w={180}
+              _groupHover={{
+                opacity: 0.5,
+                borderRadius: '50%',
+                boxShadow: `1px 1px 4px ${shadowColor}`,
+              }}
+            >
+              <chakra.img
+                src={frontmatter.thumbnail}
+                alt={frontmatter?.title}
+                width={240}
+                borderRadius="50%"
+                overflow="hidden"
+              />
+            </AspectRatio>
+          )}
           <Box
             w="100%"
             top="50%"
@@ -62,15 +74,15 @@ const WorkItem = () => {
               textAlign="center"
               p={4}
             >
-              {work.title}
+              {frontmatter?.title}
             </Text>
             <Text fontSize="xs" textAlign="center">
-              {work.kind}
+              省略
             </Text>
           </Box>
         </Link>
       </Box>
-    </SlideFade>
+    </ScaleFade>
   );
 };
 

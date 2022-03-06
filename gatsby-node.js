@@ -9,7 +9,7 @@ module.exports.createPages = async ({ graphql, actions }) => {
 
   const response = await graphql(`
     query {
-      allMdx {
+      allMdx(filter: { fileAbsolutePath: { regex: "/content/blog/" } }) {
         edges {
           node {
             id

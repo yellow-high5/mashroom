@@ -20,14 +20,14 @@ module.exports = {
       },
       __key: 'blog',
     },
-    // {
-    //   resolve: 'gatsby-source-filesystem',
-    //   options: {
-    //     name: 'works',
-    //     path: `${__dirname}/content/works`,
-    //   },
-    //   __key: 'works',
-    // },
+    {
+      resolve: 'gatsby-source-filesystem',
+      options: {
+        name: 'works',
+        path: `${__dirname}/content/works`,
+      },
+      __key: 'works',
+    },
     // {
     //   resolve: 'gatsby-source-filesystem',
     //   options: {

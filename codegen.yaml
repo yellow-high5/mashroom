@@ -8,7 +8,9 @@ generates:
       - ./src/components/blog/blog-template.tsx
       - ./src/hooks/useLogoLink.ts
       - ./src/hooks/useBlogList.ts
-      - ./src/hooks/useTagList.ts
+      - ./src/hooks/useBlogTagList.ts
+      - ./src/hooks/useWorkList.ts
+      - ./src/hooks/useWorkTabList.ts
       - ./node_modules/gatsby*/!(node_modules)/**/*.js
     plugins:
       - add:

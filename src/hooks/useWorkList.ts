@@ -1,11 +1,11 @@
 import { graphql, useStaticQuery } from 'gatsby';
 
-const useBlogList = () => {
-  const data = useStaticQuery<Gatsby.BlogListQuery>(graphql`
-    query BlogList {
+const useWorkList = () => {
+  const data = useStaticQuery<Gatsby.WorkListQuery>(graphql`
+    query WorkList {
       allMdx(
         sort: { fields: frontmatter___date, order: DESC }
-        filter: { fileAbsolutePath: { regex: "/content/blog/" } }
+        filter: { fileAbsolutePath: { regex: "/content/works/" } }
       ) {
         edges {
           node {
@@ -25,4 +25,4 @@ const useBlogList = () => {
   return data.allMdx.edges;
 };
 
-export default useBlogList;
+export default useWorkList;

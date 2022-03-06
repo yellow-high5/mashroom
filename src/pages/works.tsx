@@ -1,17 +1,15 @@
 import { Center, Grid, GridItem, Tab, TabList, TabPanel, TabPanels, Tabs } from '@chakra-ui/react';
 import Layout from 'components/layout';
 import WorkItem from 'components/work/work-item';
+import useWorkList from 'hooks/useWorkList';
+import useWorkTabList from 'hooks/useWorkTabList';
 import React from 'react';
 import { Helmet } from 'react-helmet';
 
-const WORK_TAB = [
-  { kind: 'All', number: 12 },
-  { kind: 'Web', number: 4 },
-  { kind: 'CG-Work', number: 7 },
-  { kind: 'Illust', number: 1 },
-];
-
 const WorksPage = () => {
+  const workList = useWorkList();
+  const workTabList = useWorkTabList();
+
   return (
     <Layout>
       <Helmet title="m@shroom" />
@@ -19,9 +17,9 @@ const WorksPage = () => {
       <Center>
         <Tabs colorScheme="yellow" w="100%" mx={4}>
           <TabList>
-            {WORK_TAB.map((tab) => (
+            {workTabList.map((tab, i) => (
               <Tab
-                key={tab.kind}
+                key={i}
                 fontWeight="bold"
                 _active={{
                   bgColor: 'none',
@@ -32,19 +30,21 @@ const WorksPage = () => {
                   borderColor: 'yellow.400',
                 }}
               >
-                {tab.kind}
+                {tab}
               </Tab>
             ))}
           </TabList>
           <TabPanels>
-            {WORK_TAB.map((tab) => (
-              <TabPanel key={tab.kind}>
+            {workTabList.map((tab, i) => (
+              <TabPanel key={i}>
                 <Grid templateColumns="repeat(6, 1fr)" gap={4} pt={8} m="auto">
-                  {Array(tab.number)
-                    .fill('')
-                    .map((_, i) => (
-                      <GridItem key={i} colSpan={[3, 3, 3, 2]}>
-                        <WorkItem />
+                  {workList
+                    // .filter((work) => {
+                    //   work.node.frontmatter?.tag?.includes(tab);
+                    // })
+                    .map((work, j) => (
+                      <GridItem key={j} colSpan={[3, 3, 3, 2]}>
+                        <WorkItem frontmatter={work.node.frontmatter} />
                       </GridItem>
                     ))}
                 </Grid>

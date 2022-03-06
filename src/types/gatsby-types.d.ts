@@ -3476,14 +3476,24 @@ export type BlogListQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type BlogListQuery = { __typename?: 'Query', allMdx: { __typename?: 'MdxConnection', edges: Array<{ __typename?: 'MdxEdge', node: { __typename?: 'Mdx', id: string, slug?: string | null, frontmatter?: { __typename?: 'MdxFrontmatter', date?: any | null, tag?: Array<string | null> | null, thumbnail?: string | null, title: string } | null } }> } };
 
+export type BlogTagListQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type BlogTagListQuery = { __typename?: 'Query', allMdx: { __typename?: 'MdxConnection', distinct: Array<string> } };
+
 export type LogoLinkQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type LogoLinkQuery = { __typename?: 'Query', allFile: { __typename?: 'FileConnection', nodes: Array<{ __typename?: 'File', childrenImageSharp?: Array<{ __typename?: 'ImageSharp', gatsbyImageData: any } | null> | null }> }, site?: { __typename?: 'Site', siteMetadata?: { __typename?: 'SiteSiteMetadata', siteUrl?: string | null } | null } | null };
 
-export type TagListQueryVariables = Exact<{ [key: string]: never; }>;
+export type WorkListQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type TagListQuery = { __typename?: 'Query', allMdx: { __typename?: 'MdxConnection', distinct: Array<string> } };
+export type WorkListQuery = { __typename?: 'Query', allMdx: { __typename?: 'MdxConnection', edges: Array<{ __typename?: 'MdxEdge', node: { __typename?: 'Mdx', id: string, slug?: string | null, frontmatter?: { __typename?: 'MdxFrontmatter', date?: any | null, tag?: Array<string | null> | null, thumbnail?: string | null, title: string } | null } }> } };
+
+export type WorkTabListQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type WorkTabListQuery = { __typename?: 'Query', allMdx: { __typename?: 'MdxConnection', distinct: Array<string> } };
 
 }

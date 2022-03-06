@@ -1,12 +1,12 @@
 import { Flex, FlexProps, Tag, Text } from '@chakra-ui/react';
 import SideHeading from 'components/common/side-heading';
 import { navigate } from 'gatsby';
-import useTagList from 'hooks/useTagList';
+import useBlogTagList from 'hooks/useBlogTagList';
 import React, { useContext } from 'react';
 import { SearchBlogContext } from 'store/serach-blog-store';
 
 const BlogTagList: React.FC<FlexProps> = (props) => {
-  const tagList = useTagList();
+  const tagList = useBlogTagList();
 
   const { state, dispatch } = useContext(SearchBlogContext);
 
