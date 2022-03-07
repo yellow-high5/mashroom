@@ -2,12 +2,12 @@ import theme from '@chakra-ui/gatsby-plugin/theme';
 import { Box, ChakraProvider, Grid, GridItem } from '@chakra-ui/react';
 import { MDXProvider } from '@mdx-js/react';
 import { useScrollPosition } from '@n8tb1t/use-scroll-position';
-import blogComponents from 'components/blog/blog-components';
 import BlogHeading from 'components/blog/blog-heading';
 import BlogIndex from 'components/blog/blog-index';
 import Footer from 'components/layout/footer';
 import Header from 'components/layout/header';
 import AuthorIntro from 'components/layout/sidebar/author-intro';
+import mdxComponents from 'components/mdx/mdx-components';
 import { graphql } from 'gatsby';
 import { MDXRenderer } from 'gatsby-plugin-mdx';
 import React, { useState } from 'react';
@@ -53,7 +53,7 @@ const BlogTemplate: React.FC<Props> = ({ data }) => {
 
       <Grid templateColumns="repeat(4, 1fr)" gap={4} maxW="62em" pt={28} m="auto">
         <GridItem colSpan={[4, 4, 3, 3]}>
-          <MDXProvider components={blogComponents}>
+          <MDXProvider components={mdxComponents}>
             <Box m={6} pb={32}>
               <BlogHeading
                 frontmatter={data.mdx?.frontmatter}

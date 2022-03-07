@@ -1,5 +1,5 @@
 import { HStack, Icon, Spacer, StackProps, Text, VStack } from '@chakra-ui/react';
-import blogComponents from 'components/blog/blog-components';
+import mdxComponents from 'components/mdx/mdx-components';
 import React from 'react';
 import { IoStopwatchOutline, IoTimeOutline } from 'react-icons/io5';
 import { getMinutesToRead } from 'utils/format';
@@ -25,7 +25,7 @@ const BlogHeading: React.FC<Props> = (props: Props) => {
           <Text fontSize="xs">{getMinutesToRead(wordCount?.words)}</Text>
         </HStack>
       </HStack>
-      <blogComponents.h1>{frontmatter?.title}</blogComponents.h1>
+      <mdxComponents.h1>{frontmatter?.title}</mdxComponents.h1>
     </VStack>
   );
 };

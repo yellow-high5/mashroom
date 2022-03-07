@@ -1,13 +1,13 @@
 import theme from '@chakra-ui/gatsby-plugin/theme';
-import { Box, chakra, ChakraProvider, Heading, HStack, Icon, Text, VStack } from '@chakra-ui/react';
+import { Box, ChakraProvider } from '@chakra-ui/react';
 import { MDXProvider } from '@mdx-js/react';
-import blogComponents from 'components/blog/blog-components';
 import Layout from 'components/layout';
+import mdxComponents from 'components/mdx/mdx-components';
+import WorkHeading from 'components/work/work-heading';
 import { graphql } from 'gatsby';
 import { MDXRenderer } from 'gatsby-plugin-mdx';
 import React from 'react';
 import { Helmet } from 'react-helmet';
-import { getWorkIcon } from 'utils/format';
 
 export const getWorkData = graphql`
   query WorkData($slug: String!) {
@@ -41,26 +41,9 @@ const WorkTemplate: React.FC<Props> = ({ data }) => {
       <Helmet title={data.mdx?.frontmatter?.title} />
 
       <Layout>
-        <MDXProvider components={blogComponents}>
+        <MDXProvider components={mdxComponents}>
           <Box m={6} pb={32}>
-            <VStack mb={12}>
-              <HStack mb={4}>
-                <Icon
-                  boxSize={4}
-                  as={getWorkIcon(data.mdx?.frontmatter?.tag?.[0] || '')}
-                  cursor="pointer"
-                />
-                <Text fontSize="xs">
-                  {data.mdx?.frontmatter?.tag}: {data.mdx?.frontmatter?.date}
-                </Text>
-              </HStack>
-              <Heading size="lg" pb={4}>
-                {data.mdx?.frontmatter?.title}
-              </Heading>
-              {data.mdx?.frontmatter?.thumbnail && (
-                <chakra.img src={data.mdx?.frontmatter?.thumbnail} />
-              )}
-            </VStack>
+            <WorkHeading frontmatter={data.mdx?.frontmatter} mb={12} />
 
             {data.mdx && <MDXRenderer>{data.mdx.body}</MDXRenderer>}
           </Box>
