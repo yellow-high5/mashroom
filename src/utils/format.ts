@@ -1,4 +1,10 @@
-import { IoDocumentText } from 'react-icons/io5';
+import {
+  IoBrushOutline,
+  IoCubeOutline,
+  IoDocumentText,
+  IoFileTrayOutline,
+  IoLaptopOutline,
+} from 'react-icons/io5';
 import { IconType } from 'react-icons/lib';
 import {
   SiCss3,
@@ -35,6 +41,15 @@ export const getFileIcon = (language?: string): IconType | undefined => {
     graphql: SiGraphql,
   } as Record<string, IconType>;
   return icons[language] || IoDocumentText;
+};
+
+export const getWorkIcon = (tag: string): IconType => {
+  const icons = {
+    Web: IoLaptopOutline,
+    'CG-Work': IoCubeOutline,
+    Illust: IoBrushOutline,
+  } as Record<string, IconType>;
+  return icons[tag] || IoFileTrayOutline;
 };
 
 export const getMinutesToRead = (wc?: number | null): string => {

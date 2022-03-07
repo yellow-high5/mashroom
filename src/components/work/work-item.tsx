@@ -10,10 +10,10 @@ import {
 import { Link } from 'gatsby';
 import React from 'react';
 
-type Props = { frontmatter?: Gatsby.MdxFrontmatter | null } & BoxProps;
+type Props = { slug?: string | null; frontmatter?: Gatsby.MdxFrontmatter | null } & BoxProps;
 
 const WorkItem: React.FC<Props> = (props: Props) => {
-  const { frontmatter } = props;
+  const { slug, frontmatter } = props;
 
   const shadowColor = useColorModeValue('black', 'white');
 
@@ -34,7 +34,7 @@ const WorkItem: React.FC<Props> = (props: Props) => {
         p={{ base: 2, lg: 4 }}
         position="relative"
       >
-        <Link to="/profile" role="group">
+        <Link to={`/works/${slug}`} role="group">
           {frontmatter?.thumbnail && (
             <AspectRatio
               ratio={1}
@@ -69,7 +69,7 @@ const WorkItem: React.FC<Props> = (props: Props) => {
             <Text
               fontSize="sm"
               fontStyle="italic"
-              fontWeight="semibold"
+              fontWeight="bold"
               lineHeight="tight"
               textAlign="center"
               p={4}
@@ -77,7 +77,7 @@ const WorkItem: React.FC<Props> = (props: Props) => {
               {frontmatter?.title}
             </Text>
             <Text fontSize="xs" textAlign="center">
-              省略
+              {frontmatter?.tag}
             </Text>
           </Box>
         </Link>

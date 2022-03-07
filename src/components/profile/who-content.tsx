@@ -10,7 +10,7 @@ const INTERVIEW_LIST = [
   { question: 'あなたを表す言葉は？', answer: '楽観的、愚直、たまに神経質' },
   {
     question: '座右の銘は？',
-    answer: '人生で起きるすべてはどこかでつながる',
+    answer: '人生で選択するすべてはどこかでつながる',
   },
 ];
 

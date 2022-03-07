@@ -6,6 +6,7 @@ generates:
     schema: http://localhost:8000/___graphql
     documents:
       - ./src/components/blog/blog-template.tsx
+      - ./src/components/work/work-template.tsx
       - ./src/hooks/useLogoLink.ts
       - ./src/hooks/useBlogList.ts
       - ./src/hooks/useBlogTagList.ts

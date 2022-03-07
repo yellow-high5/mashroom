@@ -41,7 +41,7 @@ const WorksPage = () => {
                     .filter((work) => work.node.frontmatter?.tag?.includes(tab))
                     .map((work, j) => (
                       <GridItem key={j} colSpan={[3, 3, 3, 2]}>
-                        <WorkItem frontmatter={work.node.frontmatter} />
+                        <WorkItem slug={work.node.id} frontmatter={work.node.frontmatter} />
                       </GridItem>
                     ))}
                 </Grid>
