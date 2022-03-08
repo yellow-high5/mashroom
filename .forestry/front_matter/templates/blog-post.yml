@@ -26,3 +26,5 @@ fields:
   type: tag_list
   default: []
   label: tag
+pages:
+- content/blog/入門-モダン監視.mdx

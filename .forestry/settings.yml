@@ -9,7 +9,7 @@ sections:
   label: works
   create: documents
   match: "**/*"
-  new_doc_ext: ".mdx"
+  new_doc_ext: mdx
   templates:
   - blog-post
 - type: directory
