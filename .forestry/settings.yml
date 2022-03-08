@@ -20,10 +20,10 @@ sections:
   new_doc_ext: mdx
   templates:
   - blog-post
-upload_dir: uploads
-public_path: "/uploads"
-front_matter_path: ''
-use_front_matter_path: false
+upload_dir: media
+public_path: https://res.cloudinary.com/dso4npatn/image/upload
+front_matter_path: https://res.cloudinary.com/dso4npatn/image/upload
+use_front_matter_path: true
 file_template: ":filename:"
 build:
   preview_output_directory: public
