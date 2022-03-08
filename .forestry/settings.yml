@@ -29,8 +29,8 @@ build:
   preview_env:
   - GATSBY_GITHUB_PERSONAL_ACCESS_TOKEN=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
   preview_output_directory: public
-  install_dependencies_command: yarn install
+  install_dependencies_command: yarn dev
   preview_docker_image: forestryio/node:12
   mount_path: "/srv"
   working_dir: "/srv"
-  instant_preview_command: yarn dev
+  instant_preview_command: yarn build
