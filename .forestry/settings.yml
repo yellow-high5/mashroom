@@ -26,8 +26,6 @@ front_matter_path: ''
 use_front_matter_path: false
 file_template: ":filename:"
 build:
-  preview_env:
-  - GATSBY_GITHUB_PERSONAL_ACCESS_TOKEN=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
   preview_output_directory: public
   install_dependencies_command: yarn dev
   preview_docker_image: forestryio/node:12
