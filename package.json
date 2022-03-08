@@ -19,7 +19,8 @@
     "lint": "eslint --max-warnings=0 --ext js,jsx,ts,tsx src",
     "lint:fix": "eslint --max-warnings=0 --fix --ext js,jsx,ts,tsx src",
     "prepare": "husky install",
-    "lint-staged": "lint-staged --concurrent=false --config .lintstagedrc.js"
+    "lint-staged": "lint-staged --concurrent=false --config .lintstagedrc.js",
+    "forestry-preview": "gatsby develop"
   },
   "lint-staged": {
     "src/**/!(.)*.{js,jsx,ts,tsx}": [
