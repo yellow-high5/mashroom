@@ -6,13 +6,13 @@ import React from 'react';
 const LogoLink = () => {
   const { colorMode } = useColorMode();
 
-  const { site, allFile } = useLogoLink();
+  const { allFile } = useLogoLink();
 
   const logoLight = getImage(allFile?.nodes?.[0].childrenImageSharp?.[0]?.gatsbyImageData);
   const logoDark = getImage(allFile?.nodes?.[1].childrenImageSharp?.[0]?.gatsbyImageData);
 
   return (
-    <Link href={site?.siteMetadata?.siteUrl || undefined}>
+    <Link href={`${process.env.GATSBY_SITE_URL}`}>
       <Box>
         {logoLight && logoDark && (
           <GatsbyImage
