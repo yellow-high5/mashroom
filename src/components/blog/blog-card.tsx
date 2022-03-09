@@ -1,4 +1,5 @@
 import {
+  AspectRatio,
   Box,
   chakra,
   Heading,
@@ -56,7 +57,11 @@ const BlogCard: React.FC<Props> = (props: Props) => {
         >
           <Box position="relative">
             {/* 画像がない場合は大体を用意しておく */}
-            {thumbnail && <chakra.img src={thumbnail} alt="thumbnail" />}
+            {thumbnail && (
+              <AspectRatio ratio={{ md: 16 / 9 }}>
+                <chakra.img src={thumbnail} alt="thumbnail" />
+              </AspectRatio>
+            )}
             <HStack
               display={{ base: 'none', lg: 'flex' }}
               position="absolute"
@@ -84,7 +89,7 @@ const BlogCard: React.FC<Props> = (props: Props) => {
 
             <Box>
               <Heading
-                w={240}
+                w={{ base: 360, lg: 240 }}
                 mt={2}
                 fontSize="md"
                 fontWeight="semibold"
