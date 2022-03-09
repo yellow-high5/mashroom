@@ -6,6 +6,7 @@ import {
   DrawerOverlay,
   Icon,
   useBreakpointValue,
+  useColorModeValue,
   useDisclosure,
 } from '@chakra-ui/react';
 import Navigation from 'components/layout/header/navigation';
@@ -15,6 +16,8 @@ import { IoCloseOutline, IoMenuOutline } from 'react-icons/io5';
 const HeaderMenu = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const isMobile = useBreakpointValue({ base: true, md: false });
+
+  const bgColor = useColorModeValue('#ffffff', '#001025');
 
   const mobileIcon = isOpen ? (
     <Icon boxSize={8} as={IoCloseOutline} cursor="pointer" onClick={onClose} />
@@ -29,7 +32,7 @@ const HeaderMenu = () => {
       </Box>
       <Drawer isOpen={isOpen && !!isMobile} onClose={onClose} placement="top">
         <DrawerOverlay>
-          <DrawerContent>
+          <DrawerContent bg={bgColor}>
             <DrawerBody>
               <Navigation />
             </DrawerBody>
