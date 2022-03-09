@@ -21,7 +21,7 @@ const Footer: React.FC<FlexProps> = (props) => {
         {colorMode === 'light' ? (
           <IoSunny onClick={toggleColorMode} cursor="pointer" />
         ) : (
-          <IoMoon onClick={toggleColorMode} cursor="pointer" />
+          <IoMoon onClick={toggleColorMode} color="#ECC94B" cursor="pointer" />
         )}
         <Spacer />
 

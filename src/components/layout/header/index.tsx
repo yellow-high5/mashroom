@@ -4,7 +4,7 @@ import LogoLink from 'components/layout/header/logo-link';
 import React from 'react';
 
 const Header: React.FC<FlexProps> = (props) => {
-  const bg = useColorModeValue('white', 'gray.800');
+  const bg = useColorModeValue('#ffffff', '#001025');
 
   return (
     <Flex
