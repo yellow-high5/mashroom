@@ -1,0 +1,304 @@
+---
+date: 2020-02-24T22:44:38.000+00:00
+title: APIのクエリ言語GraphQLはメシアなのか？
+thumbnail: 'https://res.cloudinary.com/dso4npatn/image/upload/v1646834503/media/blog/thumbnail/API%E3%81%AE%E3%82%AF%E3%82%A8%E3%83%AA%E8%A8%80%E8%AA%9EGraphQL%E3%81%AF%E3%83%A1%E3%82%B7%E3%82%A2%E3%81%AA%E3%81%AE%E3%81%8B_df6cvr.png'
+tag:
+  - Web開発
+---
+
+React や Vue や Angular などのフロントエンドフレームワークの台頭で世間はかなりリッチクライアントになってきていますが、サービスを実装する上でフロントエンドとバックエンド間の開発スピードの差や認識共有に苦しむことはよくあります。ドキュメントや仕様通りに動いていなかったら、バックエンドのコードを読んで修正お願いしますって「もうそれフロントエンドの仕事じゃないやん」ということはよくあるかと思います。
+その救世主？がまさに今回取り上げる、GraphQL です。
+
+REST と GraphQL は何が違うのかよく論じられているのでまとめると、
+
+- レスポンスデータの形式をクライアントが決められるので、必要なデータだけを抽出可能(REST は余分なデータまで取得してしまいがち)
+- １リクエストですべてのデータを取得可能(REST は複数回エンドポイントを叩きがち)
+- どんなレスポンスデータが返るかのクエリ検証が用意になる
+
+[有名な比較記事](https://blog.apollographql.com/graphql-vs-rest-5d425123e34b)で言われていることですが、**_REST と GraphQL はは大きくは違わない。ただし API 構築までのエクスペリエンスが違うのだ_**と。まさにそれに尽きるかと思います。
+
+## 基本概念
+
+クエリ・ミューテーションは、**_クライアントが発行する API リクエストの形式_**を定義したものに対して、  
+スキーマ・タイプは、**_要求できるデータ構造の型_**を定義したものになります。
+これらがきちんと定義されることで、クライアント/API 間のズレが埋まれないような緩衝材になります。
+つまり、フロントエンド開発者とバックエンド開発者が GraphQL を理解していれば、認識齟齬や取得データの修正依頼多発を防げるというわけですね。まさに**_フロントエンドとバックエンドの共通インターフェース_**やー...。
+
+### クエリ
+
+ドキュメントで紹介されているクエリで指定可能な名称を一つにまとめて整理してみました。  
+[ドキュメント](https://graphql.org/learn/)を一読してここを見れば備忘録としてわかりやすいかと思います。
+
+```javascript:(サンプル)クエリ
+/*Operation Type*/query /*Operation Name*/HeroNameAndFriends(/*Variables*/$episode: Episode = JEDI,   /*Variables*/$withFriends: Boolean!
+) {
+  /*Aliases*/jediHero: /*Fields*/hero(/*Arguments*/episode: $episode) {
+    /*Fields*/name
+    /*Fields*/friends /*Directives*/@include(if: $withFriends) {
+      /*Fields*/name
+    }
+    /*Inline Fragments*/... on Droid {
+      primaryFunction
+    }
+    /*Inline Fragments*/... on Human {
+      height
+    }
+  }
+}
+
+/*Fragments*/fragment commonFields on Character {
+  /*Fields*/appearIn
+  /*Meta Fields*/__typename
+}
+
+```
+
+以下それぞれの名称について一言まとめです。詳細はドキュメントを確認しましょう。
+
+- [Fileds](https://graphql.org/learn/queries/#fields)...取得データのフィールド値
+- [Arguments](https://graphql.org/learn/queries/#arguments)...フィールドに渡す引数
+- [Aliases](https://graphql.org/learn/queries/#aliases)...取得結果のエイリアス(取得結果の名前変更)
+- Operation Type...操作タイプ(query, mutation, subscription のどれか)
+- [Operation Name](https://graphql.org/learn/queries/#operation-name)...操作名
+- [Variables](https://graphql.org/learn/queries/#variables)...クエリに渡す引数(フィールドに動的に値を渡せる)
+- [Directives](https://graphql.org/learn/queries/#directives)...取得結果の構造にフィールドを含めるか否かを決められる(@include, @skip)
+- [Fragments](https://graphql.org/learn/queries/#fragments)...フィールド値の集合(共通化に便利)
+- [Inline Fragments](https://graphql.org/learn/queries/#inline-fragments)...query に直接埋め込める(取得した型によって結果を分けられるので便利)
+
+### ミューテーション
+
+クエリは REST でいうところの GET リクエストでデータ取得するための操作です。それに対してミューテーションは POST リクエストや PUT リクエストなどで、データ変更のための操作です。構造的にはクエリが分かれば理解は容易です。操作としての違いを抑えておきましょう。
+ちなみに Variables についている`!`は必須という意味です。なのでちゃんと渡さないとエラーになりますのでご注意を。
+
+```javascript:(サンプル)ミューテーション
+mutation CreateReviewForEpisode($ep: Episode!, $review: ReviewInput!) {
+  createReview(episode: $ep, review: $review) {
+    stars
+    commentary
+  }
+}
+```
+
+### サブスクリション
+
+データ取得をサブスクしたクライアントに対して、GraphQL サーバーからデータをプッシュする方法です。特定イベント(データ更新など)をクライアントに向けて通知するのに利用されます。データが変更されるたびに、新たな結果をクライアントへ送信するようにします。
+
+```javascript:(サンプル)サブスクリプション
+subscription onCommentAdded($repoFullName: String!){
+  commentAdded(repoFullName: $repoFullName){
+    id
+    content
+  }
+}
+```
+
+### スキーマ・タイプ定義
+
+GraphQL ではデータの型定義は「GraphQL スキーマ言語(GraphQL SDL)」を用いて表します。早速サンプルのオブジェクトを定義した文法を見てみます
+
+```javascript:サンプルオブジェクト
+type /*Object Type*/Character {
+  /*Fields*/id: /*Scalar Type(Non Nullable)*/ID!
+  /*Fields*/name: /*Scalar Type(Non Nullable)*/String!
+  /*Fields*/friends: /*Array*/[Character]
+  /*Fields*/appearsIn: /*Array(Non Nullable)*/[Episode]!
+}
+
+//queryやmutationもオブジェクトタイプと同じ(クエリの返り値を示している)
+type Query {
+  hero(episode: Episode): Character
+  droid(id: ID!): Droid
+}
+
+//Enumeration
+enum Episode {
+  NEWHOPE
+  EMPIRE
+  JEDI
+}
+
+//Implementation
+interface Character {
+  id: ID!
+  name: String!
+  friends: [Character]
+  appearsIn: [Episode]!
+}
+
+type Droid implements Character {
+  id: ID!
+  name: String!
+  friends: [Character]
+  appearsIn: [Episode]!
+  primaryFunction: String
+}
+
+//Union
+union SearchResult = Human | Droid | Starship
+
+//Input Type
+input ReviewInput {
+  stars: Int!
+  commentary: String
+}
+```
+
+スカラー型とはデータ型の最小原子のことです。これらを組み合わせてオブジェクトタイプが構成されていくわけですね。
+以下 GraphQL 基本ベースのスカラー型です。
+
+- Int
+- Float
+- String
+- Boolean
+- ID
+
+インターフェースはベースに＋ α で独自のフィールドを追加できるようになります。
+ただし、query を出す際には独自フィールドを取得できずエラーになる可能性もあるので、Inline Fragments を使うようにしましょう。
+
+ユニオンはオブジェクトを登録しておき、query を発行する際には、Inline Fragments を使ってすべてのフィールを指定する必要があります。
+
+インプットはクエリの Arguments にスカラー型だけでなく、オブジェクト型も渡せるようになり、mutation を発行する際に役に立ちます。
+
+## GraphQL 開発用ツール
+
+GraphQL で API 構築する際に、頻出するであろうツールやライブラリを以下に記載しました。
+
+- [GraphiQL(グラフィクル)](https://github.com/prisma-labs/graphql-playground)...クエリ検証を行える GUI ツール(Graphql IDE)。
+- [Apollo](https://www.apollographql.com/docs/)...データグラフを構築するためのプラットフォームです。REST では axios でデータを取得するのに対して、GraphQL では Apollo Client を使うのが一般的のようです。Graphql Server の構築には Apollo Server を導入します。他にも Apollo Graph Manager で GraphQL API の監視と分析を可能にします。
+- [Prisma](https://www.prisma.io/)...GraphQL サーバーを素早く構築するのに便利な DB 連携ツールです。
+- [Vue Apollo](https://vue-apollo.netlify.com/)...Vue と GraphQL を使う際のライブラリ。Apollo のドキュメントは React 向けで Hooks を使うように書かれているので、Vue で GraphQL 使う人はこちらを参照しましょう。
+- [Relay](https://relay.dev/)...React と GraphQL を使う際のフレームワーク。これはおそらく React ユーザー向けですね。
+- [Postman](https://www.postman.com/)...お馴染み API リクエストビルダー。GraphQL をサポートしていて素敵です。他にも[PostWoman](https://postwoman.io/)もあったりします。
+
+## 実装:GraphQL クライアント
+
+### Apollo Client
+
+利用するには apollo-boost と graphql を導入します。(`npm install apollo-boost graphql`)
+React を使う場合は@apollo/react-hooks を、Vue を使う場合は vue-apollo を利用しましょう。
+
+以下 React と Vue それぞれでクエリを発行するサンプルです。
+
+⭐️React の例
+
+```javascript:React
+import gql from 'graphql-tag';
+import { useQuery } from '@apollo/react-hooks';
+
+function Dogs({ onDogSelected }) {
+  const GET_DOGS = gql`
+    {
+      dogs {
+        id
+        breed
+      }
+    }
+  `;
+  const { loading, error, data } = useQuery(GET_DOGS);
+
+  if (loading) return 'Loading...';
+  if (error) return `Error! ${error.message}`;
+
+  return (
+    <select name="dog" onChange={onDogSelected}>
+      {data.dogs.map(dog => (
+        <option key={dog.id} value={dog.breed}>
+          {dog.breed}
+        </option>
+      ))}
+    </select>
+  );
+}
+```
+
+⭐️Vue の例
+
+```html:Vue
+<template>
+  <div>{{ hello }}</div>
+</template>
+
+<script>
+import gql from 'graphql-tag'
+
+export default {
+  apollo: {
+    // Simple query that will update the 'hello' vue property
+    hello: gql`query {
+      hello
+    }`,
+  },
+}
+</script>
+```
+
+React ではフックを使って表現しており、Vue ではコンポーネントのオプションに apollo を追加して apollo オブジェクトでクエリを宣言しています。どちらもクライアントインスタンスを生成する際に、GraphQL サーバー(たとえば GitHub API v4 ならば、https://api.github.com/graphql ) への接続情報を渡しておく必要があります。
+
+## 実装:GraphQL サーバーサイド
+
+### リゾルバ関数
+
+> [Execution \| GraphQL](https://graphql.org/learn/execution/) > [3. Write your graph's resolvers - Apollo Basics - Apollo GraphQL Docs](https://www.apollographql.com/docs/tutorial/resolvers/)
+
+GraphQL サーバーでクライアントのクエリが実行される際に、各フィールドの値をスカラー値(最小原子)になるまで処理していきます。この処理を行うのがサーバーサイドで実装された**_リゾルバ関数_**です。各フィールドが処理され、すべてのフィールドが解決された時、GraphQL サーバーはクライアントに対して解決し終えた結果を map に配備して、データを返します。
+
+以下リゾルバ関数のサンプルです。
+
+```javascript:(サンプル)リゾルバ関数
+human(obj, args, context, info) {
+  return context.db.loadHumanByID(args.id).then(
+    userData => new Human(userData)
+  )
+}
+```
+
+４つの引数は以下を示します。
+
+- obj...前のリゾルバ関数で返されたオブジェクト
+- args..クエリに含まれた Arguments
+- context...すべてのリゾルバで共有されるユーザーデータや DB アクセスなどの情報
+- info...操作の実行状態
+
+### Apollo Server
+
+GraphQL サーバー構築に[Apollo Server](https://www.apollographql.com/docs/apollo-server/)を利用するのがベターです。具体的な手順は以下のようになります。
+
+1. モジュールのインストール(`npm install apollo-server graphql`)
+2. スキーマを定義する
+3. リゾルバ関数を定義する
+4. 定義したスキーマとリゾルバ関数を引数に Apollo Server インスタンスを起動する
+
+Apollo Server インスタンスを定義する際に接続する DB の情報や認証情報などのコンテキストを渡しておきます。以下は Node.js で Apollo Server インスタンスを起動しているサンプルです。
+
+```javascript
+const { ApolloServer } = require('apollo-server');
+const typeDefs = require('./schema');
+const { createStore } = require('./utils');
+
+const resolvers = require('./resolvers');
+
+const LaunchAPI = require('./datasources/launch');
+const UserAPI = require('./datasources/user');
+
+const store = createStore();
+
+const server = new ApolloServer({
+  typeDefs,
+
+  resolvers,
+  dataSources: () => ({
+    launchAPI: new LaunchAPI(),
+    userAPI: new UserAPI({ store }),
+  }),
+});
+
+server.listen().then(({ url }) => {
+  console.log(`🚀 Server ready at ${url}`);
+});
+```
+
+## 最後に
+
+GraphQL はややクライアント贔屓のために開発された言語かと思います。リクエストに柔軟性を持たせやすいからです。逆にバックエンドの開発者からすると「エンティティで定義したのになんでわざわざクエリ言語でスキーマを定義する必要があるの？」と思うので手間がかかる感じがします。
+導入には一長一短ある気もしますが、個人的には「クライアントに優しい API を作るべき」という考え方なので、無駄なエンドポイントが消えてバックエンド側もすっきりするのではと思っています。結局 API の設計パターンとしてデータスキーマが中心になるのは間違いないので、そういった意味で REST より GraphQL の方がリクエストする際にデータスキーマとの距離がだいぶ縮まります。実際に[NestJs](https://nestjs.com/)の[GraphQL サンプル](https://github.com/nestjs/nest/tree/master/sample/12-graphql-apollo)を参考にしてみても、xx.contorller.ts が消えて(エンドポイントの名前を考えなくてよくなった)、xx.entity.ts の代わりに xx.graphql ファイルが置き換わっている(Swagger などのドキュメント導入がいらなくなった)のが確認されました。
+GraphQL が思ったよりトレンドとして普及していないのを見ると、REST から GraphQL の移行コストが結構かかるのかなーとか色々感じますが、綺麗な設計ができるいいアーキテクチャーだと思います。

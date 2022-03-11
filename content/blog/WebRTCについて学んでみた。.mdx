@@ -1,0 +1,239 @@
+---
+date: 2019-07-18T13:29:38.000+00:00
+title: WebRTCについて学んでみた。
+thumbnail: 'https://res.cloudinary.com/dso4npatn/image/upload/v1646834504/media/blog/thumbnail/WebRTC%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6%E5%AD%A6%E3%82%93%E3%81%A6%E3%82%99%E3%81%BF%E3%81%9F_rmtlie.png'
+tag:
+  - Web開発
+---
+
+まだまだ安定性にはかける WebRTC ですが、実装で使ってみたいと思ったので、その仕組みについて学習したことを以下にまとめます。自分のような初心者でも以下の記事とコードでかなりどういったことができるのかわかるようになりました。
+
+> 参考記事  
+> [MDN | WebRTC](https://developer.mozilla.org/ja/docs/Web/API/WebRTC_API/)  
+> [WebRTC 入門 2016](https://html5experts.jp/series/webrtc2016/)  
+> https://qiita.com/yusuke84/items/43a20e3b6c78ae9a8f6c  
+>  サンプルコード  
+> [https://github.com/muaz-khan/WebRTC-Experiment](https://github.com/muaz-khan/WebRTC-Experiment)  
+> [https://github.com/mganeko/webrtcexpjp](https://github.com/mganeko/webrtcexpjp)
+
+## WebRTC とは
+
+ブラウザ環境において、  
+① カメラ・マイクといったデバイスへアクセスしたり、  
+② 仲介を必要とせずに(実際には完全なサーバーレスとは言い難い)ブラウザ・モバイル間でデータの交換や、  
+③ キャプチャしたオーディオ／ビデオストリームの送受信  
+を可能にする API のことです。  
+P2P 通信とその暗号化(事前に暗号鍵の交換)、UDP/IP の使用(確実性よりリアルタイム性)が特徴です。
+
+### WebRTC で利用されているプロトコル
+
+<img src="https://camo.qiitausercontent.com/96f9643577144f38f0c07625e0ae25454875c626/68747470733a2f2f71696974612d696d6167652d73746f72652e73332e61702d6e6f727468656173742d312e616d617a6f6e6177732e636f6d2f302f3132323939322f37613264396462372d346337352d316333632d323337362d3931666336353934643764652e706e67" />
+
+> [Architecture | WebRTC](https://webrtc.org/architecture/)
+
+上記のように WebRTC API では多くの技術が利用されています。  
+P2P 通信を行うには、宛先の IP アドレスと UDP ポート番号を知る必要があります。以下、WebRTC で利用される P2P 接続における代表的なプロトコルについて説明します。
+
+#### NAT
+
+言わずと知れたパブリック IP アドレスとプライベート IP アドレスを変換するプロトコル。
+パブリック IP アドレスの特定のポートを、特定のプライベート IP アドレスの特定のポートに固定的に対応づけたものをポートマッピングといいます。
+
+#### STUN
+
+パブリック IP アドレスを発見し、ピアとの直接接続を妨害するルーターの制限を特定するためのプロトコル。  
+クライアントが STUN サーバーに問い合わせると、パブリック IP アドレス・ポートとルーターの NAT 内部にアクセス可能かどうかを確認することができます。
+
+#### TURN
+
+**「Symmetric NAT」** と呼ばれるルーターの制限を回避するためのプロトコル。  
+具体的にはパブリック IP を持っている TURN サーバがクライアントに IP と Port を貸し出します。
+
+#### SDP
+
+送受信するメディア(動画・音声)の解像度、フォーマット、コーデック、暗号化などの、接続のマルチメディアコンテンツを記述するためのプロトコル。  
+P2P 接続によって送受信されるデータを説明するためのメタデータと思っていいようです。
+
+#### ICE
+
+ブラウザ間で P2P 接続を可能にするフレームワーク。これにより、P2P 接続するための経路を決定する。  
+例えば、
+
+- NAT を通過するためには STUN サーバーからポートマッピングを取得する。
+- ファイアウォールなどの理由から直接接続が難しい場合は、TURN サーバーを経由する。
+
+通信経路の候補を「ICE Candidate」と呼び、  
+すべての ICE Candidate が出揃ってから、SDP とまとめて交換する方式を「Vanilla ICE」、先に SDP だけを交換してから ICE Candidate を順次交換する方式を「Trickle ICE」と呼びます。
+
+<img src="https://camo.qiitausercontent.com/601e21b5392bb6cf95bb3500589cf6192b52e370/68747470733a2f2f71696974612d696d6167652d73746f72652e73332e61702d6e6f727468656173742d312e616d617a6f6e6177732e636f6d2f302f3132323939322f38636334373862662d356430332d663330652d653438342d3763313666303337343439642e706e67" />
+
+### WebRTC のサポート状況
+
+IE はやはり対応してませんが、それ以外の Chrome, Firefox, Safari 主要ブラウザでは対応されています。  
+またデバイスへのアクセスでインカメの取得やスクリーンキャプチャについてもブラウザベンダーごとにコーディングしなくてはなりません。
+[WebRTC Demos, Experiments, Libraries, Examples](https://www.webrtc-experiment.com/)では WebRTC の機能を利用した色々なアプリが実装されているので参考にできます。またこの開発者の実装したライブラリ[DetectRTC](https://github.com/muaz-khan/WebRTC-Experiment/tree/master/DetectRTC)でブラウザや webrtc サポート状況について検知できます。
+
+```javascript
+let DetectRTC = require('detectrtc');
+
+DetectRTC.load(function () {
+  console.log(DetectRTC.isWebRTCSupported); //WebRTCのサポート
+  console.log(DetectRTC.isScreenCapturingSupported); //スクリーンキャプチャのサポート
+  console.log(DetectRTC.browser.name); //使用しているブラウザ
+});
+```
+
+## デバイスへのアクセス
+
+Firefox だとデバイスへのアクセスはだいたい許容されているので、API のドキュメントを確認しながら実装しやすいですが、Chrome はサポートしてたりしてなかったりなので、要注意です。以下のように、Firefox は[getUserMedia](https://developer.mozilla.org/ja/docs/Web/API/Navigator/getUserMedia)でインカメもスクリーンキャプチャも取得できますが、Chrome では[getDisplayMedia](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getDisplayMedia)を使わないとスクリーンキャプチャできませんでした。ブラウザごとの場合分けは先ほど紹介した DetectRTC を使うと良さそうです。
+
+```javascript
+let video = await document.getElementById('video');
+navigator.getUserMedia =
+  (await navigator.getUserMedia) ||
+  navigator.webkitGetUserMedia ||
+  window.navigator.mozGetUserMedia;
+//インカメなら
+navigator.getUserMedia(
+  { video: true, audio: true },
+  (stream) => {
+    this.localStream = stream; //localStreamはMediaStream.addTrack()を実装するためのトリガー
+    video.srcObject = stream;
+  },
+  (err) => {
+    console.log(err);
+  },
+);
+//Firefoxで画面共有なら
+navigator.getUserMedia(
+  { video: { mediaSource: 'screen' } },
+  (stream) => {
+    this.localStream = stream;
+    video.srcObject = stream;
+  },
+  (err) => {
+    console.log(err);
+  },
+);
+//Chromeで画面共有なら(Firefoxでもいけた)
+let stream = await navigator.mediaDevices.getDisplayMedia({ video: { displaySurface: 'window' } });
+this.localStream = stream; //localStreamはMediaStream.addTrack()を実装するためのトリガー
+video.srcObject = stream;
+```
+
+## シグナリングサーバー
+
+WebRTC では P2P 接続を確定させるために、シグナリングサーバー(SDP や ICE Candidate のやりとりを行う)が必要になります。シグナリングサーバーの実装には WebSocket が使われることが多いようです。
+
+### WebSocket の復習
+
+WebScoket とはクライアント、サーバー問わず主体的に発信できる双方向通信を実現するプロトコルです。  
+TCP と同じレイヤーで、HTTP の 3 ウェイハンドシェイク後 Upgrade ヘッダによて WebSocket へ進化します。ですので、アプリケーション層だけでは実現できない高速な通信が実現可能です。  
+参考までに WebSocket ライブラリの[socket.io](https://socket.io/)のコネクション確立からイベントの送受信について簡単にまとめた図を載せておきます。
+
+<img src="https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-image-store.s3.ap-northeast-1.amazonaws.com%2F0%2F122992%2Fc1b7e33d-a6f9-ed93-1cf5-54bdd173e7e0.png?ixlib=rb-1.2.2&auto=format&gif-q=60&q=75&w=1400&fit=max&s=5e1104b68bfa50cd0d11bca6a42d47a8" />
+
+### シグナリングサーバーの実装
+
+WebSocket ライブラリの socket.io を用いて WebRTC でのシグナリングサーバーを実装すると以下の通りです。
+
+```javascript
+socket.on('signaling', function (data) {
+  data.from = socket.id;
+  let target = data.to;
+  if (target) {
+    socket.to(target).emit('signaling', data);
+    return;
+  }
+  socket.emit('signaling', data);
+});
+```
+
+メディアへのアクセス、RTC Peer Connection の生成などはクライアント側の script に記述するので、シグナリングサーバーは簡単にクライアントからのデータを受信/配信するだけです。以下のように今回はイベント名を"signaling"としています。
+
+## クライアントサイドの実装
+
+WebRTC において SDP 交渉のやりとりとその後の流れをワークフローを示すと以下のイメージです。 ①,②,⑤,⑨ でシグナリングサーバーを介して通信しています。
+
+<img src="https://camo.qiitausercontent.com/7c2ca149e81b3a40d28b3be7404275f3061cabf2/68747470733a2f2f71696974612d696d6167652d73746f72652e73332e61702d6e6f727468656173742d312e616d617a6f6e6177732e636f6d2f302f3132323939322f33396334336366612d383763622d363766662d323234322d3362303962383130353031612e706e67" />
+
+ここで登場するのが 3 つのオブジェクト RTCPeerConnection, RTCSessionDescription, RTCIceCandidate です。
+要約するとオファーとそれに対するアンサーを返すことで、お互いの接続するセッション情報について交換しています。
+
+それらが終わると、SDP 交渉が成立します。  
+成立後は、RTCIceCandidate を生成して通信経路(ICE Candidate)の交換・追加を行いながら、RTCPeerConnection 定義時点で仕込んだイベントハンドラによってストリーム通知やトラック通知を受けて、メディアを送受信します。
+
+上のチャートフローをもとにクライアント側のソケットを実装していきます。Peer.js や SIP.js などのライブラリを使うのもありですが、制約も多いようなので今回は純粋に WebRTC の API を用いて実装していくことにします。[https://github.com/mganeko/webrtcexpjp](https://github.com/mganeko/webrtcexpjp) をだいぶ参考にしているので、詳しく知りたい方はそちらを参考に。(一部変更してます)
+
+```javascript
+socket.on('signaling', function (data) {
+  switch (data.type) {
+    //Emitterからのcastを受信
+    case 'cast':
+      //SubscriberはビデオコネクションのcallをEmitterへ発信
+      socket.emit('signaling', { type: 'end' });
+      break;
+    //Subscriberからのcallを受信
+    case 'call':
+      //EmitterはOfferを作成、接続元のセッションを記憶
+      makeOffer(from);
+      break;
+    //Emitterからのofferの受信
+    case 'offer':
+      //Subscriberは接続先のセッションを記憶、Answerを作成、接続元のセッションを記憶
+      setOffer(from, offer);
+      break;
+    //Subscriberからのanswerを受信
+    case 'answer':
+      //Emitterは接続先のセッションを記憶(SDP交渉成立)
+      setAnswer(from, answer);
+      break;
+    //ICE Candidateを受信
+    case 'candidate':
+      //ICE Candidateを候補に追加する
+      addIceCandidate(from, candidate);
+      break;
+    //P2P通信を終了する通知を受信
+    case 'end':
+      //終了の処理
+      break;
+    default:
+      break;
+  }
+});
+```
+
+以下のように RTCPeerConnection にはいくつかイベントハンドラを仕込まれており、これで ICE Candidate の交換や相手との動画共有が可能になります。
+
+```javascript
+prepareNewConnection(id) {
+  let peer = new RTCPeerConnection({"iceServers": []});
+  //ビデオストリームを受信した時の処理
+  //attachVideoで<video>に受信した動画を流す
+  peer.ontrack = (event) => {
+    let stream = event.streams[0];
+    console.log('-- peer.ontrack() stream.id=' + stream.id);
+    attachVideo(id, stream);
+  };
+
+  //ICE Candidateを受信した時の処理
+  peer.onicecandidate = (evt) => {
+     if (evt.candidate) {
+       console.log(evt.candidate);
+       this.sendIceCandidate(id, evt.candidate);
+     } else {
+       console.log('empty ice event');
+       console.log(this.peerConnections);
+     }
+   };
+
+  //ビデオストリームの受信が途切れた時の処理
+  peer.onremovestream = (event) => {
+    console.log('-- peer.onremovestream()');
+    detachVideo();
+  };
+}
+```
+
+ざっと学んで見たことについて確認して見ましたが、API が読みづらかったり、実際に運用するとブラウザサポートが壁になるかもしれませんが、それでもブラウザ上で P2P 通信ができるのはなかなか楽しいものです。
+初心者にとってはデバイスへのアクセスと、コネクション確立までの流れを抑えておくことが大事でした。

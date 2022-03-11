@@ -1,0 +1,200 @@
+---
+date: 2019-09-30T13:29:38.000+00:00
+title: ユニバーサルJavascriptとその周辺ツール
+thumbnail: 'https://res.cloudinary.com/dso4npatn/image/upload/v1646834505/media/blog/thumbnail/%E3%83%A6%E3%83%8B%E3%83%8F%E3%82%99%E3%83%BC%E3%82%B5%E3%83%ABJavascript%E3%81%A8%E3%81%9D%E3%81%AE%E5%91%A8%E8%BE%BA%E3%83%84%E3%83%BC%E3%83%AB_rug5qj.png'
+tag:
+  - Web開発
+---
+
+フロントエンド周りの開発ツールには、Javascript の歴史が深く絡んでいるので、それらのメモをまとめました。参考になれば是非。
+
+## 用語整理
+
+- ユニバーサル Javascript(アイソモーフィック Javascript)...広義では 「ブラウザとサーバー両方で動く JavaScript」、狭義では「ES のみで書かれて、この仕様を満たすものならどこでも実行可能」という概念。
+- CommonJS...Node.js で採用された、当時のモジュール機能がなかった Javascript のために作られた仕様。(`module.exports = function() {...}`)
+- AMD(Async Module Definition)...モジュールを非同期でロードする仕組みやそのための定義や API 仕様。AMD のブラウザ実装が[RequireJS](http://requirejs.org/)である。(`define(['jquery'], function() {...})`)
+- ES6 モジュール...Javascript(ES6)ビルトインのモジュールシステム。(`export default function() {...}`)
+- UMD(Universal Definition Module)...CommonJS, AMD, ブラウザグローバルなどのモジュールシステムをサポートするパターン技法。
+- Tree Shaking...デッドコード(利用されていない不要なコード)を除去する機能。
+
+> [JavaScript モジュール - JavaScript \| MDN](https://developer.mozilla.org/ja/docs/Web/JavaScript/Guide/Modules)
+
+## Javascript の歴史
+
+> [JavaScript が辿った変遷 - Qiita](https://qiita.com/naoki_mochizuki/items/cc6ef57d35ba6a69117f#commonjs) > [春からはじめるモダン JavaScript / ES2015 - Qiita](https://qiita.com/mizchi/items/3bbb3f466a3b5011b509)
+
+## ビルドツール群
+
+### ⚙️Babel
+
+トランスパイラ。最新の ECMAScript 構文を下位の ECMAScript 構文に変換する。ex.ES6+ -> ES5。
+
+> [【５分でなんとなく理解！】Babel 入門 - Qiita](https://qiita.com/Shagamii/items/a87181c22ea777ee2acc)
+
+#### 設定
+
+```sh
+$ npm install @babel/cli @babel/core
+# その他プリセットやプラグインをインストール
+$ npm install @babel/preset-env
+```
+
+.babelrc を編集する。プロジェクトに複数の package.json がある場合は babel.config.js を使う。
+
+```json: .babelrc
+{
+  "presets": [
+    "@babel/preset-env"
+  ]
+}
+```
+
+#### プラグイン
+
+es6 で定められたそれぞれの仕様に対して、それぞれ変換することができる。
+
+> [プラグイン一覧](https://babeljs.io/docs/en/plugins)
+
+#### プリセット
+
+Babel が変換処理を行う際に利用するプラグインセット。
+
+- [@babel/preset-env](https://babeljs.io/docs/en/babel-preset-env)(環境に関係なく最新の Javascript を使えるようにできるプリセット)
+- [@babel/preset-flow](https://babeljs.io/docs/en/babel-preset-flow)
+- [@babel/preset-react](https://babeljs.io/docs/en/babel-preset-react)
+- [@babel/preset-typescript](https://babeljs.io/docs/en/babel-preset-typescript)
+
+### ⚙️Webpack
+
+ES Modules の JS ファイルをまとめるモジュールバンドラー。依存関係を処理し、１つの JS ファイルにまとめる。
+
+> [【５分でなんとなく理解！】Webpack 入門 - Qiita](https://qiita.com/Shagamii/items/698a67bab0cd5eefcb4f)
+
+#### 基本事項
+
+- webpack はデフォルトで JavaScript ファイルと JSON ファイルのみを認識
+- **モジュール** = 「機能ごとに分割されたファイル」のこと
+- **ローダー** = モジュールのルールにローダーを設定することで、「.js や.json 以外のファイルを処理して、有効なモジュールとして依存関係に追加」できる。
+
+  > ##### ローダの参考
+  >
+  > - babel-loader...最新の ECMAScript -> 下位の ECMAScript
+  > - sass-loader/css-loader/style-loader...Sass -> css, css のモジュール化, css ファイル　-> style タグ
+  > - url-loader... 画像　-> DataURL
+  > - file-loader...ファイルサイズの調整
+
+- **プラグイン** = バンドルの最適化、静的アセットの管理、環境変数の注入などの「幅広いタスクを実行」できる。
+
+  > ##### プラグインの参考
+  >
+  > - webpack-bundle-analyzer...バンドルに含まれているモジュールや、モジュールのファイルサイズを確認できる
+  > - clean-webpack-plugin...webpack 実行時に指定したディレクトリ内のファイルを削除する
+  > - html-file-plugin...バンドルしたディレクトリの中に html ファイルも出力する
+
+- **エントリポイント**のデフォルトは`./src/index.js`
+- バンドルしたファイルの**出力先**のデフォルトは`./dist/main.js`
+- webpack は各環境ごとの設定ができる(Mode)が、デフォルトは本番。(`webpack --mode=development`で指定できる)
+- webpack の devServer についてはデフォルトで自動再読み込みされる
+- **HMR(Hot Module Replacement)** = 「モジュールの変更点だけを更新する」
+
+#### 設定
+
+```sh
+$ npm install --save-dev webpack webpack-cli
+```
+
+webpack.config.js を編集する
+
+```js:webpack.config.jsの参考
+const path = require('path');
+
+module.exports = {
+  entry: "./app/entry", // バンドルするためのエントリーポイント。デフォルトは"./src/index"
+  mode: "production", // "production" | "development" | "none"
+  output: {
+    path:
+    filename:
+    libraryTarget: "umd"
+  },
+  module: {
+    //ローダーやパーサーやオプションなどの設定を行う
+    rules: [
+      {
+        test: /\.jsx?$/,
+        include: [path.resolve(__dirname, "app")],
+        exclude: [path.resolve(__dirname, "app/demo-files")],
+        loader: "babel-loader",
+        options: {
+          presets: ["es2015"]
+        },
+      }
+    ]
+  },
+  //　モジュールの解決方法
+  resolve: {
+
+  },
+  // プラグインを導入してビルドプロセスをカスタマイズする。
+  plugins: {
+
+  },
+  devServer: {
+    contentBase: path.join(__dirname, 'dist'),
+    compress: true,
+    port: 9000
+  }
+}
+
+
+```
+
+### ⚙️rollup.js
+
+ES6 Modules に準拠したバンドラー。**ライブラリ作成時に強み**がある。webpack とは違い HMR 機能はない。
+
+> [webpack と Rollup：似て非なるもの \| POSTD](https://postd.cc/webpack-and-rollup-the-same-but-different/)
+
+#### 設定
+
+```sh
+$ npm install -g rollup
+
+# ブラウザ用
+$ rollup main.js --file bundle.js --format iife
+# Node.js用
+$ rollup main.js --file bundle.js --format cjs
+# ブラウザ、Node.js両用
+$ rollup main.js --file bundle.js --format umd --name "myBundle"
+```
+
+rollup.config.js を編集する。
+
+```js:rollup.config.js
+export default {
+  input: 'src/main.js', // エントリーポイント
+  output: {             // 出力先
+    file: 'bundle.js',
+    format: 'cjs'
+  }
+};
+```
+
+#### プラグイン
+
+プラグインを使用することで、たとえば、バンドルする前にコードをトランスパイルしたり、node_modules フォルダーでサードパーティのモジュールを見つけたりすることで、ロールアップの動作をカスタマイズできる。rollup のプラグインの一覧は[こちら]を参照する。
+
+### ⚙️Parcel(次世代のバンドラー...?)
+
+> [Parcel 入門 ～ Parcel は webpack の代わりになるのか～ - Qiita](https://qiita.com/soarflat/items/3e43368b2d767c730781)
+
+webpack の場合は css や画像も一つの JS ファイルとしてまとめて出力されるが、Parcel の場合は依存関係を解決したファイルがそれぞれ出力される。
+
+### その他、活躍していたツール
+
+- bower...フロントエンドのパッケージ管理ツール。バンドルツールの登場でオワコン化。([Bower はなぜオワコン化したのか - Qiita](https://qiita.com/jonghyo/items/e931f7b6357995314599#bower%E3%81%8C%E3%82%AA%E3%83%AF%E3%82%B3%E3%83%B3%E5%8C%96%E3%81%97%E3%81%9F%E7%90%86%E7%94%B1))
+- gulp や grunt...タスクランナー。webpack や npm script で完結させるのが主流になってきて、衰退気味。
+- browserify...バンドルツール。タスクランナーとの併用が必要になるや webpack のパフォーマンスの高さに敗れて、衰退気味っぽい。([Webpack vs Browserify](https://trends.google.co.jp/trends/explore?geo=JP&q=webpack,browserify))
+
+### 気になる今後の開発周りのツールの動向
+
+> [React のユーザーから見た今後のフロントエンドの予想 · GitHub](https://gist.github.com/mizchi/106d3c1bb8b8e5b46b45ceeeab0c348b) > [2019 年版: 脱 Babel!フロント/JS 開発を TypeScript に移行するための環境整備マニュアル - Qiita](https://qiita.com/shibukawa/items/0a1aaf689d5183c6e0f1)

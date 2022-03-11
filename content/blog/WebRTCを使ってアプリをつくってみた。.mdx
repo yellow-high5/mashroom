@@ -1,0 +1,302 @@
+---
+date: 2019-08-12T13:29:38.000+00:00
+title: WebRTCを使ってアプリをつくってみた。
+thumbnail: 'https://res.cloudinary.com/dso4npatn/image/upload/v1646834504/media/blog/thumbnail/WebRTC%E3%82%92%E4%BD%BF%E3%81%A3%E3%81%A6%E3%82%A2%E3%83%95%E3%82%9A%E3%83%AA%E3%82%92%E3%81%A4%E3%81%8F%E3%81%A3%E3%81%A6%E3%81%BF%E3%81%9F_cb3dlm.png'
+tag:
+  - Web開発
+  - 実装ネタ帳
+---
+
+「今持てる己の力を試す」みたいな感じで、ライブアプリ(Web)
+[LIVE VOICE](https://live-voice-react.herokuapp.com/)
+を制作してみました。このアプリはチャンネルさえ知っていれば誰でも簡単にチャットやライブ配信ができるようなアプリです。 Heroku の無料枠にデプロイしているので、サーバーが休憩している間に接続があると websocket 通信が動作しない時があります...。(高負荷には耐えられないので、いたずらはご遠慮ください)
+
+## アプリの紹介
+
+登場人物はライブを配信する(セルフカメラ、PC 画面共有)パフォーマーとライブを見るリスナーの２人です。  
+パフォーマーは、[STARTLIVE]ボタンから、ライブ名と自分の名前(任意)を入力して始めると、そのライブのチャンネルが作成されます。リスナーは、[SUBSCRIBE]ボタンから、作成されたチャンネルと自分の名前(任意)を入力すれば、そのライブルームに参加できます。  
+ライブルーム内ではボードに ❶ メッセージを書く ❷ セルフカメラまたは PC 画面を共有できます。
+
+<img
+  width="651"
+  alt="image.png"
+  src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/122992/4d576a77-9b3c-8785-fb36-496645284482.png"
+/>
+
+## デプロイするまで
+
+開発は Docker でコンテナを立てて実装。コンテナ構成はフロントに React, API には Express ＋ MongoDB で今自分が一番しっくりくる構成です。すべて Javascipt で賄うことができます。
+
+```yaml
+version: '3'
+services:
+  front:
+    build: ./front/.
+    container_name: live_voice_front
+    environment:
+      NODE_ENV: production
+    ports:
+      - 3000:3000
+    networks:
+      - live_net
+    volumes:
+      - ./front/.:/home/app/front
+      - /home/app/front/node_modules
+
+  api:
+    build: ./api/.
+    container_name: live_voice_api
+    environment:
+      NODE_ENV: production
+    ports:
+      - 8080:8080
+      - 9000:9000
+    networks:
+      - live_net
+    volumes:
+      - ./api/.:/home/app/api
+      - /home/app/api/node_modules
+
+  db:
+    image: mongo:4.0
+    container_name: live_voice_db
+    ports:
+      - 27017:27017
+    networks:
+      - live_net
+
+networks:
+  live_net:
+    driver: bridge
+```
+
+当初コンテナのホスティングサービスには GCP の VM インスタンスで、イメージに Container-Optimized OS を選択して、docker-compose を利用するには[Running Docker Compose with Docker](https://cloud.google.com/community/tutorials/docker-compose-on-container-optimized-os)を参考にしよう。そして、インスタンスのスペックは vCPU:1, メモリ 3.75GB にしようと考えていましたが、こちらの方法は断念。理由は以下の２点
+
+- WebRTC のメディアアクセスは基本的に HTTP ではなく、HTTPS なので、ドメイン取得と SSL 化が必要
+- 無料枠の期間のみしか動かない
+
+ということで Docker 開発はローカルだけにして、本番環境はプロダクション用にフロント(front コンテナ)とバックエンド(api コンテナ+db コンテナ)に分けて Heroku 上にデプロイしました。フロントは React のプロジェクトをビルドして、index.html にアクセスできるようにルーティングしています。以下を参考に当たり前ですが、ポート番号 process.env.PORT を記載しておきます。(<-自分はこれ忘れてました)
+
+> https://devcenter.heroku.com/articles/getting-started-with-nodejs > https://devcenter.heroku.com/articles/node-websockets
+
+## Material UI を使って画面を構成していく
+
+フロント実装は[Material UI](https://material-ui.com/ 'Material UI')を使うことでクールに仕上がりました。  
+このアプリは React を使った SPA です。基本的には４枚のスクリーン(Home.js, Performer.js, Listener.js, Board.js)を React Router で動かしているだけです。Board スクリーンだけ情報量が多かったので、Topbar や Form などのコンポーネントで細かく分けています。
+
+### state の設計
+
+React + Reducer の定番コンビを使っていますが、state(≒reducer)と action をちゃんと定義しておきます。図のようにモックアップとユーザーのアクションを結びつけ、state がどのように変化するかを記述しておくと分かりやすいので、自分はいつもこんな感じで設計してから実装に入ります。
+
+<img
+  width="685"
+  alt="image.png"
+  src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/122992/30d5a5b7-2725-ad4d-f85c-a82d13bf1525.png"
+/>
+
+### Material UI のスタイルを好みに変えていく
+
+Material UI はそれだけで十分な役割を果たしてくれますが、自分好みにカスタマイズする場合は、withStyles(CSS in JS で記述したスタイルを適用してくれる)や MuiThemeProvider, createMuiTheme(コンポーネントのテーマ変更)を使うようにしています。特に MuiThemeProvider に関してはかなり強力なので、自分は各コンポーネントごとに MuiThemeProvider を使用して、そのコンポーネントを組み合わせてつくったスクリーンを withStyles で微調整しています。createMuiTheme でどのプロパティを定義するかはブラウザのインスペクターを使いながら確認していました。
+
+### コンストラクタに socket.io の初期化処理を記述する
+
+このアプリでは通信に socket.io を使用するので、クライアント側の方にもソケットを立てて受信しておく必要があります。自分は React で socket.io を実装するのに、socket.io-client というモジュールを使いました。
+
+```javascript
+import io from 'socket.io-client';
+
+class Board extends React.Component {
+  constructor(props) {
+    super(props);
+    this.socket = io(`http://localhost:8080/${props.channel}?name=${props.name}`);
+  }
+}
+```
+
+## データスキーマの決定とイベント受信
+
+バックエンド側の処理は、
+
+- 新しいライブの作成
+- チャンネル名からライブを検索する
+- socket.io のイベントを受信して、各データ処理を行う
+
+だけです。
+
+### スキーマ設計
+
+<img
+  width="627"
+  alt="image.png"
+  src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/122992/c834d3fb-52ac-66aa-ea11-730c485781d3.png"
+/>
+
+### イベント受信
+
+このアプリではチャンネルごとに名前空間で分割しています。
+
+```javascript
+let nsp = await io.of(`/${live.channel}`);
+```
+
+各処理については以下の通り。
+
+#### 新たな接続を確立した時
+
+メンバーを DB に保存してから、ライブ内部の人数が増えたので、メンバー情報をライブに接続しているクライアントへ Emit します。  
+パフォーマーの場合はそのライブの主催者であることを更新します。
+
+```javascript
+new_member.save(async (err, member) => {
+  if (err) {
+    console.log(err); //fix point(エラーの投げ方どないする？)
+  }
+  //パフォーマの接続の場合
+  if (live.performer === null) {
+    await live.definePerformer(member.id); //ライブのパフォーマーを定義
+  }
+
+  //メンバー情報を更新する
+  await nsp.clients((err, clients) => {
+    Member.find({ socket: clients }, (err, members) => {
+      nsp.emit('RECEIVE_LIVE_INFO', members);
+    });
+  });
+});
+```
+
+#### メッセージを受信した時
+
+ボイス(メッセージ)を DB に保存して、成功すれば各クライアントへ Emit します。
+
+```javascript
+new_voice.save((err, voice) => {
+  if (!voice) {
+    return next(err);
+  }
+  Live.findOne({ channel: channel }).then((live) => {
+    if (!live) {
+      let err = new Error('This Live has error');
+      err.status = 401;
+      return next(err);
+    }
+    live.addVoice(voice._id);
+
+    nsp.emit('RECEIVE_VOICE', data);
+  });
+});
+```
+
+#### ビデオ配信(WebRTC 用)のシグナリングサーバー
+
+シグナリングサーバーは来た情報をターゲットがいればそれに発信し、ターゲット指定がなければ、全員に発信します。
+
+```javascript
+socket.on('SIGNALING', function (data) {
+  data.from = socket.id;
+  let target = data.to;
+  console.log(data);
+  if (target) {
+    nsp.to(target).emit('SIGNALING', data);
+    return;
+  }
+  nsp.emit('SIGNALING', data);
+});
+```
+
+#### 接続が切れた時
+
+リスナーの接続が切れた場合はライブ情報を更新するだけ、パフォーマーの接続が切れた場合はライブを削除します。
+
+```javascript
+Member.findOne({ socket: socket.id }).then((member) => {
+  if (!member) {
+    console.log('ERROR');
+  }
+  //パフォーマーだったら
+  if (live.performer.equals(member.id)) {
+    nsp.emit('CLOSE_LIVE');
+    //ライブを削除
+    Live.findOneAndRemove({ channel: live.channel }, (err, live) => {
+      if (err) {
+        console.log('ERROR');
+        return;
+      }
+    });
+  }
+  socket.disconnect();
+  nsp.clients((err, clients) => {
+    Member.find({ socket: clients }, (err, members) => {
+      nsp.emit('RECEIVE_LIVE_INFO', members);
+    });
+  });
+});
+```
+
+## WebRTC でビデオチャット
+
+WebRTC にはメディアへのアクセスや P2P のストリーム通信を実現する API です。度々仕様が変更になるので注意です。 調べた内容については[こちら](https://www.mushroom-blog.com/198/ 'こちら')にまとめています。
+ちなみに HTTPS でないと使用できません。(localhost は大丈夫)  
+シグナリングサーバーは立てているので、あとはクラインと側で処理を書いていきます。
+
+<img
+  width="683"
+  alt="image.png"
+  src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/122992/6c1a61ae-5138-0c12-0377-91d835480128.png"
+/>
+
+それぞれの送られてくるデータのタイプによって処理を分岐させています。
+
+```javascript
+this.socket.on("SIGNALING", data => {
+      let from = data.from;
+      switch (data.type) {
+
+        case "cast":
+          ...
+          connectVideo();
+          break;
+
+        case "call":
+          ...
+          makeOffer(from)
+          break;
+
+        case "offer":
+          ...
+          setOffer(from, offer)
+          break;
+
+        case "answer":
+          ...
+          setAnswer(from, answer)
+          break;
+
+        case "candidate":
+          ...
+          addIceCandidate(from, candidate)
+          break;
+
+        case "end":
+          ...
+          detachVideo()
+          break;
+
+        default:
+          break;
+      }
+});
+
+```
+
+ここに関しては WebRTC の処理をモジュール化できていないので、コンストラクタに汚く記述してしまっているので、個人的に改善が必要です。
+
+## 振り返り
+
+以下の改善点を考えたいと思いつつも、別のことにモチベーションが出てきてしまったので、後回しにします。
+
+- WebRTC のモジュール化
+- 画像のアップデート(S3 と連携させれば無料でもできそう？)
+- Board 画面でページリロードの際に state が消えてしまう
+
+まだまだ設計力という部分に関しては未熟だなと感じました。根本的なプログラムの考え方や設計ノウハウについて基本から学び直そうと思い立ちました。ということで良い経験になりました。

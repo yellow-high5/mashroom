@@ -1,0 +1,238 @@
+---
+date: 2020-03-07T22:44:38.000+00:00
+title: Typescript -モジュールと型宣言、ときどき名前空間-
+thumbnail: 'https://res.cloudinary.com/dso4npatn/image/upload/v1646834504/media/blog/thumbnail/Typescript_i7hsg9.png'
+tag:
+  - Web開発
+---
+
+所詮は「**_Typescirpt = Javascript + 型(Type)コンパイラ_**」という考え方でいいと思いますが、Typescript プロジェクト内で`npm install`した外部モジュールがうまく動かない...ということはよくあります。やはりここはひとまず、Typescript にしっかり気持ちを傾けようということで再入門しました。Javascript 系のフレームワークは書き方が単一になってしまうために原理を疎かにしがちです。
+復習内容については、型の宣言方法やクラス構文の話ではなく、外部モジュールとその型宣言についての話がメインです。
+
+## 用語整理
+
+以下の用語は Typescript では頻出です。逆にこれらの用語の原理を知れば「コンパイラ(と言ってるけど厳密にはトランスパイラ)ってこんなものか」と思える程度まで落とし込めると思います。
+
+#### ・tsconfig.json ファイル(コンパイラの設定ファイル)
+
+Typescript コンパイラの設定ファイルです。様々なオプションを指定できます。
+詳しくは[Compiler Options](https://www.typescriptlang.org/docs/handbook/compiler-options.html)を参照してください。
+
+```json:tsconfig.json
+{
+  "compilerOptions": {
+    ...
+    "target": "esnext",
+    "module": "esnext",
+    "strict": true,
+    "moduleResolution": "node",
+    "experimentalDecorators": true,
+    ...
+  },
+  "include": [...],
+  "exclude": [...]
+}
+
+```
+
+プロジェクトに tsconfig.json が置かれた瞬間から、Typescript に関係あるファイルはすべてコンパイルされる対象です。
+
+##### ・.d.ts ファイル (アンビエント宣言)
+
+以下のように、`declear`をつけて型だけを定義することが味噌です。アンビエントは「環境の」という意味です。
+
+```ts
+// "url"というモジュールの型を宣言している
+declare module 'url' {
+  export interface Url {
+    protocol?: string;
+    hostname?: string;
+    pathname?: string;
+  }
+
+  export function parse(urlStr: string, parseQueryString?, slashesDenoteHost?): Url;
+}
+```
+
+##### ・型推論
+
+Typescript コンパイラには、型を理論に基づいて推測してくれる機能があります。詳しくは以下を参照あれ。変数や関数の型は宣言された瞬間に決まるという Typescript の原則が大事です。
+
+> [TypeScript の型推論詳説 - Qiita](https://qiita.com/uhyo/items/6acb7f4ee73287d5dac0)
+
+##### ・名前空間
+
+プロジェクトではたくさんのオブジェクトが定義されます。オブジェクトの名前の衝突を回避するために以下のように名前空間を設定すれば安心です。ファイルが別々でも名前空間さえ同じであれば、１つの場所に定義されたことになります。(Java のパッケージ階層とかと同じですね)
+
+```ts
+declare namespace D3 {
+  export interface Selectors {
+    select: {
+      (selector: string): Selection;
+      (element: EventTarget): Selection;
+    };
+  }
+
+  export interface Event {
+    x: number;
+    y: number;
+  }
+
+  export interface Base extends Selectors {
+    event: Event;
+  }
+}
+
+declare var d3: D3.Base;
+```
+
+> ##### 👉 名前空間とモジュールの違い
+>
+> 名前空間とモジュールの大きな違いは**_依存関係_**を定義しているかどうかです。モジュールは依存関係を含みますが、名前空間は含みません。名前空間の使い方を誤ると参照する階層が増えるので、基本はモジュール定義で書いていくべき。
+
+## Typescript コンパイラのモジュール解決の流れ
+
+> [Module Resolution · TypeScript](https://www.typescriptlang.org/docs/handbook/module-resolution.html)
+
+Typescript にはモジュール解決方法が Classic と Node の２種類あり、tsconfig.json の`--moduleResolution`で指定できます。多くのプロジェクトでは**_Node_**を選択することが多いと思うので、Classic は簡単なので省略します。
+
+Node は文字通りに**_Node.js のモジュール解決方式を真似した手法_**です。
+
+> ##### 👉npm のモジュール解決順序
+>
+> 1. コアモジュール([Node のコアモジュール](https://nodejs.org/dist/latest-v12.x/docs/api/)) <= `require('fs')`とか
+> 2. ファイルモジュール(自分が定義したモジュール)
+> 3. パッケージモジュール(外部定義モジュール) <= node_modules ディレクトリ配下
+
+まず、コンパイル時にインポートするモジュールが定義されたファイルを読み込む基本順序を覚えましょう。
+※ .tsx ファイルは JSX(React ではお馴染みのテンプレート言語)を Typescript でサポートした拡張子のことです。
+
+1. **_.ts ファイル_**
+2. **_.tsx ファイル_**
+3. **_.d.ts ファイル_**
+4. **_package.json(ただし、types または typings プロパティが指定されている場合のみ)_**
+
+そしてこの順序で、自分の近くからディレクトリを辿っていきます。
+
+例として moduleA が moduleB を`import { b } from "moduleB"`でインポートした時、どのようにモジュールを探索していくのか図解するとこんな感じです。
+
+```:モジュールの探索順序
+root
+    ├── node_modules
+    │   ├── moduleB
+    │   │   ├── package.json              🔍11
+    │   │   ├── index.ts                  🔍12
+    │   │   ├── index.tsx                 🔍13
+    │   │   └── index.d.ts                🔍14
+    │   ├── moduleB.ts                  🔍8
+    │   ├── moduleB.tsx                 🔍9
+    │   └── moduleB.d.ts                🔍10
+    └── src
+        ├── ⭐️moduleA.ts            import { b } from "moduleB"
+        └── node_modules
+            ├── moduleB
+            │   ├── package.json     🔍4
+            │   ├── index.ts         🔍5
+            │   ├── index.tsx        🔍6
+            │   └── index.d.ts       🔍7
+            ├── moduleB.ts          🔍1
+            ├── moduleB.tsx         🔍2
+            └── moduleB.d.ts        🔍3
+```
+
+この例では`import { b } from "moduleB"`を紹介しましたが、これは**_非相対パス指定_**と言われます。
+一方、`import { b } from "./moduleB"`のように指定する方法を**_相対パス指定_**と言います。
+
+棲み分けとしては
+
+- 非相対パス指定 => 外部モジュールをインポートしたい
+- 相対パス指定 => プロジェクト内の自分で書いたモジュールをインポートしたい
+
+時に使う感じになるはずです。
+
+##### モジュール解決のオプション
+
+tsconfig.json にモジュール解決のオプションを指定できます。以下主なオプションまとめ。
+
+- baseUrl...非相対パスで指定されたインポートはがすべて`baseUrl`からの相対パスになる。
+- paths...baseUrl が設定されていることが前提。モジュールのファイルの場所を`baseUrl`からの相対パスで指定できる。
+- rootDirs...ディレクトリをリスト指定することで、相対パスで指定されたモジュールを探索する時に探す範囲を拡張できる。
+
+## 型宣言さえあれば何とかなる
+
+> [Declaration Merging · TypeScript](https://www.typescriptlang.org/docs/handbook/declaration-merging.html)
+
+勘の鋭い人なら、なぜ既存の Javascript ライブラリが容易に Typescript 化できているのかお分かりかと思います。
+コンパイラのモジュール解決時のファイルの呼び出し順を思い出してください。
+
+> 1. .ts ファイル
+> 2. .tsx ファイル
+> 3. .d.ts ファイル
+> 4. package.json
+
+これはつまり、Typescript コンパイラにとって
+
+1. **_「.js ファイルを.ts ファイルに全置換できていればいいんだけど、」_**
+2. (省略)
+3. **_「それが無理なら、型定義ファイルを用意してくれればいいよ。」_**
+4. **_「もっと言えば、package.json に型定義ファイルの場所さえ書いといてくれれば読み込みにいくよ。」_**
+
+ということです。
+
+Typescript コンパイラは.d.ts(型定義ファイル)で型を宣言しといてくれれば、Javascript に型を付与して、型安全な静的チェックを行ってくれるわけです。なんと優秀。
+
+##### 型拡張 -宣言をマージする-
+
+ドキュメントの仕様通りに書いたのに、「そのオブジェクトの型、定義されてないよ」と警告を受けることがあります。その場合はまず、型が定義されているか.d.ts ファイルを見ましょう。その中で警告された書き方の型定義が見当たらない場合は自分で定義してしまいましょう。Typescript の拡張は柔軟で、後付けされた型定義の方が優先度は高くなります。
+以下インターフェースを拡張した場合の例です。
+
+```ts:インターフェース拡張の例
+interface Box {
+  height: number;
+  width: number;
+}
+
+interface Box {
+  scale: number;
+}
+
+let box: Box = { height: 5, width: 6, scale: 10 };
+```
+
+Javascript で継承やパッチを当てる際には prototype を利用して定義しますが、その際に定義したオブジェクトについての型宣言も忘れないようにしましょう。
+
+##### @types について
+
+node*modules 内を見ると@types ディレクトリががあり、package.json でこの`@types/~~`を参照しているパッケージがよくあります。これは\*\*\_npm に公開されている型定義ファイル*\*\*です。通常ライブラリの型定義ファイルはパッケージ内に含まれていることが好ましいですが、型定義ファイルだけを以下のように公開している場合があります。
+
+```
+├── LICENSE
+├── README.md
+├── index.d.ts
+├── (next.d.ts)
+└── package.json
+```
+
+> [Publishing · TypeScript](http://www.typescriptlang.org/docs/handbook/declaration-files/publishing.html#publish-to-types)
+
+## おまけ(環境構築)
+
+Typescript の開発は VSCode が最適ですよね。自分は[TypeScript Extension Pack](https://marketplace.visualstudio.com/items?itemName=loiane.ts-extension-pack)を使ってます。機能を使いこなす願いを込め、その中身を日本語に訳して以下確認。
+
+- TSLint...Typescript 用の Linter ツール。構文ミスを指摘してくれます。
+
+- TypeScript Hero...インポートの整理(未使用のインポートは消してくれる)をしてくれます。
+
+- json2ts...Ctrl+Alt+V でコピーした json から定義ファイルを生成してくれます。([おためし](http://json2ts.com/))
+
+- Move TS...ファイル移動するとそのファイルを参照していたファイルのインポートパスを自動で書き換えます。
+
+- Path Intellisense...インポートパスを自動で追加してくれます。
+
+- TypeScript Importer...ワークスペース上の Typescript 定義を自動で探して補完してくれます。
+
+- Prettier - JavaScript formatter...コードフォーマッター。
+
+- Debugger for Chrome...Chrome デバッガー。(個人的にはあまり使わない)
+
+Javascript はマルチパラダイム言語で色々な書き方が許されているので、Typescript を導入してもそこまで良さを享受できないプロジェクトがあるのも事実です。たとえば、[Vue.js は Class API(vue-class-component)が RFC でリジェクトされた](https://github.com/vuejs/rfcs/pull/17)のもあって、個人的にそれほどメリットを感じていません。イベント駆動のフロントエンド系フレームワークより、Node.js を利用したサーバーサイド系のフレームワークの方が導入すると価値を発揮するのでは??と推測しています。[Nest.js](https://nestjs.com/)を勉強中ですが、Typescript で書かれていてかなり相性が良いと感じております。いずれにせよ Typescript は少し癖があるので、そこを早くコード書きながらマスターしたいところであります。

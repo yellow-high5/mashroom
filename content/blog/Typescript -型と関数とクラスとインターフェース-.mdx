@@ -1,0 +1,288 @@
+---
+date: 2020-04-24T22:44:38.000+00:00
+title: Typescript -型と関数とクラスとインターフェース-
+thumbnail: 'https://res.cloudinary.com/dso4npatn/image/upload/v1646834504/media/blog/thumbnail/Typescript_i7hsg9.png'
+tag:
+  - Web開発
+---
+
+「プログラミング TypeScript ―スケールする JavaScript アプリケーション開発」を読破したのでまとめます。手短に感想を述べさせてもらうと**片手間で読むには少しヘビーですが、内容が濃くて Typescript にディープダイブしたい人向けの良書**です。巻末にまとめられている内容がとても勉強になりました。
+
+> [プログラミング TypeScript ―スケールする JavaScript アプリケーション開発](https://www.amazon.co.jp/%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%83%9F%E3%83%B3%E3%82%B0TypeScript-%E2%80%95%E3%82%B9%E3%82%B1%E3%83%BC%E3%83%AB%E3%81%99%E3%82%8BJavaScript%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E9%96%8B%E7%99%BA-Boris-Cherny/dp/4873119049/ref=sr_1_1?__mk_ja_JP=%E3%82%AB%E3%82%BF%E3%82%AB%E3%83%8A&dchild=1&keywords=%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%83%9F%E3%83%B3%E3%82%B0+typescript&qid=1587723730&sr=8-1)
+
+モジュールや型宣言周りについては[以前も記事](https://www.mushroom-blog.com/325/)にしたので、Typescript のモダン型システムについて振り返りできるようにまとめを残しておくことにします。
+
+## 型
+
+まずは Typescript で利用できる型を理解し、その型階層構造についてまとめられた以下の最高の図を抑えるべきです。
+
+![](https://www.mushroom-blog.com/wp-content/uploads/2020/04/typescriptの型階層構造.png)
+
+#### unknown について
+
+以下 Typescript での unknown の挙動まとめです。
+
+- 値を unknown と推論することはない
+- unknown 型の値を使うことを許可しない
+- unknown 型は値と比較することはできる
+
+#### 基本型の４つの宣言方法とリテラル型
+
+boolean, string, number には以下の４つの宣言方法があります。
+
+1. 値の型を推論させる
+2. const を使ってリテラル型を推論させる
+3. 明示的に値を宣言する
+4. 明示的にリテラル型の値を宣言する
+
+```ts
+// 1. 値の型を推論させる
+let a = true; // boolean
+let b = 'hello'; // string
+let c = 24; // number
+// 2. constを使ってリテラル型を推論させる
+const d = false; // false
+const e = 'good'; // 'good'
+const f = 32; // 32
+// 3. 明示的に値を宣言する
+let g: boolean = true; // boolean
+let h: string = 'yeah'; // string
+let i: number = 48; // number
+// 4. 明示的にリテラル型の値を宣言する
+let j: false = false; // false
+let k: 'wow' = 'wow'; // 'wow'
+let l: 60 = 60; // 60
+
+//リテラル型にはその値以外の代入は許されない
+j = true; // Type 'true' is not assignable to type 'false'.
+k = 'hey'; // Type '"hey"' is not assignable to type '"wow"'.
+l = 72; // Type '72' is not assignable to type '60'.
+```
+
+リテラル型とは**ただ１つの値だけを表す型**のことです。束縛力の強い型表現が可能になります。
+
+#### オブジェクトの表現方法
+
+オブジェクトリテラル表記でキーの値の型を明示するか、object 型でオブジェクトであることのみを伝えるのかのどちらかで表すと良いです。**インデックスシグネチャは型 T のすべてのキーは型 U の値を持たなければならず、より多くのキーを含む可能性があること**を表現します。
+
+```ts
+// オブジェクトリテラル表記
+let x: {
+  a: number;
+  b?: string;
+  [key: string]: boolean; // インデックスシグネチャ
+};
+
+x = { a: 2020, b: 'test', John: true, Bob: false };
+
+// object型
+let y: object;
+```
+
+#### null, undefined, never, void の違い
+
+void と never は関数の戻り値に使います。違いについては以下の表通り
+
+| 型        | 意味                             |
+| --------- | -------------------------------- |
+| null      | 値が欠如している型               |
+| undefined | あるものがまだ定義されていない型 |
+| never     | 決して戻ることのない関数の型     |
+| void      | 何も返さない関数の戻り値の型     |
+
+never はエラーをスローしたり、無限ループする関数で使われますが、実用性は少なさそうです。
+
+## 関数
+
+#### 型シグネチャ(呼び出しシグネチャ)
+
+関数の型を示す構文。型レベルのコードだけを記述する`type`という型エイリアスで定義します。
+完全記法で関数をオーバーロードすることで複数の呼び出し方法を定義できます。
+
+```ts
+//省略記法
+type Log = (message: string, userId?: string) => void;
+
+//完全記法
+type Log = {
+  (message: string, userId?: string): void;
+};
+
+let log1: Log = (message, userId) => {
+  console.log('log1:' + message + ' user#' + userId);
+};
+log1('call', '123');
+
+//オーバーロード
+type Log = {
+  (message: string): void;
+  (message: string, userId?: string): void;
+};
+//オーバーロードされた関数の型を呼ぶ場合は、具体的に宣言する
+let log2: Log = (message: string, userId?: string) => {
+  console.log('log2:' + message + ' user#' + userId);
+};
+log2('call', '123');
+```
+
+#### ジェネリック型
+
+ジェネリック型の定義は**明示的に宣言する方法**と**関数の引数の型から推論させる方法**の２種類があります。
+
+```ts
+// 1.明示的に宣言する
+type Filter<T> = {
+  (array: T[], f: (item: T) => boolean): T[]
+}
+let filter: Filter<number> = (array, f){...} //関数定義時にTはnumberであると宣言
+filter([1,2,3], _ => _ > 2)
+
+// 2.関数呼び出し時に、関数の引数の型からジェネリック型を推論させる
+type Filter = {
+  <T>(array: T[], f: (item: T) => boolean): T[]
+}
+let filter: Filter = (array, f){...}
+filter([1,2,3], _ => _ > 2) //引数からTはnumberと推論
+```
+
+以下のように`=`や`extends`を用いてジェネリック型のデフォルトの型を指定したり、型を制約したりできます。
+
+```ts
+type MyEvent<T extends HTMLElement = HTMLElement> = {
+  target: T;
+  type: string;
+};
+```
+
+## クラス
+
+Typescript 独特のクラスの特徴を押さえておきます。
+
+- クラス内で定義した関数の**戻り値の型として this(つまりクラス自体)を使用できる**。
+- クラスを**名前的ではなく、構造的に型付け**する。つまり、クラス名が異なっても構造的に同じであれば、割当て可能。
+- **同じ名前の値と型の宣言が可能**。Typescript は値と型を文脈的に解決することが可能。
+
+## インターフェース
+
+type(型エイリアス)と同じで、型に名前をつける方法。基本的にインターフェースで定義したメソッドはクラスですべて実装する必要があります。
+
+#### 👉 interface(インターフェース)と type(型エイリアス)の違い
+
+- 型エイリアスの方が右辺に「&」や「|」などの型演算子が使えて汎用的である。
+- 拡張する場合、インターフェースは extends を用いて拡張先が拡張元を拡張できるかをチェックするのに対し、型エイリアスは拡張元と拡張先の型を&で結合してオーバロードしてくれる(つまり、型の拡張は type の方が柔軟)
+- インターフェースには**宣言のマージ**がある。同じスコープに同じ名前のインタフェースがある場合、自動でマージしてくれる。
+
+## 型演算子まとめ
+
+Typescript で頻出の型演算子をまとめました。
+
+#### `typeof`...型を取得する。評価できる型は、'string' | 'number' | 'boolean' | 'symbol' | 'undefined' | 'object' | 'function'のいずれか。
+
+```ts
+console.log(typeof 'hello' === 'string'); // true
+console.log(typeof 123 === 'string'); // false
+```
+
+#### `instanceof`...左辺が、右辺で定義したクラスのインスタンスかどうかを評価する。
+
+```ts
+console.log(animal instanceof Animal); // true
+console.log(person instanceof Animal); // false
+```
+
+#### `keyof`...オブジェクトのすべてのキーを取得できる
+
+```ts
+type ApiResponse = {
+  user: {
+    userId: string;
+    friendList: {
+      count: number;
+      friends: {
+        firstName: string;
+        lastName: string;
+      }[];
+    };
+  };
+};
+
+// Type[field]でオブジェクトの型を取得できる(ルックアップ型)
+type ResponseKeys = keyof APIResponse; // 'user'
+type UserKeys = keyof APIResponse['user']; // 'userId' | 'friendList'
+type FriendListKeys = keyof APIResponse['user']['friendList']; // 'count' | 'friends'
+```
+
+#### `is`...型ガード。boolean を返す関数において、絞り込みを引き継ぐ。
+
+```ts
+function isString(a: unknow): a is string {
+  return typeof a === 'string';
+}
+
+if (isString(input)) {
+  // もし`a is string`が`boolean`だとエラーになる
+  formattedInput = input.toUpperCase(); //inputはstringであると断定されている
+}
+```
+
+#### `as`...型アサーション。その名の通り型を断定する。
+
+```ts
+// inputは文字列だと断定される
+function formatInput(input: string) {
+  /*...*/
+}
+function getUserInput(): string | number {
+  /*...*/
+}
+
+let input = getUserInput();
+formatInput(input as string); // inputはnumberではなく、stringであると断定
+```
+
+#### `!`...非 null アサーション。**型の後**に「!」をつけることで null ではないことを断定する
+
+```ts
+type Dialog = {
+  id?: string
+}
+
+function removeDialog(element: Element) {
+  ...
+}
+
+function closeDialog(dialog: Dialog) {
+  if(!dialog.id){
+    return true
+  }
+  removeElement(
+    document.getElementByID(dialog.id!)! //Elementはnullではないことを断定
+  )
+}
+```
+
+## 標準の型ユーティリティ(レコード型、マップ型、条件型)
+
+最後にいくつかのを型ユーティリティ紹介します。
+
+Typescript には組み込みで型を定義したり、拡張させる型ユーティリティがあります。
+
+レコード型とは、マップを対応づけるための表現型です。  
+マップ型とは、対応づけをさらに強化して、値の型に制約を与えるのに便利な型です。  
+条件型とは、型の絞り込むのに便利な型です。
+
+| 型ユーティリティ     | 説明                                                               |
+| -------------------- | ------------------------------------------------------------------ |
+| Record<Keys, Values> | Key 型のキーと Values 型の値を持つオブジェクト                     |
+| Partial<Object>      | オブジェクト内のすべてのフィールドを省略可能にする                 |
+| Required<Object>     | オブジェクト内のすべてのフィールドを必須にする                     |
+| Readonly<Object>     | オブジェクト内のすべてのフィールドを読み取り専用に指定する         |
+| Pick<Object, Keys>   | 指定された Keys だけを持つ、オブジェクトのサブタイプを返す         |
+| Exclude<T, U>        | T には含まれているが、U には含まれていない型を計算する             |
+| Extract<T, U>        | T に含まれている型のうち、U に割り当てることのできるものを計算する |
+| NonNullable<T>       | T から null と undefined は除外して返す                            |
+| ReturnType<F>        | 関数の型から戻り値の型を返す                                       |
+| InstanceType<C>      | クラスの型からインスタンスの型を返す                               |
+
+> 追記: 以下の記事がよくまとまっています
+> https://qiita.com/k-penguin-sato/items/e2791d7a57e96f6144e5

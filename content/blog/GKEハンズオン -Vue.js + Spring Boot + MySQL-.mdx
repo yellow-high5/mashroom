@@ -1,0 +1,284 @@
+---
+date: 2019-12-28T16:34:38.000+00:00
+title: GKEハンズオン -Vue.js + Spring Boot + MySQL-
+thumbnail: 'https://res.cloudinary.com/dso4npatn/image/upload/v1646834503/media/blog/thumbnail/GKE%E3%83%8F%E3%83%B3%E3%82%B9%E3%82%99%E3%82%AA%E3%83%B3-Vue.js_Spring_Boot_MySQL-_ow8hsx.png'
+tag:
+  - 実装ネタ帳
+  - インフラ構築
+---
+
+Kubernetes について学んだことのアウトプットとして自分で簡単な MVC アプリ(Vue.js + Spring Boot + MySQL)を GKE にデプロイしてみました。以下にソースコードアップしてます。(期待通りの動きしなかったら Github 上で教えてください)  
+ソースコードを見れば動きは大抵分かりますが、作成した中での設計ポイントについて以下解説していきます。シンプルな MVC アーキテクチャですが、ドキュメントには設計方針的な部分がまとめて書かれていないので、自分も迷った部分などをシェアハピできれば嬉しいです。
+
+> [GitHub - yellow-high5/easy-mvc-gke: Easy MVC Application for Google Kubernetes Engine](https://github.com/yellow-high5/easy-mvc-gke)
+
+## 設計した流れ
+
+「開発環境では Docker 環境上で実行できる(`docker-compose up`一発で立ち上げ)。本番環境ではシェルスクリプト一発で GKE 上にアプリケーションをデプロイして実行できる」という理想を念頭に置いて設計しました。
+ローカル上では DB コンテナを簡単に立てて OK ですが、GKE 上では永続化するストレージはきちんと Kubernetes クラスターの外部に持っておくことが一般的のようです。詳しくは[コンテナ運用のおすすめの方法](https://cloud.google.com/solutions/best-practices-for-operating-containers?hl=ja)にも記載されていますが、コンテナ内部をステートレスに保つことが重要になってきます。また、永続ストレージにアクセスするためのユーザー名やパスワードは[シークレットリソース](https://cloud.google.com/kubernetes-engine/docs/concepts/secret?hl=ja)で定義しておきます。
+
+<img
+  width="911"
+  alt="image.png"
+  src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/122992/3c09ec17-a062-ef23-d5a2-70ff6e3c69a7.png"
+/>
+
+配置構成については、Redis などのキャッシュ用途が強く、コンテナと結合度が高いコンポーネントがあったりすると配置が変わってくるかもしれません...。
+
+### ローカル環境
+
+ローカル環境での構築は、ごく普通に各アプリのフォルダごとに Dockerfile をビルドして実行する docker-compose.yml を作成していくだけです。
+
+#### Dockerfile の記述
+
+それぞれ[Vue.js のコンテナ化](https://jp.vuejs.org/v2/cookbook/dockerize-vuejs-app.html)と[SpringBoot のコンテナ化](https://spring.io/guides/gs/spring-boot-docker/)についてのドキュメントが非常に分かりやすいです。npm は[マルチステージビルド](https://docs.docker.com/develop/develop-images/multistage-build/)を利用しており、SpringBoot は事前にシェル上でビルドしてからコンテナ化しているケースが紹介されています。
+
+Vue.js はビルドして静的コンテンツとして NGINX にデプロイしてしまうと、API への URL などは動的に変更できなくなるのでビルド段階で環境変数を渡しておくようにします。
+
+```Dockerfile:Vue.jsのマルチステージビルド
+# ビルド環境
+FROM node:lts-alpine as build-stage
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+ARG API_PATH
+ENV VUE_APP_API_ORIGIN=${API_PATH}
+RUN npm run build
+
+# 本番環境(NGINX)
+FROM nginx:stable-alpine as production-stage
+COPY --from=build-stage /app/dist /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+Cloud Shell は起動時にすでに mvn コマンドまたは gradle コマンドがあるので、本番実行用のシェルスクリプトに mvn, gradle が使えちゃいます。自分はこれを知らず、「Cloud Shell に mvn をインストールするのはダルい」と勘違いしていて、SpringBoot の Dockerfile でマルチステージビルドを利用しています。Java は npm と違ってビルド時間が長いので、もしかしたらシェル上でビルドした方が良かったのかもしれません。どちらにせよ、ビルドをコンテナでするか、シェル上でするかの違いになります。
+
+```Dockerfile:SpringBootのマルチステージビルド
+# ビルド環境
+FROM maven:3.6-jdk-8 as build-stage
+WORKDIR /app
+COPY src /app/src
+COPY pom.xml /app
+RUN mvn install
+
+# 本番環境
+FROM openjdk:8-jdk-alpine
+COPY --from=build-stage /app/target/*.jar app.jar
+COPY wait-for ./
+RUN chmod 700 ./wait-for
+# ローカル環境では、docker-composeのentrypointに上書きされる
+ENTRYPOINT ["java","-Dspring.profiles.active=gke","-jar","app.jar"]
+
+# mvnがインストールされているならmvn install実行後に以下でDockerビルドした方が早い
+# FROM openjdk:8-jdk-alpine
+# VOLUME /tmp
+# ARG JAR_FILE=target/*.jar
+# COPY ${JAR_FILE} app.jar
+# ENTRYPOINT ["java","-Dspring.profiles.active=gke","-jar","app.jar"]
+
+```
+
+DB 接続情報については、Spring Boot の定義ファイルの resources フォルダ配下の application.yml(application.properties)に記載します。docker で構築する場合と gke で構築する場合で接続情報を分けておき、`-Dspring.profiles.active`プロパティで起動環境を指定する形にしています。
+
+#### コンテナ間の接続
+
+あとはコンテナ構築で厄介になるのが ①Client-API 間、②API-DB 間のコネクションです。
+① については、ソースコードを見てもらうとわかると思いますが、環境変数で定義して繋いでいます。
+
+```yaml
+client:
+  build:
+    context: ./vuejs-app-gke/.
+    args:
+      - API_PATH=http://localhost:8080
+  container_name: vuejs
+  environment:
+    NODE_ENV: development
+  ports:
+    - '80:80'
+  networks:
+    - frontend
+```
+
+② については、DB が起動してからでないとアプリ側のコネクションエラーが発生してしまうので、DB の準備完了まで待つように wait-for-it や dockerize のようなラッパー用のスクリプトを利用するべきらしく、自分は[このスクリプト](https://github.com/eficode/wait-for)を使ってます。`depends_on`などの docker-compose 上で依存関係を指定していても、DB 起動までは待ってくれても DB 準備完了までは待ってくれないようです。
+
+```yaml
+api:
+  build: ./springboot-app-gke/.
+  container_name: springboot
+  depends_on:
+    - 'database'
+  # DockerfileにあるENTRYPOINTを上書きしている
+  entrypoint: sh -c "./wait-for database:3306 -t 60 -- java -Dspring.profiles.active=docker -jar app.jar"
+  ports:
+    - '8080:8080'
+  networks:
+    - frontend
+    - backend
+```
+
+> [Compose の起動順番を制御 — Docker-docs-ja 17.06.Beta ドキュメント](http://docs.docker.jp/compose/startup-order.html)
+
+### GKE
+
+Kubernetes クラスターの作成からクラスターへのアプリデプロイまでの大まかな流れは以下の感じでした。
+Kubernets Engine API と Service Networking API を Enabled にする必要があります。
+
+**1. VPC ネットワーク作成**
+**2. サブネット作成**
+**3. ファイアウォール設定**
+**4. Kubernetes クラスターを作成**
+**5. VPC ネットワーク内で IP アドレス範囲を割り当てる**
+**6. プライベート接続の作成**
+**7. CloudSQL MySQL インスタンス(プライベート IP アドレス割り当て)の作成**
+**8. YAML ファイル書き換え**
+**9. ConfigMap を作成**
+**10. API(SpringBoot)イメージをビルド&プッシュ**
+**11. kubectl でバックエンド用のリソースを適用**
+**12. フロントエンド(Vue.js)イメージをビルド&プッシュ**
+**13. kubectl でフロントエンド用のリソースを適用**
+
+**1-7**については、GCP の一般的なドキュメントを読めば書いてあることを実行していくだけなので詳細は省略します。  
+ポイントとしては CloudSQL 用のプライベート IP を取得するところだと思います。ローカルではコンテナをホストに公開して開発を行った方が良いですが、本番の GCP 内部では DB へのアクセスはプライベート IP を使って接続するのが一般的です。  
+また、今回 GKE 上に作った API は外部公開されてしまう仕様となっていますが、内部 API として公開するには[Cloud IAP for GKE の有効化](https://cloud.google.com/iap/docs/enabling-kubernetes-howto?hl=ja)が必要になるようです。
+
+**8-13**については、Kuberntes 上でアプリ構築とそれに対するリソースを定義を行っています。プロジェクト構成は manifests フォルダに各リソースの YAML ファイルを作り、サービス単位(Frontend と Backend)でそれらをまとめたものを all-in-one フォルダに格納しています。  
+バックエンドサービスが先に立ち上がって IP を確立してくれないと、フロントエンドのアクセスする対象の IP が見つからなくなるので、シェル内での実行順序は試行錯誤しました。
+
+#### イメージビルドと GCR ヘプッシュ
+
+Dockerfile をビルドしてプッシュするには、GKE のチュートリアルだと[`gcloud builds submit`](https://cloud.google.com/sdk/gcloud/reference/builds/submit)コマンドを使って構築しているケースがよく見られましたが、今回は docker コマンドを使ってます。理由はフロントエンドビルド時に API の URL を`--build-arg`で渡したかったからです。`gcloud builds submit`でも Dockerfile に変数を渡せるのであれば、ぜひ知りたいです...。
+
+```shell
+# echo "=> STEP10: Build and Push Container Image -Backend-"
+docker build --tag gcr.io/${PROJECT_ID}/springboot-app-gke springboot-app-gke
+docker push gcr.io/${PROJECT_ID}/springboot-app-gke
+
+# echo "=> STEP12: Build and Push Container Image -Frontend-"
+docker build --build-arg API_PATH=http://${API_SERVICE_IP}:${API_SERVICE_PORT} --tag gcr.io/${PROJECT_ID}/vuejs-app-gke vuejs-app-gke
+docker push gcr.io/${PROJECT_ID}/vuejs-app-gke
+```
+
+#### ワークロードとサービスの定義
+
+Pod をデプロイするリソースをワークロードと呼んでいます。ReplicationController を使って、フロントエンドもバックエンドもそれぞれ 3 つの Pod を立てるようにしています。
+
+```yaml:フロントエンドのワークロード定義
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: frontend
+spec:
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app:  easy-mvc
+        tier: frontend
+    spec:
+      containers:
+      - name: vue
+        image: gcr.io/YOUR_PROJECT_ID/vuejs-app-gke
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        ports:
+        - containerPort: 80
+```
+
+ワークロードの作成が終わったら、外部からの接続ができるようにサービスを定義します。`spec.selector.app`で先ほど建設したワークロードを指定してあげれば、あっという間に外部 IP を取得してくれます。
+
+```yaml:フロントエンドのサービス定義
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  labels:
+    app: easy-mvc
+    tier: frontend
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+  selector:
+    app: easy-mvc
+    tier: frontend
+```
+
+あとは`kubectl apply -f`を使えば、リソースが作成されます。GUI コンソール上でも作成できますが、やはり作成には yaml ファイルを自分で用意してコマンドを叩いた方が楽だと思います。GUI コンソールは、作成したリソースの確認に使うのが良いでしょう。
+
+#### Secret と ConfigMap
+
+[Secret オブジェクト](https://cloud.google.com/kubernetes-engine/docs/concepts/secret?hl=ja)と[ConfigMap オブジェクト](https://cloud.google.com/kubernetes-engine/docs/concepts/configmap?hl=ja)については、ドキュメントでも説明されていますが、シンプルに以下のような棲み分けで考えました。
+
+| Secret                          | ConfigMap                  |
+| ------------------------------- | -------------------------- |
+| 機密度が高い DB 認証や SSL 認証 | Pod 実行に必要な引数や変数 |
+
+Secret リソースの定義には、パスワードを base64 でエンコードして Key-Value 形式で保存します。
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: easy-mvc-secret
+type: Opaque
+data:
+  # base64で暗号化している
+  mysql_username: c3ByaW5nYm9vdA== # => springboot
+  mysql_password: cEBzc3cwcmQ= # => p@ssw0rd
+```
+
+Secret や ConfigMap に保存した情報をワークロード定義ファイルから参照する場合は、secretKeyRef や configMapKeyRef などのプロパティを指定してあげます。
+
+```yaml:バックエンドのワークロードから情報を参照する
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: backend
+spec:
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app:  easy-mvc
+        tier: backend
+    spec:
+      containers:
+      - name: springboot
+        image: gcr.io/YOUR_PROJECT_ID/springboot-app-gke
+        env:
+        - name: CLOUDSQL_MYSQL_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: db.host
+        - name: CLOUDSQL_MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: easy-mvc-secret
+              key: mysql_username
+        ...
+
+        [省略]
+
+```
+
+## 感想
+
+GKE は開発するのにとにかく使いやすいです。Kubernetes の学習コストを高く感じる人は、GKE 上で手を動かして理解していくことをオススメします。  
+個人的に作っていて悩まさせられたのは、環境変数の受け渡しと、ローカル/本番共通して使える Dockerfile の定義です。  
+環境変数の受け渡しの部分をシェルスクリプトや docker-compose での上書きや、ConfigMap/Secret リソースの作成で対応せねばならないのがなかなかに考えさせられます。ここら辺のコンテナ間接続(あるいはコンテナ-インスタンス間接続)がシンプルにできると嬉しいのになと思うことはあります。環境変数については、DI コンテナのようにシングルトンな設計が実現できてくれれば嬉しいのですが、自分が知らないだけでベストプラクティスがあるのでしょうか...?
+
+ちなみに今回構築した Pod がどんな感じで配置されていたのか絵にしてみたら、こんな感じでした。
+
+<img
+  width="905"
+  alt="image.png"
+  src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/122992/fa7d7c01-9beb-10cf-407f-9d239e75df9d.png"
+/>
+
+アプリをデプロイするだけだと、GKE の圧倒的な抽象力に怠けて Kubnernetes のオーケストレーション機能をあまり深く見れませんでした。アクセス負荷などの実験ができれば、Kubernetes が真価を発揮しそうなのでまた記事書けるように勉強します。

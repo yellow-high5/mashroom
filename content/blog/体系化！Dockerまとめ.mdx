@@ -1,0 +1,251 @@
+---
+date: 2018-10-04T21:42:00.000+00:00
+title: 体系化！Dockerまとめ
+thumbnail: 'https://res.cloudinary.com/dso4npatn/image/upload/v1646834505/media/blog/thumbnail/%E4%BD%93%E7%B3%BB%E5%8C%96_Docker%E3%81%BE%E3%81%A8%E3%82%81_spzjwl.png'
+tag:
+  - インフラ構築
+---
+
+コンテナ技術、Docker について学習したことを一直線の知識としてわかるように自分なりにまとめてみたので、参考になればぜひ！
+
+## Docker そもそも論
+
+コンテナ技術はよく仮想環境と比較されることが多いようですが、ウェブサーバー、アプリケーションサーバー、データベースサーバーの３階層システムで考えるとわかりやすいかと思います。
+
+![](https://camo.qiitausercontent.com/903e2f909b2d0fd93ade2ad86db5288a3c965d05/68747470733a2f2f71696974612d696d6167652d73746f72652e73332e616d617a6f6e6177732e636f6d2f302f3132323939322f61666436386163662d626333362d343064642d666562392d3962626365346434343866612e706e67)
+
+システムを構築するのに従来は、各サーバーごとにインフラ、OS、ミドルウェア、アプリと構築していましたが、仮想化の登場で１台のサーバーで３階層を構築することが可能になりました。そして、Docker の登場で仮想化よりも管理するレイヤーが減り、ミドルウェアとアプリの２層だけになりました。この２層をコンテナとして DockerEngine は管理しています。さらに、Docker はこのコンテナをコードで管理しているのです。
+
+### Immutable Infrastructure
+
+一度セットアップしたサーバーには二度と変更を加えないという Docker の運用概念です。  
+この概念のおかげでコンテナ内は不変のサーバー基盤環境として動作するので、開発者にとっては利便性が増します。
+
+## コンテナの具体像
+
+コンテナとはいわば「**サンドボックス化されたプロセスの集合体**」です。  
+(サンドボックスは本来外部プログラムの安全性を確かめるための保護された領域のことを指します。)
+コンテナ内は隔離されており、その内部でプロセスが実行されています。
+
+![](https://camo.qiitausercontent.com/6357e210e159a41313e5be4cf7f47dd69b222149/68747470733a2f2f71696974612d696d6167652d73746f72652e73332e616d617a6f6e6177732e636f6d2f302f3132323939322f33353461373662352d616539652d656361642d306133362d3236646338333865316563342e706e67)
+
+実際にコンテナの中身を覗いてみると、ファイルシステムが存在しています。
+
+```bash
+$ docker exec -it コンテナ名 ls /
+
+#実行結果
+bin    etc    lib    mnt    root   sbin   sys    usr
+dev    home   media  proc   run    srv    tmp    var
+```
+
+## コンテナができるまで
+
+![](https://camo.qiitausercontent.com/460143a543d1f09a48c2e460bebca9d9d82db735/68747470733a2f2f71696974612d696d6167652d73746f72652e73332e616d617a6f6e6177732e636f6d2f302f3132323939322f33323664636439392d646565622d623439652d313066662d3664386430613962373636362e706e67)
+
+コンテナの生成には大きく分けて２パターンあります。
+
+一つは、**DockerHub からイメージを引っ張る**方法。DockerHub では、世界中の人々が作ったコンテナ環境が公開されています。Apache や MySQL など、有名どころのミドルウェア・ソフトウェアの環境をローカルにイメージとしてダウンロードして、docker run のコマンドでコンテナを作成することができます。
+
+もう一つは、自分でオリジナルな環境を構築したい(たとえば、自分でパッケージを厳選してダウンロードしたり、コンテナ起動時にはあるコマンドを実行したり)という場合に**Dockerfile を記述**して、それを docker build のコマンドでイメージにしてコンテナを作る方法です。
+
+以下は[チュートリアル](http://docs.docker.jp/get-started/part2.html)で使われていた Dockerfile です。python:2.7-slim という親イメージをもとにオリジナルのコンテナ環境を作成しています。
+
+> [Dockerfile のベストプラクティス — Docker-docs-ja 1.9.0b ドキュメント](http://docs.docker.jp/engine/articles/dockerfile_best-practice.html)
+
+```dockerfile:Dockerfile
+# 公式 Python ランタイムを親イメージとして使用
+FROM python:2.7-slim
+
+# 作業ディレクトリを /app に設定
+WORKDIR /app
+
+# 現在のディレクトリの内容を、コンテナ内の /app にコピー
+ADD . /app
+
+# requirements.txt で指定された必要なパッケージを全てインストール
+RUN pip install -r requirements.txt
+
+# ポート 80 番をコンテナの外の世界でも利用可能に
+EXPOSE 80
+
+# 環境変数の定義
+ENV NAME World
+
+# コンテナ起動時に app.py を実行
+CMD ["python", "app.py"]
+```
+
+詳しい Dockerfile の書き方については、[Dockerfile リファレンス](http://docs.docker.jp/engine/reference/builder.html)を参照にしてください。
+
+## 複数コンテナの管理
+
+![](https://camo.qiitausercontent.com/02b416ab6aeea92eddcdd3130a1558ff051a22bb/68747470733a2f2f71696974612d696d6167652d73746f72652e73332e616d617a6f6e6177732e636f6d2f302f3132323939322f66323964633535642d373865612d323636302d313532372d3030343730633066373135382e706e67)
+
+### Docker Compose
+
+複数のコンテナを起動するのに、１コンテナずつ起動していては面倒なので、docker-compose コマンドを利用しましょう。docker-compose コマンドは**YAML 形式で定義されたファイルをもとに**複数コンテナを起動します。
+
+以下は Django(Python のフレームワーク)アプリを起動するための YAML ファイルです。([参照](http://docs.docker.jp/compose/django.html))
+db コンテナはイメージから直接引っ張ってきています。また、web コンテナは Dockerfile をもとに起動しています。
+
+`docker-compose.yml`
+
+```yaml
+version: '2'
+services:
+  db:
+    #DockerHubからpostgresイメージからコンテナを起動
+    image: postgres
+  web:
+    #カレントディレクトリにあるDockerfileをもとにコンテナを起動
+    build: .
+    #コンテナ起動時のコマンド
+    command: python manage.py runserver 0.0.0.0:8000
+    #カレントディレクトリを/codeにマウント
+    volumes:
+      - .:/code
+    #ポートを公開する(ホスト:コンテナ)
+    ports:
+      - '8000:8000'
+    #dbへのコンテナ間通信を可能にする
+    links:
+      - db
+```
+
+> 詳しい docker-compose.yml の書き方:[docker-compose.yml リファレンス](https://qiita.com/zembutsu/items/9e9d80e05e36e882caaa)
+
+## Docker ネットワーク
+
+> [Compose のネットワーク機能 — Docker-docs-ja 17.06.Beta ドキュメント](http://docs.docker.jp/compose/networking.html)  
+> [マルチホストでの Docker Container 間通信 第 1 回: Docker ネットワークの基礎 - UZABASE Tech Blog](https://tech.uzabase.com/entry/2017/08/07/172411)  
+> [マルチホストでの Docker Container 間通信 第 2 回 Port Forwarding と Overlay Network - UZABASE Tech Blog](https://tech.uzabase.com/entry/2017/08/23/175813)  
+> [マルチホストでの Docker Container 間通信 第 3 回: Kubernetes のネットワーク(CNI, kube-proxy, kube-dns) - UZABASE Tech Blog](https://tech.uzabase.com/entry/2017/09/12/164756)
+
+### コンテナ間ネットワークについて
+
+![](https://camo.qiitausercontent.com/1a7c897592856bb8f5701263dbb2839819d60ba6/68747470733a2f2f71696974612d696d6167652d73746f72652e73332e61702d6e6f727468656173742d312e616d617a6f6e6177732e636f6d2f302f3132323939322f63623666376666372d623835642d316138362d313662372d3562653634666339303235662e706e67)
+
+IP マスカレード(NAPT)…１つのグローバル IP アドレスを複数のプライベート IP アドレスと紐づけて変換する機能。
+
+#### 基本
+
+- docker-compose の場合、同一ホスト上に存在するコンテナはデフォルト上のネットワーク(ディレクトリ名\_default)で docker0 というブリッジ(bridge)を介して、すべてのコンテナ間で通信ができるようになります。ブリッジは外部通信との架け橋にもなります。ネットワーク確認コマンド`docker network ls`で見つけられる標準のネットワークは以下 3 つです。
+
+1. none...外部ネットワークなし。
+2. host...Docker ホストと同じ IP アドレス、インタフェースを持つ。
+3. bridge...Docker ホストとは異なる内部ネットワークを構築し、veth で docker0 インタフェースと Docker ホストのインターフェースと接続する。
+
+> [Docker network 概論 - Qiita](https://qiita.com/TsutomuNakamura/items/ed046ee21caca4a2ffd9)
+
+- コンテナに割り振られた IP アドレスは起動するたびに異なりますが、コンテナのホスト名で指定することで名前解決して通信を行えるようになります。
+
+- `ports`で指定した場合は Docker ホスト側のネットワークインターフェースからもアクセス可能です。
+
+- `links`を使えばコンテナのホスト名にエイリアスを割り当てることが可能です。
+
+### ネットワークをカスタマイズする
+
+> [Docker ネットワーク・プラグイン — Docker-docs-ja 17.06.Beta ドキュメント](http://docs.docker.jp/engine/extend/plugins_network.html)
+
+ドライバーを適用してオリジナルのネットワークを作成することができます。
+ドライバーのデフォルトは単一ホスト上なら bridge, Swarm 上であれば overlay を使うと良いそうです。
+(ネットワーク・プラグインを使えば DockerEngine が拡張されて、プラグインを使ったネットワークを構築することができるらしい…)
+
+`dockerネットワークを作成してそのネットワークでコンテナを動かす`
+
+```bash
+# カスタムネットワークを作成
+$ docker network create --driver [ドライバー名] [ネットワーク名]
+# コンテナをそのネットワークで動かす
+$ docker run --net=[ネットワーク名]
+```
+
+#### docker-compose でカスタム・ネットワーク設定
+
+基本的にディレクトリ名\_default でネットワークを作成することができます。
+それでも、オリジナルでネットワークを作成した場合は以下のサンプルを参照にしてください。
+
+```yaml
+version: '2'
+
+services:
+  proxy:
+    build: ./proxy
+    networks:
+      - front
+  app:
+    build: ./app
+    networks:
+      - front
+      - back
+  db:
+    image: postgres
+    networks:
+      - back
+
+networks:
+  front:
+    # Use a custom driver
+    driver: custom-driver-1
+  back:
+    # Use a custom driver which takes special options
+    driver: custom-driver-2
+    driver_opts:
+      foo: '1'
+      bar: '2'
+```
+
+> [Compose ファイル・リファレンス](http://docs.docker.jp/compose/compose-file.html#network-configuration-reference)
+
+### マルチホストでコンテナを管理する
+
+![](https://camo.qiitausercontent.com/3d5e79346ce10d20545078675a0795e90b36e00b/68747470733a2f2f71696974612d696d6167652d73746f72652e73332e61702d6e6f727468656173742d312e616d617a6f6e6177732e636f6d2f302f3132323939322f31653764316562632d343165392d303562392d356261362d3661343139643131363934322e706e67)
+
+Docker ネットワークはプライベートネットワークのため、異なるホストにあるコンテナには通常アクセスすることができません。
+参考にさせていただいた記事では対応策としては以下が挙げられていました。
+
+- Port Forwarding...**接続元の Container が接続先の Container のホストの IP を知っている**ことが前提
+- Overlay Network...Overlay Network 構築して同じネットワークに属するようにする
+- [flannel](https://github.com/coreos/flannel)...**ホストに動的 IP が割り振られている場合は適用不可**
+
+ただどれもイマイチなので、  
+=> Kubernetes の登場へと続く…  
+Docker Swarm も Kubernetes と同じく、複数の Docker 環境を管理できるオーケストレーションツールです。環境のスケールをより効率的に行うことができますが、Kubernetes の方が優勢です。
+
+以下の記事で Docker Swarm の具体的なイメージがつかめるかと思います。
+
+> [Docker Swarm 入門ハンズオン](https://qiita.com/TsutomuNakamura/items/6124ab7d32a58bc93ac7)
+
+## あらゆる環境で Docker Engine を動かす
+
+### Docker Machine
+
+Docker を利用するためには、各種 OS、クラウド環境に Docker Engine が必要です。Docker Machine は "利用するホスト環境に Docker Engine を導入するためのツール"のことです。
+
+**_ローカルで Docker を実行したい_**
+![](https://camo.qiitausercontent.com/ff8bd0e46480554022b2ba5d2b166eead24de4e2/68747470733a2f2f71696974612d696d6167652d73746f72652e73332e616d617a6f6e6177732e636f6d2f302f3132323939322f30333466343539352d346539642d663630632d613234652d3931663538363961396530612e706e67)
+
+**_リモート・システム上に Docker ホストをプロビジョンしたい_**
+![](https://camo.qiitausercontent.com/edba11b14739e918061b10bf2feba0afe3ecd54e/68747470733a2f2f71696974612d696d6167652d73746f72652e73332e616d617a6f6e6177732e636f6d2f302f3132323939322f64353538666532312d363461372d663230392d333264652d3264336330326439326438382e706e67)
+
+[Docker Machine 概要](http://docs.docker.jp/machine/overview.html)
+
+以下は Docker が使用できる AWS EC2 環境を docker-machine コマンドを用いて作成する手順です。(前提条件:アクセスキーとシークレットアクセスキーを取得するのは必須)
+
+> [Docker Machine:Amazon Web Services (AWS) EC2 の例](http://docs.docker.jp/machine/examples/aws.html)
+
+```bash
+# 1,AWS EC2環境を作成
+$ docker-machine create --driver amazonec2 --amazonec2-access-key YOUR_ACCESS_KEY --amazonec2-secret-key YOUR_SECRET_KEY  aws-test
+#2,Docker Machine環境をアクティブにする
+$ eval $(docker-machine env aws-test)
+#3,Docker Machine環境を停止する
+$ docker-machine stop aws-test
+#4,Docker Machine環境を再開する
+$ docker-machine start aws-test
+# TLS証明書を発行する
+$ docker-machine regenerate-certs aws-test
+# SSH接続する
+$ docker-machine ssh aws-test
+```

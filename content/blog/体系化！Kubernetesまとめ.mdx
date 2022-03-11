@@ -1,0 +1,518 @@
+---
+date: 2019-06-29T21:42:00.000+00:00
+title: 体系化！Kubernetesまとめ
+thumbnail: 'https://res.cloudinary.com/dso4npatn/image/upload/v1646834505/media/blog/thumbnail/%E4%BD%93%E7%B3%BB%E5%8C%96_Kubernetes%E3%81%BE%E3%81%A8%E3%82%81_sfwa5x.png'
+tag:
+  - インフラ構築
+---
+
+## Kubernetes の基本
+
+コンテナ化アプリケーションの展開、スケーリング、および管理を自動化するオーケストレーションツール。
+
+### **主な役割**
+
+- 複数サーバーでのコンテナ管理(Workloads リソース)
+- コンテナ間のネットワーク管理、負荷分散(Services,LB&Network リソース)
+- コンテナに割り当てるストレージの管理(Storage リソース)
+- コンテナリソースへのアクセス設定(Configuration リソース)
+- コンテナ、ノードの監視(Security リソース)<=[Prometheus](https://prometheus.io/)と相性良さげ
+
+### **Kubernetes におけるアプリケーション展開の流れ**
+
+![clipboard.png](https://camo.qiitausercontent.com/7261ef5c276f6ee2444fe51ae64fe4aa52bb6e3c/68747470733a2f2f71696974612d696d6167652d73746f72652e73332e61702d6e6f727468656173742d312e616d617a6f6e6177732e636f6d2f302f3132323939322f62363965616339352d643631362d326135302d363664352d6335343035633231633235382e706e67)
+
+##### １、Kubernetes クラスタの作成
+
+###### マスター
+
+クラスタの管理、アプリの展開、拡張の実行を行う。
+
+###### ノード
+
+クラスターのワーカーマシンとして動く VM または物理マシン。
+各ノードには kubelet と呼ばれるマスターと通信するエージェントが存在し、Kubernetes API を用いてマスターと通信する。
+
+##### ２、アプリのデプロイ
+
+##### ３、Kubernetes 内部を詳しく
+
+###### Pod
+
+Kubernetes プラットフォームの原子単位で、”論理ホスト”。
+共有ストレージ(ボリューム)や IP アドレスを割り当てる。
+Pod は配置されているノードに紐付き、ノードで障害が起きた場合は、クラスタ内の使用可能なノードに配置される。
+
+###### ノードと Pod
+
+Kubernetes 環境では、ノードリソース状況を判断して自動で Pod を配置する。
+
+##### ４、アプリを公開する
+
+###### Kubernetes サービス
+
+YAML ファイルで、Pod の論理セットとアクセスポリシーなどを定義する。
+
+###### レプリカセット
+
+死んだ Pod を複製する。ラベルとセレクタをサポートする。
+
+##### ５、アプリのスケーリング
+
+Pod を使用可能なリソースを持つノードに展開できる。(縮小することも可能である)
+
+##### ６、アプリのアップデート
+
+アプリのアップデートではスケーリング(複数のインスタンスを動かしていること)は最低条件。
+そうすることで Pods を段階的にアップデートして、ダウンタイムをゼロにする。( = **ローリングアップデート**)
+
+### **Kubernetes の登場人物**
+
+![clipboard.png](https://camo.qiitausercontent.com/092ac38f209f34a8f3892acdcbbab82af381034b/68747470733a2f2f71696974612d696d6167652d73746f72652e73332e61702d6e6f727468656173742d312e616d617a6f6e6177732e636f6d2f302f3132323939322f35366532383938362d303262342d623635302d373536312d6563653162653736303236312e706e67)
+
+#### kubectl
+
+開発者が kubernetes Master の API を直接叩かずに、操作するためのコマンドラインツール。
+
+#### scheduler
+
+どのノードで起動するか決まっていない Pod を検知して、Pod が起動するノードを割り当てる。
+
+#### controller-manager
+
+各種コントローラー。  
+EX:Deployment や Replicaset の状態を監視しながら、必要に応じて ReplicaSet や Pod を作成する
+
+#### etcd
+
+Kubernetes クラスタ情報を永続化して格納するための KVS。
+
+#### kubelet
+
+WokerNode 上で動作し、コンテナ(Docker)の起動、停止の管理を行う。
+
+#### kube-proxy
+
+WorkerNode 上で動作し、Pod 宛のトラフィックを正しく転送することで Pod 間の疎通を確保する。
+
+###### ~マルチホスト間におけるコンテナ通信について~
+
+Kubernetes を使ってコンテナをデプロイするときにホストを指定してデプロイすることができない。(コンテナがその時のリソース状況に応じてホストを決定するため) = デプロイされるまでコンテナの IP アドレスがわからない。
+Kubernetes では**どのホストにコンテナがデプロイされてもコンテナへ自由にアクセスできる仕組み**として`Service`がある。
+
+## Kubernetes 環境構築ツール
+
+### minikube(← ローカル環境向け)
+
+Kubernetes をローカルで実行するのを簡単にするツール。
+単純なクラスタをデプロイする軽量の Kubernetes 実装。
+
+### kubeadm
+
+Flannel を使って異なるノードの Pod 同士の通信を可能にする
+![clipboard.png](https://camo.qiitausercontent.com/15bf47dc76091e71bcdacc5ae7e2aba87975382d/68747470733a2f2f71696974612d696d6167652d73746f72652e73332e61702d6e6f727468656173742d312e616d617a6f6e6177732e636f6d2f302f3132323939322f31643032373864302d323637622d373530342d343833342d3439643238666336633038342e706e67)
+
+### [Rancher](https://rancher.com/)
+
+Rancher Server が中央集権的に Kubernetes クラスターを管理する。WebGUI によって管理できたり、異なるクラウドプロバイダーのプラットフォームを管理できたりするのがメリット。
+
+### パブリッククラウド上で行える管理ツール
+
+- — Google Kubernetes Engine
+- — Azure Kubernetes Service
+- — AWS ECS for Kubernetes
+
+クラウドコントローラーマネージャ(CCM)により、クラウドプロバイダが Kubernetes と統合できるようにしている。
+![clipboard.png](https://camo.qiitausercontent.com/734775852b7523892b44197b462b37a5af72465b/68747470733a2f2f71696974612d696d6167652d73746f72652e73332e61702d6e6f727468656173742d312e616d617a6f6e6177732e636f6d2f302f3132323939322f62663465323533642d346431622d383165652d636261362d3435336339656634376239632e706e67)
+
+[様々な環境で実験してみる](https://labs.play-with-k8s.com/)
+
+## Kubernetes で定義できるリソースまとめ
+
+KubeMaster でマニュフェストファイル(yaml)を適用する。
+**基本的にはリソースのアップデートや削除はマニュフェストファイルを変更して適用することを推奨する。**
+「現在のリソース状態」- 「適用するマニフェスト」の差分を計算してリソース変更を行う。
+
+```sh
+$ kubectl apply -f sample.yml
+```
+
+リソース操作コマンドまとめ
+
+```sh
+$ kubectl get pods
+
+$ kubectl delete -f sample.yml
+```
+
+#### リソースの種類
+
+- Workloads リソース
+- Services,LB&Network リソース
+- Storage リソース
+- Configuration リソース
+- Security リソース
+
+### Work Loads リソース
+
+リソース上位関係は以下の通り。
+
+- Pod << ReplicaSet << Deployment
+- Pod << DaemonSet
+- Pod << StatefulSet
+- Pod << Job << CronJob
+
+#### Pod
+
+1Pod 内に 1 コンテナが基本だが、異なる Port を指定することで２コンテナ以上含めることも可能。1Pod に 1 つの IP アドレスが割り当てられる。
+
+#### ReplicaSet
+
+複数の Pod を並行して作成する。 指定した数の Pod 数を常に維持する。
+
+- セルフヒーリング機能...Node, Pod に障害が発生した場合も別 Node で Pod を自動的に起動してくれる。
+
+また、Pod 数が超過した場合は Pod を削除する。そのとき Pod のラベリングをもとに Pod 数を調整する。
+
+`sample-replicaset.yml`
+
+```yaml
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+	name: sample
+spec:
+	replicas: 3
+  selector:
+		matchLabels:
+			tier: web-proxy
+	template:
+		metadata:
+		labels:
+      tier: web-proxy
+	spec:
+		containers:
+			-name: nginx-container
+			 image: nginx:1.79
+			 ports:
+				- containerPort: 80
+```
+
+#### Deployment
+
+複数の ReplicaSet を管理し、ローリングアップデート(Pod の稼動状態を維持しながら、順番に Pod をアップデートする仕組み)やロールバックを実行するためのリソース。
+
+`sample-deployment.yml`
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.7.9
+          ports:
+            - containerPort: 80
+```
+
+#### DaemonSet
+
+ReplicaSet は Pod 配置を自動調整するのに対して、DaemonSet は各ノードに 1Pod を原則として配置(ただし、配置したくないノードを設定することも可能)
+
+#### StatefulSet
+
+ReplicaSet と異なり、sample-statefulset-1, sample-statefulset-2... sample-statefulset-N というようにインデックスが付与され、データを永続化させる ( PersistentVolumeClaim で永続化領域を確保する。)
+データベースなどに対応するためのリソース。
+
+#### Job
+
+1 つ以上の Pod を利用して一度限りの処理を実行させるリソース。  
+spec で以下のパラメーターを設定可能
+
+- Completions...目標成功回数(回数分成功したらジョブを終了)
+- Parallelism...並列度
+- backoffLimit...許容失敗数
+
+#### CroneJob
+
+Job のスケジュールを管理するリソース 。  
+CroneJob のポリシーについては以下を参照
+
+- Allow...Job の同時実行に対して制限を行わない
+- Forbid...前の Job が終了してない場合は次の Job は実行しない
+- Replace...前の Job が終了してない場合はキャンセルして次の Job を実行する
+
+### Services,LB&Network リソース
+
+Kubernetes 環境では内部ネットワークが設定されるため、Pod 間通信は基本的にクラスタ構築時点で可能。  
+=> ただ Service を利用すれば、Pod のトラフィックのロードバランシングや公開する Pod 群(サービス)に名前を定義して、IP アドレスや Port の情報を提供することができる。
+
+![clipboard.png](https://camo.qiitausercontent.com/670c7c4d9be8ec1385b5da85e6fe5a872bd89660/68747470733a2f2f71696974612d696d6167652d73746f72652e73332e61702d6e6f727468656173742d312e616d617a6f6e6177732e636f6d2f302f3132323939322f38626261623730332d306663662d613631322d323539322d3937653033313063356135652e706e67)
+
+#### Cluster IP Service
+
+内部ネットワークに仮想 IP を割り当て、Pod への通信をロードバランシングしながら転送する役割を持つ。
+
+`sample-clusterip.yml`
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+	name: sample-clusterip
+spec:
+	type: ClusterIP
+  ports:
+    -name: "http-port"
+     protocol: "TCP"
+     port: 8080
+     targetPort: 80
+	selector:
+		app: sample-app
+```
+
+#### External IP Service
+
+**指定したノード**の IP アドレスと Port で受信 →ClusterIP に転送 → 各 Pod に転送するように設定する。
+(マニュフェストファイルのタイプは ClusterIP と同じ)
+
+#### NodePort Service
+
+**全ての Kubernetes ノードの IP アドレスと Port**で受信(利用できるポート範囲はデフォルトだと 30000~32767)→ClusterIP に転送 → 各 Pod に転送するように設定する。
+
+#### LoadBalancer Service
+
+Cluster IP Service が**Pod への通信をロードバランシングするのに対して**LoadBalancer Service は**ノードへの通信をロードバランシングする**。(ノード障害に強い)
+
+`sample-lb.yml`
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+	name: sample-lb
+spec:
+	type: LoadBalancer
+  ports:
+		-name: "http-port"
+		 protocol: "TCP"
+       #LBが払い出す仮想IPとClusterIPで受信するport
+		 port: 8080
+		 #転送先のコンテナのport
+		 targetPort: 80
+       #kubernetes上の全ノードのIPアドレスで受信するport
+		 nodePort: 30082
+	selector:
+		app: sample-app
+```
+
+#### Headless Service
+
+通常クラスタ内 DNS で Pod 名の名前解決は行われない。
+DNS Round Robin を使って Service 名から Pod の IP アドレスを割り当てるリソース。(Cluster 単位の IP アドレスではなく、Pod 単位の IP アドレスで考える)  
+・DNS Round Robin…1 つのドメイン名に複数の IP アドレスを割り当てる負荷分散技術
+
+【前提条件】
+
+- Service の spec.type が ClusterIP であること
+- Service の spec.clusterIP が None であること
+- Service の metada.name が StatefulSet の spec.serviceName と同じであること
+
+#### ExternalName Service
+
+Service 名の名前解決に対して CNAME(外部のドメイン宛)を返すリソース。
+
+#### None-Selector Service
+
+Service 名で名前解決すると自分で指定したホストに対してロードバランシングを行うリソース。
+
+#### Ingress
+
+Service が L4 ロードバランシングを提供するのに対して、L7 ロードバランシング(HTTPS 終端)を提供する特殊なリソース。  
+HTTPS 負荷分散を実現できるため、トラフィックの多い通信処理を捌くのに向いている予感。
+
+- クラスタ外のロードバランサーを利用した Ingress  
+  クライアント => L7 ロードバランサー(NodePort 経由) => 転送先の Pod
+
+- クラスタ内に Ingress 用の Pod をデプロイする Ingress  
+  クライアント => L4 ロードバランサー => Nginx Pod => 転送先の Pod
+
+### Storage リソース
+
+まず Volume, PersistentVolume, PersistentVolumeClaim の違いについては以下の通り。
+
+- Volume...ホスト領域に用意されている利用可能なボリューム(基本的には単なるディレクトリと考えてよい)
+- PersistentVolume...外部の永続ボリュームを提供するシステムと連携して、新規のボリューム作成や既存のボリューム削除を行うことができる。
+- PersistentVolumeClaim...PersistentVolume はクラスタにボリュームを登録するためのリソース。このリソースによって、PersistentVolume を操作することが可能。
+
+#### Volume
+
+ディレクトリ AWS EBS, Azure Disk, emptyDir, hostPath など様々なボリュームタイプをサポート。サポートされているボリュームによってその特性も変化する。詳しくは公式を参考。ちなみに emptyDir と hostPath の違いは以下の通り。
+
+- emptyDir はホストノード上のコンテナ用の一時領域をコンテナ上の領域にマッピングする(すぐ消える)
+- hostPath はホストノード上の領域にマッピングできるが、セキュリティ上注意は必要
+
+`sample-emptydir.yml`
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-pd
+spec:
+  containers:
+    - image: k8s.gcr.io/test-webserver
+      name: test-container
+      volumeMounts:
+        - mountPath: /cache
+          name: cache-volume
+  volumes:
+    - name: cache-volume
+      emptyDir: {}
+```
+
+`sample-hostpath.yml`
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-pd
+spec:
+  containers:
+    - image: k8s.gcr.io/test-webserver
+      name: test-container
+      volumeMounts:
+        - mountPath: /test-pd
+          name: test-volume
+  volumes:
+    - name: test-volume
+      hostPath:
+        # directory location on host
+        path: /data
+        # this field is optional
+        type: Directory
+```
+
+#### PersistentVolume(PV)
+
+基本的にネットワーク経由でアタッチされるディスク領域と考えてよい。(もちろん Kubernetes クラスタ内のリソース領域)  
+`PersistentVolumeClaim(PVC)`によって要求され、プロビジョニングされる。流れとしては、PVC にバインドされた PV が最終的に Pod にマウントされます。PVC の yaml ファイルの selector に一致する PV だけがバインドされます。  
+`sample-pv.yaml`
+
+```yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv0003
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Recycle
+  storageClassName: slow
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+  nfs:
+    path: /tmp
+    server: 172.17.0.2
+```
+
+`sample-pvc.yaml`
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: myclaim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 8Gi
+  storageClassName: slow
+  selector:
+    matchLabels:
+      release: 'stable'
+    matchExpressions:
+      - { key: environment, operator: In, values: [dev] }
+```
+
+#### VolumeSnapshotContent
+
+クラスタ内のボリュームからスナップショットを作成するリソース。`VolumeSnapshot`というユーザー要求から作成される。
+
+### Configuration リソース, Security リソース
+
+#### Secret
+
+ユーザー名やパスワードなどの機密情報を保持するリソース。環境変数として参照させることが可能。Docker イメージやマニュフェストファイルで記述せず、一括管理可能。(※Configmap とは異なり、機密情報を扱うためにメモリ上の一時的なファイルシステムにデータが保持される仕組みになっている。)以下 Secret の種類。
+
+- Generic タイプの Secret
+  kubectl コマンドやマニュフェストファイルからの作成が可能。
+
+```yaml
+apiVersion: v1
+ kind: Secret
+metadata:
+ name: sample-db-auth
+ type: Opaque
+data:
+	username: cm 9 vdA == # root
+	password: cm 9 vdHBhc 3 N 3 b 3 Jk # rootpassword
+```
+
+- TLS タイプの Secret
+  秘密鍵と証明書のファイルから作成する
+
+```sh
+$ kubectl create secret tls --save-config tls-sample --key ~/tls.key --cert ~/tls.crt
+```
+
+- Docker レジストリタイプの Secret
+  プライベートレポジトリ用の Docker イメージの取得時に必要な認証用。
+
+```sh
+$ kubectl create secret --save-config docker-registry sample-registry-auth
+\ --docker-server = REGISTRY_ SERVER
+\ --docker-username = REGISTRY_ USER
+\ --docker-password = REGISTRY_ USER_ PASSWORD
+\ --docker-email = REGISTRY_ USER_ EMAIL
+```
+
+#### Secret の利用方法
+
+1,環境変数の渡し方
+spec.containers[].env の valueFrom.secretKeyRef 使って指定する
+
+2, Volume として key のみ、Secret 全体をマウントする
+key のみの場合は、Spec.volumes[]の secret.items[]を指定。
+Secret 全体の場合は、Spec.volumes[]の secret.secretName[]を指定。
+→Volume にマウントしておくと、定期的に kube-apiserver に変更を確認し、更新してくれる
+
+##### [kubesec](https://github.com/shyiko/kubesec) について
+
+Secret リソースを暗号化して安全に管理するためのオープンソースソフトウェア 。Google Cloud KMS, AWS KMS の暗号鍵と並行して利用することが可能。
+
+#### Configmap
+
+単純な Key-Value 値や設定ファイルを管理するリソース。
+リソース作成方法や利用法は Generic タイプの Secret とほぼ同じ。よって省略。

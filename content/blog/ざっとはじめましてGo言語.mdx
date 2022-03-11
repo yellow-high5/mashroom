@@ -1,0 +1,675 @@
+---
+date: 2020-05-12T13:29:38.000+00:00
+title: ざっとはじめましてGo言語
+thumbnail: 'https://res.cloudinary.com/dso4npatn/image/upload/v1646834504/media/blog/thumbnail/%E3%81%95%E3%82%99%E3%81%A3%E3%81%A8%E3%81%AF%E3%81%97%E3%82%99%E3%82%81%E3%81%BE%E3%81%97%E3%81%A6Go%E8%A8%80%E8%AA%9E_mtzcjo.png'
+tag:
+  - サーバーサイド
+---
+
+Go 言語を入門する上での簡単なメモをまとめておきます。  
+以下を参考にすると、学習が捗りました。
+
+> [Go 言語の初心者が見ると幸せになれる場所](https://qiita.com/tenntenn/items/0e33a4959250d1a55045) >[Awesome Go](https://qiita.com/hatai/items/f31914f37dc6c53b2bce)
+
+## 第一印象:Go 文法で気になったところ
+
+- キーワードが少ない(超シンプル)
+
+```go
+break        default      func         interface    select
+case         defer        go           map          struct
+chan         else         goto         package      switch
+const        fallthrough  if           range        type
+continue     for          import       return       var
+```
+
+- 型は変数の後に書く
+- 変数に初期値を与えずに宣言すると、ゼロ値( zero value )が与えられる
+- パッケージでエクスポートされている関数・変数は大文字から始まる。つまり小文字はエクスポートされていない
+- 基本的に定義されているが使用されていないパッケージや変数のせいでエラーを出力することが多い
+- for 文や if 文の条件式に`( )`はいらない
+- if 文の条件式で変数の初期化ができる
+- switch 文は合致したケースがあった時点で勝手に break してくれる
+- defer で遅延できる(遅延の順序は LastInFirstOut)
+- 配列よりも可変長であるスライスを使うこと
+
+```go:配列とスライス
+//配列の定義
+a := [3]int{1,2,3}
+//スライスの定義
+s := []int{1,2,3}
+s := make([]int, length, capacity)
+```
+
+- range でループが回せる
+
+```go:rangeループ
+func main() {
+	pow := make([]int, 10)
+	for i := range pow {
+		pow[i] = i
+	}
+	for _, value := range pow {
+		fmt.Printf("%d\n", value)
+	}
+}
+```
+
+- map の操作
+
+```go:mapの操作
+m := make(map[string]int)
+m["Answer"] = 42 //追加
+delete(m, "Answer") //削除
+v, ok := m["Answer"] //第二引数はキーの存在確認
+```
+
+- 構造体のフィールドは、構造体のポインタを通してアクセスすることもできる
+
+```go:構造体とポインタ
+type Vertex struct {
+	X int
+	Y int
+}
+func main() {
+	v := Vertex{1, 2}
+	p := &v
+	p.X = 1e9
+	fmt.Println(v) //=> {1000000000 2}
+}
+```
+
+- 構造体をメソッドで使う場合は必ずポインタを使って定義する
+- 構造体にタグ(メタ情報)を挿入でき、reflect パッケージを使って型情報とメタ情報を抽出できるが、あまり使わない方が良さげ。
+
+- 文字列操作には strings パッケージを使うようにする
+
+```go:文字列操作まとめ
+package main
+import (
+  "fmt"
+  "strings"
+  "strconv"
+)
+func main() {
+  // 文字列の結合
+  s := "ABCDEFG"
+  s = s + "hijklmn"
+  fmt.Println(s)
+  // -> "ABCDEFhijklmn"
+
+  // 文字列の 大文字、小文字変換
+  s = "ABCDEFGhijklmn"
+  fmt.Println(strings.ToUpper(s))  // -> "ABCDEFHIJKLMN"
+  fmt.Println(strings.ToLower(s))  // -> "abcdefhijklmn"
+
+  // 文字列の部分取得
+  s = "ABCDEFGhijklmn"
+  fmt.Println(s[4:10]) // -> "EFGhij"
+  fmt.Println(s[4:])   // -> "EFGhijklmn"
+  fmt.Println(s[:10])  // -> "ABCDEFGhij"
+  fmt.Println(s[:])    // -> "ABCDEFGhijklmn"
+
+  // 両端トリム
+  s = "    123456    "
+  fmt.Printf("[%s]\n", strings.TrimSpace(s)) // -> "[123456]"
+
+  // 両端トリム（トリム対象指定）
+  s = "    123456    "
+  fmt.Printf("[%s]\n", strings.Trim(s, " ")) // -> "[123456]"
+
+  // 左側トリム、右側トリム
+  s = "    123456    "
+  fmt.Printf("[%s]\n", strings.TrimLeft(s, " "))  // -> "[123456    ]"
+  fmt.Printf("[%s]\n", strings.TrimRight(s, " ")) // -> "[    123456]"
+
+  // 文字列中に指定文字列が含まれているか
+  s = "Alfa Bravo Charlie Delta Echo Foxtrot Golf"
+  fmt.Println(strings.Contains(s, "Delta")) // -> true
+
+  // 文字列中の指定文字列の出現位置
+  s = "Alfa Bravo Charlie Delta Echo Foxtrot Golf"
+  fmt.Println(strings.Index(s, "Delta")) // -> 19
+  fmt.Println(strings.Index(s, "Hotel")) // -> -1
+
+  // 文字列中の指定文字列の最後の出現位置
+  s = "Alfa Bravo Charlie Delta Echo Foxtrot Golf"
+  fmt.Println(strings.LastIndex(s, "a")) // -> 23
+
+  // 文字列中の指定文字列のカウント
+  s = "Alfa Bravo Charlie Delta Echo Foxtrot Golf"
+  fmt.Println(strings.Count(s, "a")) // -> 4
+
+  // 文字列の先頭一致
+  s = "Alfa Bravo Charlie Delta Echo Foxtrot Golf"
+  fmt.Println(strings.HasPrefix(s, "Alfa")) // -> true
+
+  // 文字列の後方一致
+  s = "Alfa Bravo Charlie Delta Echo Foxtrot Golf"
+  fmt.Println(strings.HasSuffix(s, "Golf")) // -> true
+
+  // 文字列置換
+  s = "hogehogehogehoge"
+  fmt.Println(strings.Replace(s, "ge", "ji", 2)) // -> "hojihojihogehoge" 最後の引数は回数
+  fmt.Println(strings.Replace(s, "ge", "ji", -1)) // -> "hojihojihojihoji" -1で無制限
+
+  // 文字列繰り返し
+  s = "abc"
+  fmt.Println(strings.Repeat(s, 3)) // -> "abcabcabc"
+
+  // 文字列のタイトルケースへの変換
+  s = "alfa bravo charlie delta echo foxtrot golf"
+  fmt.Println(strings.Title(s)) // -> "Alfa Bravo Charlie Delta Echo Foxtrot Golf"
+
+  // 文字列の分割
+  s = "Alfa Bravo Charlie Delta Echo Foxtrot Golf"
+  slice := strings.Split(s, " ")
+  for _, str := range slice {
+    fmt.Printf("[%s]", str) // -> [Alfa][Bravo][Charlie][Delta][Echo][Foxtrot][Golf]
+  }
+  fmt.Println("")
+
+  // 文字列結合
+  slice = []string{"Alfa", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf"}
+  fmt.Println(strings.Join(slice, ",")) // -> "Alfa,Bravo,Charlie,Delta,Echo,Foxtrot,Golf"
+
+  // 文字列長カウント
+  s = "Alfa Bravo Charlie Delta Echo Foxtrot Golf"
+  fmt.Println(len(s)) // -> 42
+
+  // 文字列長カウント（マルチバイト）
+  s = "Go言語"
+  fmt.Println(len(s))         // -> 8
+  fmt.Println(len([]rune(s))) // -> 4
+
+  // 複数行文字列
+  s = `
+  This is a sample.
+  golang multiple lines.
+  `
+  fmt.Println(s) /* ->
+  This is a sample.
+  golang multiple lines.
+  */
+
+  // 文字列の整数変換
+  s = "123"
+  si, _ := strconv.Atoi(s)
+  si = si + 1
+  fmt.Println(si) // -> 124
+
+  // 文字列の浮動小数変換
+  s = "123.456"
+  sf, _ := strconv.ParseFloat(s, 64)
+  sf = sf + 0.1
+  fmt.Println(sf) // -> 123.556
+}
+```
+
+## Go の非同期処理(ゴルーチン)
+
+チャネル自体はキューのデータ構造を持ち、キューに格納できる領域サイズをバッファと呼ぶ。複数のゴルーチン間でデータの受け渡しをするのにチャネルを介するわけだ。  
+ゴルーチンがチャネル操作によって止まる原因は以下の 2 つ
+
+- バッファサイズ 0 またはバッファ内の空のチャネルからの受信
+- バッファサイズが 0 またはバッファ内に空きがないチャネルへの送信
+
+```go:チャネル・ゴルーチンのいろいろ
+//矢印が左なら受信、右なら送信
+var ch1 <-chan int //[受信専用]チャネル定義
+var ch2 chan<- int //[送信専用]チャネル定義
+
+ch := make(chan int, 10) //バッファサイズ10のチャネル
+ch <- 5　//チャネルに5を送信
+i := <-ch //5を受信
+
+cap(ch) // チャネルのバッファのサイズ
+len(ch) // ==1 これチャネルのバッファ内に溜まっているデータの数
+
+//チャネルを閉じる
+//閉じた瞬間データをチャネルに送信することはできないが、チャネル内に溜まったデータを受信することは可能
+close(ch)
+
+//「バッファ内が空でかつクローズされた状態」をチャネルがクローズされた状態
+ch := make(chan int)
+close(ch)
+i, ok := <- ch // i == 0, ok == false(クローズ状態)
+```
+
+以下はマルチスレッドの非同期処理の簡単な例になります。
+
+```go:マルチスレッドの非同期処理の簡単な例
+package main
+
+import (
+  "fmt"
+)
+
+func receiver(ch <-chan int){
+  for {
+    i := <-ch //チャネルから受信
+    fmt.Println(i)
+  }
+}
+
+func main() {
+  ch := make(chan int)
+
+  go receiver(ch)
+
+  i := 0
+  for i < 1000 {
+    ch <- i //チャネルへ送信
+    i++
+  }
+}
+
+
+```
+
+### select 構文を使った複数チャネルの処理
+
+複数のチャネルからデータを受信するときなど、他のチャネルの影響でゴルーチンが停止しないように並列的に処理を書くために select 構文を利用する。
+どの case 節を実行するかは**ランダム**に選択される。default 節は全ての case 節の処理の継続が不可能である場合に実行される。
+
+```go:select構文
+//ダメな例
+e1 := <-ch1 //ch1が受信待ちになると...
+e2 := <-ch2 //ch2の受信処理にたどり着けない
+
+//select構文で解決
+select {
+  case e1 := <-ch1
+    /*ch1からの受信が成功した時の処理*/
+  case e2 := <-ch2
+    /*ch2からの受信が成功した時の処理*/
+  default:
+    /*それ以外の条件が成立しなかった時の処理*/
+}
+```
+
+## 構造体とインターフェース
+
+### ポインタ
+
+- ポインタ...変数のメモリのアドレスと型の情報
+
+```go
+//ポインタ型の定義
+var p *int //Int型のポインタ
+//変数からポイント型を生成
+var i int
+i = 5
+p := &i
+//ポイント型から元の変数を参照する(デリファレンス)
+fmt.Println(*p) // => 5
+```
+
+### 構造体
+
+構造体の前に型について紹介しておきます。
+
+```go:構造体の前に型について
+//エイリアスでまとめる
+type(
+  IntPair [2]int
+  Strings []string
+  AreaMap map[string][2]float64
+  IntsChannel chan []int
+)
+
+pair := IntPair{1, 2}
+strs := Strings{"Apple", "Banana", "Cherry"}
+amap := AreaMap{"Tokyo": {35.68948, 139.691708}}
+ich  := make(IntsChannel)
+
+//関数型に型を定義する
+type Callback func(i int) int //intをとり、intを返す
+
+func Sum(ints []int, callback Callback) int {
+  var sum int
+  for _, i := range ints {
+    sum += 1
+  }
+  return callback(sum)
+}
+
+```
+
+- 構造体...複数の型の値を１つにまとめたもの。構造体は値型で関数の引数で使う場合は構造体のコピーが渡されるため、基本的に関数処理で構造体の変更を行えない。そこでポインタを使う!
+
+```go:構造体を定義するにはstructを使う
+//構造体(Point型)を定義する
+type Point struct {
+  X int
+  Y int
+}
+
+//構造体のフィールド値を代入
+var pt Point
+pt.x = 10
+pt.y = 8
+
+//こんな感じで代入もできる
+pt := Point{X: 1, Y: 2}
+
+
+
+//構造体の中に構造体
+type Feed struct{
+  Name string
+  Amount uint
+}
+
+type Animal struct{
+  Name string
+  Feed /*構造体を埋め込み(フィールド値を省略)*/
+  /*フィールド値を省略しないならFeed Feed*/
+}
+
+var monkey := Animal{
+  Name: "Monkey",
+  Feed: Feed{
+    Name: "Banana",
+    Amount: 10
+  },
+}
+
+monkey.Amount // == 10
+
+//構造体とポインタ(関数の引数に構造体を使う場合はポインタを使う)
+type Point struct {
+  X int,
+  Y int,
+}
+
+func swap(p *Point) {
+  x, y := p.Y, p.X
+  p.X = x
+  p.Y = y
+}
+
+p := Point{X:1, Y:2}
+swap(&p) //ポインタを渡している
+
+p.X // == 2
+p.Y // == 1
+
+//new: 構造体のポインタ型を生成する
+type Person struct{
+ Id int
+ Name string
+ Area string
+}
+
+p := new(Person) //変数pは*Person型
+
+```
+
+### メソッド
+
+- メソッド...特定の型や構造体に対応した関数を定義する
+
+```go:メソッドの定義
+type Point struct{ X, Y int }
+
+func(p *Point) Render() {
+  fmt.Printf("<%d, %d>\n", p.X, p.Y)
+}
+
+p := &Point{X: 5, Y: 12}
+p.Render() //=> <5, 12>
+
+```
+
+### インターフェース
+
+- インターフェース...「どのようなメソッドを実装すべきか」を定義した型
+
+```go:インターフェースを使うにはinterfaceを使う
+type error interface {
+  Error() string
+}
+
+type MyError struct {
+  Message string
+  ErrCode int
+}
+
+//インタフェースのメソッドを実装
+func (e *MyError) Error() string {
+  return e.Message
+}
+
+//インターフェースを返す
+func RaiseError() error {
+  return &MyError{Message: 'エラーが発生しました', ErrCode: 123}
+}
+
+err := RaiseError()
+err.Error() //=="エラーが発生しました"
+
+```
+
+> #### 参考：型、構造体、インターフェースまとめてテンプレート
+>
+> ```go:型定義ファイル
+> package foo
+>
+> type I interface {
+>   Method1() string //外部から参照できる
+>   method2() string //外部から参照できない
+> }
+>
+> type T struct{}
+>
+> func(t *T) Method1() string {
+>   return "Method1()"
+> }
+>
+> func(t *T) method2() string {
+>   return "method2()"
+> }
+>
+> //ファクトリー関数
+> func NewI() I {
+>   return &T{}
+> }
+>
+> //fooパッケージを使うと
+> package main
+>
+> t := foo.NewI()
+> t.Method1() //=> "Method1"
+> t.method2() //=> エラー(小文字は外部から参照できない)
+> ```
+
+## Go プロジェクトのディレクトリ構成
+
+- トップレベルは Go のパッケージとして利用される
+- cmd/いかにバイナリビルド用の main パッケージが配置される
+- サブパッケージが必要な場合はディレクトリを深くする(サブパッケージのインポートには絶対パスを使う)
+- Makefile はビルドだけでなく、タスクランナーとして利用する
+
+```sh:プロジェクトディレクトリ構成の例
+proj
+├── Makefile          # ビルド定義(タスクランナーとしても利用)
+├── _tools            # Go以外のシェルスクリプトなど
+├── cmd               # 実行バイナリ用のソースが配置される
+│   └── proj
+│       └── main.go
+├── internal          # 外部から利用されたくないパッケージ
+├── logger            # サブパッケージの例
+│   └── logger.go
+├── proj.go           # ソースコード
+├── proj_test.go      # テストコード
+├── testdata          # テストデータ
+├── type.go           # 型定義ファイル
+├── type_test.go      # 型定義のテスト
+└── version.go        　
+
+```
+
+## go コマンド
+
+go のデフォルトコマンドについて紹介します。ちなみに go コマンドのオプションで`-x`をつけると実行したコマンドの詳細を見ることができます。
+
+### go mod
+
+Go 言語 1.11 以上のバージョンで採用されている Go Modules。
+
+> [Go 言語の依存モジュール管理ツール Modules の使い方 - Qiita](https://qiita.com/uchiko/items/64fb3020dd64cf211d4e)
+
+### go env
+
+ビルドに関連する環境変数の内容を確認する。
+
+- GOPATH...パッケージのソースコードや実行ファイルが格納されるディレクトリ
+- GOBIN...通常は$GOPATH/bin
+
+### go fmt
+
+コード整形する。
+
+### go doc
+
+パッケージのドキュメントを参照可能。ソースコード内のコメントアウトがそのまま go doc で参照できるドキュメントになる。
+
+### go run
+
+go ファイルの実行。
+
+### go build
+
+go ファイルをコンパイルして実行ファイルを作成する。**オプションで指定がなければカレントディレクトリの名前が実行ファイルの名前になる。**
+
+> ビルドがうまくいかない場合は-x オプションをつける。
+
+### go install
+
+go ファイルをビルドして、作成したパッケージや実行ファイルを環境変数 GOPATH 内へインストールする。
+
+```sh:GOPATH配下のソースコード、パッケージ、実行ファイルの格納先
+$GOPATH/
+├── bin[実行ファイルのインストール先]
+|    └──baz(Windowsならexeファイル)
+├── pkg[ビルドしたパッケージのインストール先]
+|    └──[OSとアーキテクチャ名]
+|    　　　└──foo.a
+└── src[パッケージのソースコードのインストール先]
+     ├──baz
+     |    └──main.go(package main)
+     └──foo
+          └──bar.go(package foo)
+```
+
+### go get
+
+外部パッケージのダウンロード(Github などにあるソースコードを`$GOPATH`/src へインストール)とインストール(go install で`$GOPATH`/pkg へインストール)。
+
+### go test
+
+`*_test.go`のパターンに合致するテストコードを記述したファイルを実行する。
+
+```go:sample.go
+package foo
+
+func IsOne(n int) bool {
+  if n == 1 {
+    return true
+  } else {
+    return false
+  }
+}
+```
+
+```go:sample_test.go
+package foo
+
+import (
+  "testing"
+)
+
+func TestIsOne(t *testing.T) {
+  n := 1
+  b := IsOne(n)
+  if b != true {
+    t.Errorf("%d is not one", n)
+  }
+}
+```
+
+## Go 標準パッケージ代表一覧
+
+Go の標準パッケージは優秀らしく、ライブラリに依存しなくても使える便利なものが多いそうです。代表的な標準パッケージをまとめました。
+
+### os
+
+ファイル・環境変数操作やプロセスの参照
+
+### fmt
+
+フォーマット処理を含めた入出力処理のための機能
+
+### log
+
+標準エラー出力、プログラム実行の終了
+
+### time
+
+日付や時間(変換・計算)を取り扱う
+
+### math
+
+数学的な定数や関数の処理
+
+### flag
+
+コマンドラインからプログラムに与えられた引数やオプションなどを処理する
+
+### strconv
+
+string 型と他のデータ型の相互変換をサポートする
+
+### strings
+
+文字列操作(結合、検索、置換、分割、変換)
+
+### unicode
+
+rune 型で表現されるデータに対してのコードポイント処理
+
+### io, bufio, io/util
+
+基本的な入出力処理、buifio はそれらの低レベルのな処理をさらにサポートしたバッファ処理や複雑な入出力処理。io/util は簡単なファイルの入出力やテンポラリファイルの作成を行うことができる
+
+### regexp
+
+文字列の正規表現処理
+
+### encoding/json
+
+json ファイルを読み込んでパースする。構造体から json 形式へ変換することも可能
+
+### net/url, net/http
+
+net/url は URL をパースしたり、URL を生成し、net/http は簡単な HTTP サーバー/クライアント機能を提供する
+
+### sync
+
+非同期処理における排他的制御や同期処理を実施する
+
+### crypto/\*
+
+ハッシュ値を生成する暗号化機能(MD5/SHA-1/SHA-256/SHA-512)
+
+## Go の開発お助けツール
+
+- gore...Go の REPL。対話的に Go 言語を試すことができる。
+- goimports...使わないパッケージの import を自動で削除してくれる。gofmt のようにコード整形もする。高速化には dragon-imports を使う
+- go vet...標準ツール。バグの原因になりそうなコードを検出する。
+- golint...コーディングスタイルに警告を出してくれる。
+- godoc...localhost:6060 でブラウザからドキュメントを参照できる
+- termbox...TUI(Text-based User Interface)ツール
+- statik, packr...静的アセットへのアクセス
+- go-humanize...ファイルサイズや時間を人間が見やすい単位に変換する
