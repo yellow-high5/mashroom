@@ -45,8 +45,8 @@ export const getFileIcon = (language?: string): IconType | undefined => {
 
 export const getWorkIcon = (tag: string): IconType => {
   const icons = {
-    Web: IoLaptopOutline,
-    'CG-Work': IoCubeOutline,
+    App: IoLaptopOutline,
+    CG: IoCubeOutline,
     Illust: IoBrushOutline,
   } as Record<string, IconType>;
   return icons[tag] || IoFileTrayOutline;
