@@ -1,11 +1,11 @@
 import { AspectRatio, Flex, FlexProps } from '@chakra-ui/react';
-import SideHeading from 'components/common/side-heading';
+import BorderedHeading from 'components/common/bordered-heading';
 import React from 'react';
 
 const AuthorMusic: React.FC<FlexProps> = (props) => {
   return (
     <Flex flexDir="column" alignItems="center" {...props}>
-      <SideHeading>ミュージック</SideHeading>
+      <BorderedHeading>ミュージック</BorderedHeading>
       <AspectRatio ratio={{ base: 16 / 9, md: 9 / 16 }} w={{ base: 360, md: 240 }}>
         <iframe
           src="https://www.youtube.com/embed/Kcp4dy8tJP0"

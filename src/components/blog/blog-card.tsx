@@ -40,7 +40,7 @@ const BlogCard: React.FC<Props> = (props: Props) => {
         <Box
           as="article"
           maxW={{
-            base: 'md',
+            base: '100%',
             lg: 'xs',
           }}
           m={{ base: 2, md: 'auto' }}
@@ -56,9 +56,8 @@ const BlogCard: React.FC<Props> = (props: Props) => {
           alignItems="center"
         >
           <Box position="relative">
-            {/* 画像がない場合は大体を用意しておく */}
             {thumbnail && (
-              <AspectRatio minW="120px" ratio={16 / 9}>
+              <AspectRatio minW="120px" ratio={{ base: 1, lg: 16 / 9 }}>
                 <chakra.img src={thumbnail} alt="thumbnail" />
               </AspectRatio>
             )}
@@ -89,9 +88,9 @@ const BlogCard: React.FC<Props> = (props: Props) => {
 
             <Box>
               <Heading
-                w={{ base: 360, lg: 240 }}
+                w="100%"
                 mt={2}
-                fontSize="md"
+                fontSize="0.75rem"
                 fontWeight="semibold"
                 lineHeight="tight"
                 as="h4"

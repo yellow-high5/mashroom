@@ -34,11 +34,11 @@ const BlogHeading: React.FC<Props> = (props: Props) => {
           <Text fontSize="xs">{getMinutesToRead(wordCount?.words)}</Text>
         </HStack>
       </HStack>
-      <Heading size="lg">{frontmatter?.title}</Heading>
-      <AspectRatio minW="100%" ratio={16 / 9} display={{ base: 'block', md: 'none' }}>
-        {frontmatter?.thumbnail && (
-          <chakra.img src={frontmatter.thumbnail} borderRadius={24} alt="thumbnail" />
-        )}
+      <Heading fontSize={{ base: '1.375rem', md: '1.75rem' }} pb={4}>
+        {frontmatter?.title}
+      </Heading>
+      <AspectRatio minW={'100%'} ratio={16 / 9} display={{ base: 'block', md: 'none' }}>
+        {frontmatter?.thumbnail && <chakra.img src={frontmatter.thumbnail} alt="thumbnail" />}
       </AspectRatio>
     </VStack>
   );

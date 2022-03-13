@@ -97,8 +97,8 @@ const BlockQuote: React.FC<BoxProps> = (props) => {
       borderRadius={8}
       boxShadow="1px 1px 4px #E2E8F0"
       bgColor={bgColor}
-      p={4}
-      mx={4}
+      p={{ base: 2, sm: 4 }}
+      mx={{ base: 0, sm: 4 }}
       my={8}
       {...props}
     />

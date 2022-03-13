@@ -9,11 +9,11 @@ type Props = {
   total: number;
 };
 
-const PageChanger: React.FC<Props> = (props: Props) => {
+const BlogPageChanger: React.FC<Props> = (props: Props) => {
   const { page, onChange, skip, total } = props;
 
   return (
-    <HStack px={8}>
+    <HStack p={8}>
       <Button
         leftIcon={<IoCaretBackCircle />}
         size="sm"
@@ -39,4 +39,4 @@ const PageChanger: React.FC<Props> = (props: Props) => {
   );
 };
 
-export default PageChanger;
+export default BlogPageChanger;

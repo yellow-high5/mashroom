@@ -1,7 +1,7 @@
 import { Heading, HeadingProps } from '@chakra-ui/react';
 import React from 'react';
 
-const SideHeading: React.FC<HeadingProps> = (props) => {
+const BorderedHeading: React.FC<HeadingProps> = (props) => {
   return (
     <Heading
       size="xs"
@@ -29,4 +29,4 @@ const SideHeading: React.FC<HeadingProps> = (props) => {
   );
 };
 
-export default SideHeading;
+export default BorderedHeading;

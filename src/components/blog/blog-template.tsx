@@ -54,7 +54,7 @@ const BlogTemplate: React.FC<Props> = ({ data }) => {
       <Grid templateColumns="repeat(4, 1fr)" gap={4} maxW="62em" pt={28} m="auto">
         <GridItem colSpan={[4, 4, 3, 3]}>
           <MDXProvider components={mdxComponents}>
-            <Box m={6} pb={32}>
+            <Box m={{ base: 3, sm: 6 }} pb={32}>
               <BlogHeading
                 frontmatter={data.mdx?.frontmatter}
                 wordCount={data.mdx?.wordCount}

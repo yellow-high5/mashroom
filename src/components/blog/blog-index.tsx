@@ -25,9 +25,7 @@ const BlogIndex: React.FC<Props> = (props: Props) => {
 
   return (
     <Box {...boxProps}>
-      {frontmatter?.thumbnail && (
-        <chakra.img src={frontmatter.thumbnail} width="240px" mb={6} borderRadius={12} />
-      )}
+      {frontmatter?.thumbnail && <chakra.img src={frontmatter.thumbnail} width="240px" mb={6} />}
       <Box ml={4}>
         <Heading size="sm">Index</Heading>
         <List mt={4} spacing={4}>

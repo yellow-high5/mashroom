@@ -1,6 +1,14 @@
-import { Flex, Grid, GridItem, Heading, Icon, IconButton } from '@chakra-ui/react';
+import {
+  Flex,
+  Grid,
+  GridItem,
+  Heading,
+  Icon,
+  IconButton,
+  useBreakpointValue,
+} from '@chakra-ui/react';
 import BlogCard from 'components/blog/blog-card';
-import PageChanger from 'components/common/page-changer';
+import BlogPageChanger from 'components/blog/blog-page-changer';
 import { navigate } from 'gatsby';
 import { useBlogList } from 'hooks';
 import React, { useContext, useEffect, useMemo, useState } from 'react';
@@ -15,7 +23,9 @@ const BlogCardGrid: React.FC<Props> = (props: Props) => {
   const blogList = useBlogList();
 
   const [page, setPage] = useState(0);
-  const skip = 6;
+  const skip = 8;
+
+  const isMobile = useBreakpointValue({ base: true, sm: false });
 
   const { dispatch, state } = useContext(SearchBlogContext);
   useEffect(() => {
@@ -37,7 +47,12 @@ const BlogCardGrid: React.FC<Props> = (props: Props) => {
   const total = filteredBlogList.length;
 
   return (
-    <Grid templateColumns="repeat(2, 1fr)" gap={4} pt={8} m="auto">
+    <Grid
+      templateColumns="repeat(2, 1fr)"
+      gap={{ base: 1, sm: 4 }}
+      m={'auto'}
+      pt={{ base: 4, sm: 8 }}
+    >
       {filterTag && (
         <GridItem colSpan={2} mb={4}>
           <Flex justifyContent="center">
@@ -54,20 +69,34 @@ const BlogCardGrid: React.FC<Props> = (props: Props) => {
           </Flex>
         </GridItem>
       )}
-      {filteredBlogList.slice(page * skip, (page + 1) * skip).map((item, index) => (
-        <GridItem key={`${index}`} colSpan={[2, 2, 2, 1]} justifyContent="center">
-          <BlogCard
-            slug={item.node.id}
-            title={item.node.frontmatter?.title}
-            tag={item.node.frontmatter?.tag}
-            thumbnail={item.node.frontmatter?.thumbnail}
-            date={item.node.frontmatter?.date}
-          />
+      {isMobile
+        ? filteredBlogList.map((item, index) => (
+            <GridItem key={`${index}`} colSpan={[2, 2, 2, 1]} justifyContent="center">
+              <BlogCard
+                slug={item.node.id}
+                title={item.node.frontmatter?.title}
+                tag={item.node.frontmatter?.tag}
+                thumbnail={item.node.frontmatter?.thumbnail}
+                date={item.node.frontmatter?.date}
+              />
+            </GridItem>
+          ))
+        : filteredBlogList.slice(page * skip, (page + 1) * skip).map((item, index) => (
+            <GridItem key={`${index}`} colSpan={[2, 2, 2, 1]} justifyContent="center">
+              <BlogCard
+                slug={item.node.id}
+                title={item.node.frontmatter?.title}
+                tag={item.node.frontmatter?.tag}
+                thumbnail={item.node.frontmatter?.thumbnail}
+                date={item.node.frontmatter?.date}
+              />
+            </GridItem>
+          ))}
+      {!isMobile && (
+        <GridItem colSpan={2}>
+          <BlogPageChanger page={page} onChange={setPage} skip={skip} total={total} />
         </GridItem>
-      ))}
-      <GridItem colSpan={2} mt={12}>
-        <PageChanger page={page} onChange={setPage} skip={skip} total={total} />
-      </GridItem>
+      )}
     </Grid>
   );
 };
