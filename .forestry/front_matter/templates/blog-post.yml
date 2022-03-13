@@ -27,4 +27,5 @@ fields:
   default: []
   label: tag
 pages:
+- content/blog/graphql-code-generator-gatsby.mdx
 - content/blog/入門-モダン監視.mdx
