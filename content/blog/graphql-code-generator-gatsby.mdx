@@ -6,8 +6,6 @@ title: Graphql Code GeneratorをGatsbyに導入した時の話
 thumbnail: https://res.cloudinary.com/dso4npatn/image/upload/v1647190522/media/Graphql_Code_Generator%E3%82%92Gatsby%E3%81%AB%E5%B0%8E%E5%85%A5%E3%81%97%E3%81%9F%E6%99%82%E3%81%AE%E8%A9%B1_kn8odb.png
 
 ---
-# Graphql Code GeneratorをGatsbyに導入した時の話
-
 Graphqlで受け取ったdataに型がないと辛いよねということで、一般的な解決方法を探すと「[GraphQL Code Generator](https://www.graphql-code-generator.com/)が最高だぜ」という記事に行き着く。そこでGatsbyにこれを導入して型の恩恵を授かる方法を模索する。
 
 
@@ -136,4 +134,3 @@ Gatsbyの型生成する際に`http://localhost:8000/___graphql`を参照して�
 
 プラグインが果たして外部Graphql APIに対応しているかはよくわからないが、Gatsbyのコミュニティプラグインに頼りすぎるとブラックボックス感が怖いなと思ったので今回は自分で導入した。呼び出すエンドポイントごとに型定義ファイルを分けれているのでとりあえずよしとする。
 型生成前に`yarn dev`をしなくてはならないのが少し嫌だがプラグインはそこを`yanr dev`の実行時に生成してくれているみたい。もしまた開発していてGraphqlの型周りで躓いたら直そうと思う。
-
