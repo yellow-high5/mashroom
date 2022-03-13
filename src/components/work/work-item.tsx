@@ -39,7 +39,7 @@ const WorkItem: React.FC<Props> = (props: Props) => {
             <AspectRatio
               ratio={1}
               cursor="pointer"
-              minW={{ base: 120, md: 180 }}
+              minW={{ base: 120, lg: 180 }}
               _groupHover={{
                 opacity: 0.5,
                 borderRadius: '50%',

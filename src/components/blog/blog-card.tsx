@@ -43,7 +43,7 @@ const BlogCard: React.FC<Props> = (props: Props) => {
             base: '100%',
             lg: 'xs',
           }}
-          m={{ base: 2, md: 'auto' }}
+          mx={{ base: 2, lg: 'auto' }}
           borderWidth="1px"
           borderRadius="lg"
           overflow="hidden"
@@ -90,7 +90,7 @@ const BlogCard: React.FC<Props> = (props: Props) => {
               <Heading
                 w="100%"
                 mt={2}
-                fontSize="0.75rem"
+                fontSize={{ base: '0.75rem', md: '0.85rem' }}
                 fontWeight="semibold"
                 lineHeight="tight"
                 as="h4"

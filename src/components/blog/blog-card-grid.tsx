@@ -25,7 +25,7 @@ const BlogCardGrid: React.FC<Props> = (props: Props) => {
   const [page, setPage] = useState(0);
   const skip = 8;
 
-  const isMobile = useBreakpointValue({ base: true, sm: false });
+  const isMobile = useBreakpointValue({ base: true, md: false });
 
   const { dispatch, state } = useContext(SearchBlogContext);
   useEffect(() => {
@@ -50,8 +50,8 @@ const BlogCardGrid: React.FC<Props> = (props: Props) => {
     <Grid
       templateColumns="repeat(2, 1fr)"
       gap={{ base: 1, sm: 4 }}
-      m={'auto'}
-      pt={{ base: 4, sm: 8 }}
+      m="auto"
+      pt={{ base: 0, md: 8 }}
     >
       {filterTag && (
         <GridItem colSpan={2} mb={4}>

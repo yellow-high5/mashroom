@@ -17,7 +17,7 @@ const WorkTabPanel: React.FC<Props> = (props: Props) => {
         {workList
           .filter((work) => (tab ? work.node.frontmatter?.tag?.includes(tab) : true))
           .map((work, j) => (
-            <GridItem key={j} colSpan={[3, 3, 3, 2]}>
+            <GridItem key={j} colSpan={[3, 2, 2, 2]}>
               <WorkItem slug={work.node.id} frontmatter={work.node.frontmatter} />
             </GridItem>
           ))}
