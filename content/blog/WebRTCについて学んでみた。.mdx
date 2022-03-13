@@ -8,13 +8,16 @@ tag:
 
 まだまだ安定性にはかける WebRTC ですが、実装で使ってみたいと思ったので、その仕組みについて学習したことを以下にまとめます。自分のような初心者でも以下の記事とコードでかなりどういったことができるのかわかるようになりました。
 
-> 参考記事  
-> [MDN | WebRTC](https://developer.mozilla.org/ja/docs/Web/API/WebRTC_API/)  
-> [WebRTC 入門 2016](https://html5experts.jp/series/webrtc2016/)  
-> https://qiita.com/yusuke84/items/43a20e3b6c78ae9a8f6c  
->  サンプルコード  
-> [https://github.com/muaz-khan/WebRTC-Experiment](https://github.com/muaz-khan/WebRTC-Experiment)  
-> [https://github.com/mganeko/webrtcexpjp](https://github.com/mganeko/webrtcexpjp)
+> #### 参考記事
+>
+> - [MDN | WebRTC](https://developer.mozilla.org/ja/docs/Web/API/WebRTC_API/)
+> - [WebRTC 入門 2016](https://html5experts.jp/series/webrtc2016/)
+> - [WebRTC ハンズオン](https://qiita.com/yusuke84/items/43a20e3b6c78ae9a8f6c)
+>
+> #### サンプルコード
+>
+> - [https://github.com/muaz-khan/WebRTC-Experiment](https://github.com/muaz-khan/WebRTC-Experiment)
+> - [https://github.com/mganeko/webrtcexpjp](https://github.com/mganeko/webrtcexpjp)
 
 ## WebRTC とは
 
@@ -149,7 +152,7 @@ socket.on('signaling', function (data) {
 });
 ```
 
-メディアへのアクセス、RTC Peer Connection の生成などはクライアント側の script に記述するので、シグナリングサーバーは簡単にクライアントからのデータを受信/配信するだけです。以下のように今回はイベント名を"signaling"としています。
+メディアへのアクセス、RTC Peer Connection の生成などはクライアント側の script に記述するので、シグナリングサーバーは簡単にクライアントからのデータを受信/配信するだけです。以下のように今回はイベント名を`signaling`としています。
 
 ## クライアントサイドの実装
 
