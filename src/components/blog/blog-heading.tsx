@@ -37,7 +37,7 @@ const BlogHeading: React.FC<Props> = (props: Props) => {
       <Heading fontSize={{ base: '1.375rem', md: '1.75rem' }} pb={4}>
         {frontmatter?.title}
       </Heading>
-      <AspectRatio minW={'100%'} ratio={16 / 9} display={{ base: 'block', md: 'none' }}>
+      <AspectRatio minW="100%" ratio={16 / 9} display={{ base: 'block', md: 'none' }}>
         {frontmatter?.thumbnail && <chakra.img src={frontmatter.thumbnail} alt="thumbnail" />}
       </AspectRatio>
     </VStack>

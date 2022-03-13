@@ -4,7 +4,6 @@ import {
   chakra,
   Heading,
   Icon,
-  SlideFade,
   Tab,
   TabList,
   TabPanel,
@@ -35,66 +34,58 @@ const ProfilePage = () => {
     <Layout>
       <Helmet title="m@shroom" />
 
-      <SlideFade
-        in
-        transition={{
-          enter: { delay: 0.4 },
-          exit: { delay: 0.4 },
-        }}
-      >
-        <Center>
-          <Tabs
-            align="center"
-            variant="soft-rounded"
-            isFitted
-            colorScheme="yellow"
-            w="100%"
-            mx={4}
-            index={tabIndex}
-            onChange={handleTabsChange}
-            display={{ base: 'none', md: 'block' }}
-          >
-            <Heading size="lg" py={12}>
-              <chakra.span borderBottom="1px solid" paddingBottom={1}>
-                {PROFILE_TAB[tabIndex].title}
-              </chakra.span>
-            </Heading>
+      <Center>
+        <Tabs
+          align="center"
+          variant="soft-rounded"
+          isFitted
+          colorScheme="yellow"
+          w="100%"
+          mx={4}
+          index={tabIndex}
+          onChange={handleTabsChange}
+          display={{ base: 'none', md: 'block' }}
+        >
+          <Heading size="lg" py={12}>
+            <chakra.span borderBottom="1px solid" paddingBottom={1}>
+              {PROFILE_TAB[tabIndex].title}
+            </chakra.span>
+          </Heading>
 
-            <TabList>
-              {PROFILE_TAB.map((tab) => (
-                <Tab
-                  key={tab.title}
-                  _selected={{
-                    color: `${tab.iconColor}`,
-                    bgGradient: 'linear(to-r, yellow.300, yellow.500)',
-                  }}
-                >
-                  <Icon boxSize={6} as={tab.icon} />
-                </Tab>
-              ))}
-            </TabList>
-
-            <TabPanels>
-              {PROFILE_TAB.map((tab) => (
-                <TabPanel key={tab.title}>{tab.content}</TabPanel>
-              ))}
-            </TabPanels>
-          </Tabs>
-
-          <Box display={{ base: 'block', md: 'none' }} w="100%">
-            {PROFILE_TAB.map((tab, index) => (
-              <Box key={tab.title}>
-                <Heading textAlign="center" size="lg" py={4}>
-                  <chakra.span borderBottom="1px solid" paddingBottom={1}>
-                    {PROFILE_TAB[index].title}
-                  </chakra.span>
-                </Heading>
-                {tab.content}
-              </Box>
+          <TabList>
+            {PROFILE_TAB.map((tab) => (
+              <Tab
+                key={tab.title}
+                _selected={{
+                  color: `${tab.iconColor}`,
+                  bgGradient: 'linear(to-r, yellow.300, yellow.500)',
+                }}
+              >
+                <Icon boxSize={6} as={tab.icon} />
+              </Tab>
             ))}
-          </Box>
-        </Center>
-      </SlideFade>
+          </TabList>
+
+          <TabPanels>
+            {PROFILE_TAB.map((tab) => (
+              <TabPanel key={tab.title}>{tab.content}</TabPanel>
+            ))}
+          </TabPanels>
+        </Tabs>
+
+        <Box display={{ base: 'block', md: 'none' }} w="100%">
+          {PROFILE_TAB.map((tab, index) => (
+            <Box key={tab.title}>
+              <Heading textAlign="center" size="lg" py={4}>
+                <chakra.span borderBottom="1px solid" paddingBottom={1}>
+                  {PROFILE_TAB[index].title}
+                </chakra.span>
+              </Heading>
+              {tab.content}
+            </Box>
+          ))}
+        </Box>
+      </Center>
     </Layout>
   );
 };

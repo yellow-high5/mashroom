@@ -25,9 +25,12 @@ const HeaderMenu = () => {
     <Icon boxSize={8} as={IoMenuOutline} cursor="pointer" onClick={onOpen} />
   );
 
-  return isMobile ? (
+  return (
     <>
-      <Box display="flex" alignItems="center" mr={2}>
+      {/* For Desktop */}
+      <Navigation display={{ base: 'none', md: 'flex' }} />
+      {/* For Mobile */}
+      <Box display={{ base: 'flex', md: 'none' }} alignItems="center" mr={2}>
         {mobileIcon}
       </Box>
       <Drawer isOpen={isOpen && !!isMobile} onClose={onClose} placement="top">
@@ -40,8 +43,6 @@ const HeaderMenu = () => {
         </DrawerOverlay>
       </Drawer>
     </>
-  ) : (
-    <Navigation display="flex" />
   );
 };
 

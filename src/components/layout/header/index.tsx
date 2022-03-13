@@ -21,7 +21,7 @@ const Header: React.FC<FlexProps> = (props) => {
       justifyContent="center"
       {...props}
     >
-      <Flex flexGrow={1} maxW="62em">
+      <Flex flexGrow={1} maxW={{ sm: '62em' }}>
         <LogoLink />
 
         <Spacer />
