@@ -12,7 +12,7 @@ Firebase を使った時も勉強したのに、ちゃんと記録に残さな�
 
 ## 前提知識
 
-認証の仕組みを理解する上で切り離すことのできない用語類は以下のようにまとめてみました。以下の神記事５選を読むとそれなりに API ファーストの認証方法やセキュリティについて理解できるようになるかと思います。
+認証の仕組みを理解する上で切り離すことのできない用語類は以下のようにまとめてみました。以下の記事を読むとそれなりに API ファーストの認証方法やセキュリティについて理解できるようになるかと思います。
 
 > - [この Web API って CSRF 対策出来てますか？って質問にこたえよう - Qiita](https://qiita.com/maruloop/items/e14d02299bd136f4b1fc)
 > - [【REST API】認証トークンをどのように扱うのが良さげか調べたことをまとめる - s u p ?](https://whatsupguys.net/programming-learning-142/)
@@ -50,7 +50,7 @@ Firebase を使った時も勉強したのに、ちゃんと記録に残さな�
 | [SessionStorage](https://developer.mozilla.org/ja/docs/Web/API/Window/sessionStorage) | ウィンドウ/タブを閉じるまで | 5MB      | データ利用時のみ       |
 
 - [JWT(Json Web Token)](https://jwt.io/)...Base64 でエンコーディングされた認証トークン。API 利用者は JWT を HTTP リクエストヘッダーに含めてリクエストを送信する。
-  ![](https://www.mushroom-blog.com/wp-content/uploads/2020/02/jwt_generate.png)
+  ![](https://res.cloudinary.com/dso4npatn/image/upload/v1647150483/media/blog/insert/jwt_generate_fsodlb.png)
 
 > [【JWT】 入門 - Qiita](https://qiita.com/Naoto9282/items/8427918564400968bd2b)
 
@@ -65,7 +65,7 @@ Firebase を使った時も勉強したのに、ちゃんと記録に残さな�
 - フロント-バックエンド間はセッション管理ではなく、認証トークンを利用したリクエストを構築する(ただし、この認証トークンをどのように管理していくかがセキュリティ上の課題)
 
 認証トークンを発行して利用するフローは以下の通りです。
-![](https://www.mushroom-blog.com/wp-content/uploads/2020/02/auth_flow_diagram.png)
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1647150483/media/blog/insert/auth_flow_diagram_nxoq1k.png)
 
 #### ユーザー登録処理
 

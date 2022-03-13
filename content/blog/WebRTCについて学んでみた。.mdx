@@ -27,7 +27,7 @@ P2P 通信とその暗号化(事前に暗号鍵の交換)、UDP/IP の使用(確
 
 ### WebRTC で利用されているプロトコル
 
-<img src="https://camo.qiitausercontent.com/96f9643577144f38f0c07625e0ae25454875c626/68747470733a2f2f71696974612d696d6167652d73746f72652e73332e61702d6e6f727468656173742d312e616d617a6f6e6177732e636f6d2f302f3132323939322f37613264396462372d346337352d316333632d323337362d3931666336353934643764652e706e67" />
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1647150482/media/blog/insert/68747470733a2f2f71696974612d696d6167652d73746f72652e73332e61702d6e6f727468656173742d312e616d617a6f6e6177732e636f6d2f302f3132323939322f37613264396462372d346337352d316333632d323337362d3931666336353934643764652e706e67_dplboi.png)
 
 > [Architecture | WebRTC](https://webrtc.org/architecture/)
 
@@ -65,7 +65,7 @@ P2P 接続によって送受信されるデータを説明するためのメタ�
 通信経路の候補を「ICE Candidate」と呼び、  
 すべての ICE Candidate が出揃ってから、SDP とまとめて交換する方式を「Vanilla ICE」、先に SDP だけを交換してから ICE Candidate を順次交換する方式を「Trickle ICE」と呼びます。
 
-<img src="https://camo.qiitausercontent.com/601e21b5392bb6cf95bb3500589cf6192b52e370/68747470733a2f2f71696974612d696d6167652d73746f72652e73332e61702d6e6f727468656173742d312e616d617a6f6e6177732e636f6d2f302f3132323939322f38636334373862662d356430332d663330652d653438342d3763313666303337343439642e706e67" />
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1647150483/media/blog/insert/68747470733a2f2f71696974612d696d6167652d73746f72652e73332e61702d6e6f727468656173742d312e616d617a6f6e6177732e636f6d2f302f3132323939322f38636334373862662d356430332d663330652d653438342d3763313666303337343439642e706e67_dhoi82.png)
 
 ### WebRTC のサポート状況
 
@@ -131,7 +131,7 @@ WebScoket とはクライアント、サーバー問わず主体的に発信で�
 TCP と同じレイヤーで、HTTP の 3 ウェイハンドシェイク後 Upgrade ヘッダによて WebSocket へ進化します。ですので、アプリケーション層だけでは実現できない高速な通信が実現可能です。  
 参考までに WebSocket ライブラリの[socket.io](https://socket.io/)のコネクション確立からイベントの送受信について簡単にまとめた図を載せておきます。
 
-<img src="https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-image-store.s3.ap-northeast-1.amazonaws.com%2F0%2F122992%2Fc1b7e33d-a6f9-ed93-1cf5-54bdd173e7e0.png?ixlib=rb-1.2.2&auto=format&gif-q=60&q=75&w=1400&fit=max&s=5e1104b68bfa50cd0d11bca6a42d47a8" />
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1647152556/media/blog/insert/socketIO-image_kypikg.png)
 
 ### シグナリングサーバーの実装
 
@@ -155,7 +155,7 @@ socket.on('signaling', function (data) {
 
 WebRTC において SDP 交渉のやりとりとその後の流れをワークフローを示すと以下のイメージです。 ①,②,⑤,⑨ でシグナリングサーバーを介して通信しています。
 
-<img src="https://camo.qiitausercontent.com/7c2ca149e81b3a40d28b3be7404275f3061cabf2/68747470733a2f2f71696974612d696d6167652d73746f72652e73332e61702d6e6f727468656173742d312e616d617a6f6e6177732e636f6d2f302f3132323939322f33396334336366612d383763622d363766662d323234322d3362303962383130353031612e706e67" />
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1647150482/media/blog/insert/68747470733a2f2f71696974612d696d6167652d73746f72652e73332e61702d6e6f727468656173742d312e616d617a6f6e6177732e636f6d2f302f3132323939322f33396334336366612d383763622d363766662d323234322d3362303962383130353031612e706e67_okt7rm.png)
 
 ここで登場するのが 3 つのオブジェクト RTCPeerConnection, RTCSessionDescription, RTCIceCandidate です。
 要約するとオファーとそれに対するアンサーを返すことで、お互いの接続するセッション情報について交換しています。

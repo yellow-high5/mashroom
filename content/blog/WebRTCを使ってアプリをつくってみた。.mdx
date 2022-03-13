@@ -17,11 +17,7 @@ tag:
 パフォーマーは、[STARTLIVE]ボタンから、ライブ名と自分の名前(任意)を入力して始めると、そのライブのチャンネルが作成されます。リスナーは、[SUBSCRIBE]ボタンから、作成されたチャンネルと自分の名前(任意)を入力すれば、そのライブルームに参加できます。  
 ライブルーム内ではボードに ❶ メッセージを書く ❷ セルフカメラまたは PC 画面を共有できます。
 
-<img
-  width="651"
-  alt="image.png"
-  src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/122992/4d576a77-9b3c-8785-fb36-496645284482.png"
-/>
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1647150482/media/blog/insert/4d576a77-9b3c-8785-fb36-496645284482_gagiyv.png)
 
 ## デプロイするまで
 
@@ -88,11 +84,7 @@ networks:
 
 React + Reducer の定番コンビを使っていますが、state(≒reducer)と action をちゃんと定義しておきます。図のようにモックアップとユーザーのアクションを結びつけ、state がどのように変化するかを記述しておくと分かりやすいので、自分はいつもこんな感じで設計してから実装に入ります。
 
-<img
-  width="685"
-  alt="image.png"
-  src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/122992/30d5a5b7-2725-ad4d-f85c-a82d13bf1525.png"
-/>
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1647150482/media/blog/insert/30d5a5b7-2725-ad4d-f85c-a82d13bf1525_dbz5ho.png)
 
 ### Material UI のスタイルを好みに変えていく
 
@@ -125,11 +117,7 @@ class Board extends React.Component {
 
 ### スキーマ設計
 
-<img
-  width="627"
-  alt="image.png"
-  src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/122992/c834d3fb-52ac-66aa-ea11-730c485781d3.png"
-/>
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1647150483/media/blog/insert/c834d3fb-52ac-66aa-ea11-730c485781d3_ac1s0v.png)
 
 ### イベント受信
 
@@ -235,15 +223,11 @@ Member.findOne({ socket: socket.id }).then((member) => {
 
 ## WebRTC でビデオチャット
 
-WebRTC にはメディアへのアクセスや P2P のストリーム通信を実現する API です。度々仕様が変更になるので注意です。 調べた内容については[こちら](https://www.mushroom-blog.com/198/ 'こちら')にまとめています。
+WebRTC にはメディアへのアクセスや P2P のストリーム通信を実現する API です。度々仕様が変更になるので注意です。
 ちなみに HTTPS でないと使用できません。(localhost は大丈夫)  
 シグナリングサーバーは立てているので、あとはクラインと側で処理を書いていきます。
 
-<img
-  width="683"
-  alt="image.png"
-  src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/122992/6c1a61ae-5138-0c12-0377-91d835480128.png"
-/>
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1647150482/media/blog/insert/6c1a61ae-5138-0c12-0377-91d835480128_qnlmnd.png)
 
 それぞれの送られてくるデータのタイプによって処理を分岐させています。
 

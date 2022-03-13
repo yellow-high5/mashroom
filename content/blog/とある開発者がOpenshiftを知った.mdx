@@ -16,7 +16,7 @@ Openshift の話をする前にコンピュータリソースの歴史を簡単�
 このおかげでアプリ開発者はとても早くアプリを開発・構築してユーザーの元へリリースできるようになりました。  
 大きく分けると４つの時代か存在します。
 
-![b202979c.png](attachments/b202979c.png)
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1647150481/media/blog/insert/-2021-04-19-23.46.20_dj5l9o.png)
 
 ##### ・物理マシン時代
 
@@ -65,7 +65,7 @@ DevOps とは、**“新たな機能を追加する”をミッションとす�
 
 以下のように Openshift では NameSpace という単位でプロジェクトを管理しており、白色の Kubernetes 機能を補う形で青色の Openshift の機能が存在しています。
 
-![82ef71f4.png](attachments/82ef71f4.png)
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1647150481/media/blog/insert/-2021-04-19-23.46.35_hlvczf.png)
 
 実際のプロジェクトでは、Github 上のリポジトリが develop にマージされたタイミングで、ソースコードをビルドしてコンテナイメージを生成して Openshift 環境にデプロイされるようなパイプラインを構築しました。また、Kubernetes ではリソースの割り当てを yaml ファイルにマニフェストファイルとして記載していますが、Opensfhit 上でもコンソールから yaml ファイルを簡単に編集できるようになっています。
 Web コンソール上にログの出力や Pod の状態を反映したモニタリング情報が載っています。たまに自動化したデプロイパイプラインが失敗したときは、Web コンソールから手動でデプロイを行うことも簡単です。

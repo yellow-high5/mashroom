@@ -19,7 +19,7 @@ Go 言語初学者です。普段の生息界隈は JS/TS+Java ですが、サ�
 
 座標点 Point は int の X と Y で構成されていて、長方形領域 Rectangle は Point の Min と Max で構成されています。
 
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/122992/6adeb0cc-1d7c-f1c7-00b4-62965a545332.png)
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1647150482/media/blog/insert/6adeb0cc-1d7c-f1c7-00b4-62965a545332_c3w8m5.png)
 
 ### [Color](https://golang.org/pkg/image/color/)
 
@@ -32,7 +32,7 @@ Go 言語初学者です。普段の生息界隈は JS/TS+Java ですが、サ�
 
 この構造体では画像を`Pix`で**Red,Green,Blue,Alpha を繰り返す１次元配列**として扱います。`Stride`とは**画像の横一列分のサイズ**を表しています。
 
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/122992/d97b9064-3d9e-d0c3-0513-eb11cebe175a.png)
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1647150483/media/blog/insert/d97b9064-3d9e-d0c3-0513-eb11cebe175a_bvx1ch.png)
 
 ## imaging ライブラリを読んでみる
 
@@ -117,7 +117,7 @@ func parallel(start, stop int, fn func(<-chan int)) {
 
 以下に[imaging.FlipH](https://godoc.org/github.com/disintegration/imaging#FlipH)(画像の左右を反転させる処理)がどのような過程で並行処理して出力するのかを表した絵を描いてみました。
 
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/122992/23ac7924-78b3-9bbc-5205-62c5a6f2cb50.png)
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1647150482/media/blog/insert/23ac7924-78b3-9bbc-5205-62c5a6f2cb50_d53kmq.png)
 
 ```go:上の絵を実現しているコード
 func FlipH(img image.Image) *image.NRGBA {
@@ -200,7 +200,7 @@ func (b *commandsBuilder) newHogeCmd() *hogeCmd {
 Go 製の Web フレームワークである[Gin の GoDoc](https://godoc.org/github.com/gin-gonic/gin)を読んで大雑把に絵にしました。かなり端折ってしまっていますが、簡略化するとこんな感じかと。処理を HandlerFunc(ミドルウェア)でつないで、HTTP リクエストから HTTP レスポンスを返すロジックを作成しているようです。
 
 ↓ イメージ
-![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/122992/66cb82fb-7a7a-94fb-7ac5-701df1aa966f.png)
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1647150482/media/blog/insert/66cb82fb-7a7a-94fb-7ac5-701df1aa966f_lem5n5.png)
 
 - **Engine**...フレームワークのインスタンス(`gin.Default()`あるいは`gin.New()`で生成される)
 - **Context**...最も重要な部分。受け取ったリクエストからレスポンスを返すまでの情報を保持する。

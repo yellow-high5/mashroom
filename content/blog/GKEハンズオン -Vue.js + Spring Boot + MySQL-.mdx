@@ -17,11 +17,7 @@ Kubernetes について学んだことのアウトプットとして自分で簡
 「開発環境では Docker 環境上で実行できる(`docker-compose up`一発で立ち上げ)。本番環境ではシェルスクリプト一発で GKE 上にアプリケーションをデプロイして実行できる」という理想を念頭に置いて設計しました。
 ローカル上では DB コンテナを簡単に立てて OK ですが、GKE 上では永続化するストレージはきちんと Kubernetes クラスターの外部に持っておくことが一般的のようです。詳しくは[コンテナ運用のおすすめの方法](https://cloud.google.com/solutions/best-practices-for-operating-containers?hl=ja)にも記載されていますが、コンテナ内部をステートレスに保つことが重要になってきます。また、永続ストレージにアクセスするためのユーザー名やパスワードは[シークレットリソース](https://cloud.google.com/kubernetes-engine/docs/concepts/secret?hl=ja)で定義しておきます。
 
-<img
-  width="911"
-  alt="image.png"
-  src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/122992/3c09ec17-a062-ef23-d5a2-70ff6e3c69a7.png"
-/>
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1647150482/media/blog/insert/3c09ec17-a062-ef23-d5a2-70ff6e3c69a7_erehzk.png)
 
 配置構成については、Redis などのキャッシュ用途が強く、コンテナと結合度が高いコンポーネントがあったりすると配置が変わってくるかもしれません...。
 
@@ -275,10 +271,6 @@ GKE は開発するのにとにかく使いやすいです。Kubernetes の学�
 
 ちなみに今回構築した Pod がどんな感じで配置されていたのか絵にしてみたら、こんな感じでした。
 
-<img
-  width="905"
-  alt="image.png"
-  src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/122992/fa7d7c01-9beb-10cf-407f-9d239e75df9d.png"
-/>
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1647150483/media/blog/insert/fa7d7c01-9beb-10cf-407f-9d239e75df9d_uh8f3o.png)
 
 アプリをデプロイするだけだと、GKE の圧倒的な抽象力に怠けて Kubnernetes のオーケストレーション機能をあまり深く見れませんでした。アクセス負荷などの実験ができれば、Kubernetes が真価を発揮しそうなのでまた記事書けるように勉強します。
