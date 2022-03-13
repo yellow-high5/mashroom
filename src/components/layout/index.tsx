@@ -13,6 +13,10 @@ type Props = {
 const Layout: React.FC<Props> = ({ children }) => {
   const [showHeader, setShowHeader] = useState(true);
   useScrollPosition(({ prevPos, currPos }) => {
+    if (currPos.y > -20) {
+      setShowHeader(true);
+      return;
+    }
     const visible = currPos.y > prevPos.y;
     setShowHeader(visible);
   }, []);

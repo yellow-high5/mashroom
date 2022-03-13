@@ -41,6 +41,10 @@ type Props = {
 const BlogTemplate: React.FC<Props> = ({ data }) => {
   const [showHeader, setShowHeader] = useState(true);
   useScrollPosition(({ prevPos, currPos }) => {
+    if (currPos.y > -20) {
+      setShowHeader(true);
+      return;
+    }
     const visible = currPos.y > prevPos.y;
     setShowHeader(visible);
   }, []);
