@@ -1,4 +1,4 @@
-import { Box, Link, useColorMode } from '@chakra-ui/react';
+import { Link, useColorMode } from '@chakra-ui/react';
 import { GatsbyImage, getImage } from 'gatsby-plugin-image';
 import { useLogoLink } from 'hooks';
 import React from 'react';
@@ -13,14 +13,12 @@ const LogoLink = () => {
 
   return (
     <Link href={`${process.env.GATSBY_SITE_URL}`}>
-      <Box>
-        {logoLight && logoDark && (
-          <GatsbyImage
-            image={colorMode === 'light' ? logoLight : logoDark}
-            alt="m@shroom logo title"
-          />
-        )}
-      </Box>
+      {logoLight && logoDark && (
+        <GatsbyImage
+          image={colorMode === 'light' ? logoLight : logoDark}
+          alt="m@shroom logo title"
+        />
+      )}
     </Link>
   );
 };

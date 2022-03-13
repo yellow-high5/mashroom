@@ -1,5 +1,14 @@
-import { HStack, Icon, Spacer, StackProps, Text, VStack } from '@chakra-ui/react';
-import mdxComponents from 'components/mdx/mdx-components';
+import {
+  AspectRatio,
+  chakra,
+  Heading,
+  HStack,
+  Icon,
+  Spacer,
+  StackProps,
+  Text,
+  VStack,
+} from '@chakra-ui/react';
 import React from 'react';
 import { IoStopwatchOutline, IoTimeOutline } from 'react-icons/io5';
 import { getMinutesToRead } from 'utils/format';
@@ -25,7 +34,12 @@ const BlogHeading: React.FC<Props> = (props: Props) => {
           <Text fontSize="xs">{getMinutesToRead(wordCount?.words)}</Text>
         </HStack>
       </HStack>
-      <mdxComponents.h1>{frontmatter?.title}</mdxComponents.h1>
+      <Heading size="lg">{frontmatter?.title}</Heading>
+      <AspectRatio minW="100%" ratio={16 / 9} display={{ base: 'block', md: 'none' }}>
+        {frontmatter?.thumbnail && (
+          <chakra.img src={frontmatter.thumbnail} borderRadius={24} alt="thumbnail" />
+        )}
+      </AspectRatio>
     </VStack>
   );
 };

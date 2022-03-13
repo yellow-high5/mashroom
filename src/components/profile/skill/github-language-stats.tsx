@@ -1,5 +1,5 @@
 import { gql, useQuery } from '@apollo/client';
-import { Box, chakra, Flex, Icon, Text, useColorModeValue } from '@chakra-ui/react';
+import { Box, chakra, Flex, Heading, Icon, useColorModeValue } from '@chakra-ui/react';
 import React from 'react';
 import { IoCodeSlashOutline } from 'react-icons/io5';
 import { Cell, Legend, Pie, PieChart } from 'recharts';
@@ -57,19 +57,20 @@ const GithubLanguageStats = () => {
     <Box my={4}>
       <Flex alignItems="center" mb={4}>
         <Icon boxSize={6} as={IoCodeSlashOutline} m={1} />
-        <Text size="sm" m={1}>
+        <Heading size="sm" fontWeight={'bold'} m={1}>
           プログラミング言語
-        </Text>
+        </Heading>
       </Flex>
+
       {!loading && !error && languages && (
-        <PieChart width={400} height={300}>
+        <PieChart width={320} height={240}>
           <Pie
             data={languages}
             dataKey="size"
-            cx={120}
-            cy={150}
-            innerRadius={60}
-            outerRadius={120}
+            cx={96}
+            cy={120}
+            innerRadius={48}
+            outerRadius={96}
             paddingAngle={4}
             stroke="#eee"
             strokeWidth={4}
@@ -83,8 +84,11 @@ const GithubLanguageStats = () => {
             layout="vertical"
             align="right"
             iconType="circle"
-            wrapperStyle={{ color: 'black!important' }}
-            formatter={(value) => <chakra.span color={fontColor}>{value}</chakra.span>}
+            formatter={(value) => (
+              <chakra.span color={fontColor} fontWeight="bold" fontSize={12}>
+                {value}
+              </chakra.span>
+            )}
           />
         </PieChart>
       )}

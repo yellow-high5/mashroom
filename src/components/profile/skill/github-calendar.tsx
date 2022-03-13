@@ -1,5 +1,5 @@
 import { gql, useQuery } from '@apollo/client';
-import { Box, Flex, Icon, Link, Text } from '@chakra-ui/react';
+import { Box, Flex, Heading, Icon, Link } from '@chakra-ui/react';
 import React from 'react';
 import CalendarHeatmap from 'react-calendar-heatmap';
 import { IoLogoGithub } from 'react-icons/io5';
@@ -40,9 +40,9 @@ const GithubCalendar = () => {
       <Box my={8}>
         <Flex alignItems="center" mb={4}>
           <Icon boxSize={6} as={IoLogoGithub} m={1} />
-          <Text size="sm" m={1}>
-            yellow-high5
-          </Text>
+          <Heading size="sm" fontWeight="bold" m={1}>
+            github.com/yellow-high5
+          </Heading>
         </Flex>
         {!loading && !error && calendar && (
           <CalendarHeatmap

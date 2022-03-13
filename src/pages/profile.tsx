@@ -81,7 +81,7 @@ const ProfilePage = () => {
             </TabPanels>
           </Tabs>
 
-          <Box display={{ base: 'block', md: 'none' }}>
+          <Box display={{ base: 'block', md: 'none' }} w="100%">
             {PROFILE_TAB.map((tab, index) => (
               <Box key={tab.title}>
                 <Heading textAlign="center" size="lg" py={4}>

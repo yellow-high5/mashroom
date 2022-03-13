@@ -18,12 +18,12 @@ const WhoContent = () => {
   return (
     <Box p={8}>
       {INTERVIEW_LIST.map((item, i) => (
-        <Stack key={i} mb={16} w="100%">
+        <Stack key={i} mb={16}>
           <HStack mb={2}>
             <Icon boxSize={4} as={IoHelpCircle} />
             <Text>{item.question}</Text>
           </HStack>
-          <Box w="100%">
+          <Box>
             <Heading
               size="sm"
               position="relative"

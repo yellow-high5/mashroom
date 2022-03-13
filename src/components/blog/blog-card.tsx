@@ -43,7 +43,7 @@ const BlogCard: React.FC<Props> = (props: Props) => {
             base: 'md',
             lg: 'xs',
           }}
-          m="auto"
+          m={{ base: 2, md: 'auto' }}
           borderWidth="1px"
           borderRadius="lg"
           overflow="hidden"
@@ -58,7 +58,7 @@ const BlogCard: React.FC<Props> = (props: Props) => {
           <Box position="relative">
             {/* 画像がない場合は大体を用意しておく */}
             {thumbnail && (
-              <AspectRatio ratio={{ md: 16 / 9 }}>
+              <AspectRatio minW="120px" ratio={16 / 9}>
                 <chakra.img src={thumbnail} alt="thumbnail" />
               </AspectRatio>
             )}
