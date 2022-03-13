@@ -1,6 +1,6 @@
 module.exports = {
   siteMetadata: {
-    title: `mashroom`,
+    title: `m@shroom`,
     siteUrl: `http://localhost:8000`,
   },
   plugins: [

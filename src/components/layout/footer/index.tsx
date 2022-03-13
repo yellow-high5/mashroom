@@ -28,7 +28,7 @@ const Footer: React.FC<FlexProps> = (props) => {
         <Heading fontSize="xs" mr={1}>
           {`${new Date().getFullYear().toString()} developed & written by m@sh.`}
         </Heading>
-        <Link href="https://github.com/yellow-high5/mashroom" isExternal>
+        <Link href="https://github.com/yellow-high5/mashroom.at" isExternal>
           <IoGitBranch cursor="pointer" />
         </Link>
       </Flex>
