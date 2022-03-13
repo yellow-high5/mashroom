@@ -26,7 +26,7 @@ const BlogIndex: React.FC<Props> = (props: Props) => {
 
   return (
     <Box {...boxProps}>
-      <AspectRatio ratio={16 / 9} width="240px" mb={6}>
+      <AspectRatio ratio={16 / 9} width="100%" mb={6}>
         {frontmatter?.thumbnail && <chakra.img src={frontmatter.thumbnail} />}
       </AspectRatio>
 
