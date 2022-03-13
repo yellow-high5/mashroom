@@ -16,6 +16,7 @@ import {
   SiJava,
   SiJavascript,
   SiPython,
+  SiReact,
   SiRuby,
   SiRust,
   SiTypescript,
@@ -26,9 +27,12 @@ export const getFileIcon = (language?: string): IconType | undefined => {
     return undefined;
   }
 
+  // https://react-icons.github.io/react-icons/icons?name=si
   const icons = {
     ts: SiTypescript,
+    tsx: SiReact,
     js: SiJavascript,
+    jsx: SiReact,
     deno: SiDeno,
     dart: SiDart,
     rust: SiRust,

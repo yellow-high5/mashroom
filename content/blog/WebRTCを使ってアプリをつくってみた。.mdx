@@ -94,7 +94,7 @@ Material UI はそれだけで十分な役割を果たしてくれますが、�
 
 このアプリでは通信に socket.io を使用するので、クライアント側の方にもソケットを立てて受信しておく必要があります。自分は React で socket.io を実装するのに、socket.io-client というモジュールを使いました。
 
-```javascript
+```js
 import io from 'socket.io-client';
 
 class Board extends React.Component {
@@ -123,7 +123,7 @@ class Board extends React.Component {
 
 このアプリではチャンネルごとに名前空間で分割しています。
 
-```javascript
+```js
 let nsp = await io.of(`/${live.channel}`);
 ```
 
@@ -134,7 +134,7 @@ let nsp = await io.of(`/${live.channel}`);
 メンバーを DB に保存してから、ライブ内部の人数が増えたので、メンバー情報をライブに接続しているクライアントへ Emit します。  
 パフォーマーの場合はそのライブの主催者であることを更新します。
 
-```javascript
+```js
 new_member.save(async (err, member) => {
   if (err) {
     console.log(err); //fix point(エラーの投げ方どないする？)
@@ -157,7 +157,7 @@ new_member.save(async (err, member) => {
 
 ボイス(メッセージ)を DB に保存して、成功すれば各クライアントへ Emit します。
 
-```javascript
+```js
 new_voice.save((err, voice) => {
   if (!voice) {
     return next(err);
@@ -179,7 +179,7 @@ new_voice.save((err, voice) => {
 
 シグナリングサーバーは来た情報をターゲットがいればそれに発信し、ターゲット指定がなければ、全員に発信します。
 
-```javascript
+```js
 socket.on('SIGNALING', function (data) {
   data.from = socket.id;
   let target = data.to;
@@ -196,7 +196,7 @@ socket.on('SIGNALING', function (data) {
 
 リスナーの接続が切れた場合はライブ情報を更新するだけ、パフォーマーの接続が切れた場合はライブを削除します。
 
-```javascript
+```js
 Member.findOne({ socket: socket.id }).then((member) => {
   if (!member) {
     console.log('ERROR');
@@ -231,7 +231,7 @@ WebRTC にはメディアへのアクセスや P2P のストリーム通信を�
 
 それぞれの送られてくるデータのタイプによって処理を分岐させています。
 
-```javascript
+```js
 this.socket.on("SIGNALING", data => {
       let from = data.from;
       switch (data.type) {

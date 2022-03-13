@@ -76,7 +76,7 @@ IE はやはり対応してませんが、それ以外の Chrome, Firefox, Safar
 またデバイスへのアクセスでインカメの取得やスクリーンキャプチャについてもブラウザベンダーごとにコーディングしなくてはなりません。
 [WebRTC Demos, Experiments, Libraries, Examples](https://www.webrtc-experiment.com/)では WebRTC の機能を利用した色々なアプリが実装されているので参考にできます。またこの開発者の実装したライブラリ[DetectRTC](https://github.com/muaz-khan/WebRTC-Experiment/tree/master/DetectRTC)でブラウザや webrtc サポート状況について検知できます。
 
-```javascript
+```js
 let DetectRTC = require('detectrtc');
 
 DetectRTC.load(function () {
@@ -90,7 +90,7 @@ DetectRTC.load(function () {
 
 Firefox だとデバイスへのアクセスはだいたい許容されているので、API のドキュメントを確認しながら実装しやすいですが、Chrome はサポートしてたりしてなかったりなので、要注意です。以下のように、Firefox は[getUserMedia](https://developer.mozilla.org/ja/docs/Web/API/Navigator/getUserMedia)でインカメもスクリーンキャプチャも取得できますが、Chrome では[getDisplayMedia](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getDisplayMedia)を使わないとスクリーンキャプチャできませんでした。ブラウザごとの場合分けは先ほど紹介した DetectRTC を使うと良さそうです。
 
-```javascript
+```js
 let video = await document.getElementById('video');
 navigator.getUserMedia =
   (await navigator.getUserMedia) ||
@@ -140,7 +140,7 @@ TCP と同じレイヤーで、HTTP の 3 ウェイハンドシェイク後 Upgr
 
 WebSocket ライブラリの socket.io を用いて WebRTC でのシグナリングサーバーを実装すると以下の通りです。
 
-```javascript
+```js
 socket.on('signaling', function (data) {
   data.from = socket.id;
   let target = data.to;
@@ -168,7 +168,7 @@ WebRTC において SDP 交渉のやりとりとその後の流れをワーク�
 
 上のチャートフローをもとにクライアント側のソケットを実装していきます。Peer.js や SIP.js などのライブラリを使うのもありですが、制約も多いようなので今回は純粋に WebRTC の API を用いて実装していくことにします。[https://github.com/mganeko/webrtcexpjp](https://github.com/mganeko/webrtcexpjp) をだいぶ参考にしているので、詳しく知りたい方はそちらを参考に。(一部変更してます)
 
-```javascript
+```js
 socket.on('signaling', function (data) {
   switch (data.type) {
     //Emitterからのcastを受信
@@ -208,7 +208,7 @@ socket.on('signaling', function (data) {
 
 以下のように RTCPeerConnection にはいくつかイベントハンドラを仕込まれており、これで ICE Candidate の交換や相手との動画共有が可能になります。
 
-```javascript
+```js
 prepareNewConnection(id) {
   let peer = new RTCPeerConnection({"iceServers": []});
   //ビデオストリームを受信した時の処理

@@ -29,7 +29,7 @@ REST と GraphQL は何が違うのかよく論じられているのでまとめ
 ドキュメントで紹介されているクエリで指定可能な名称を一つにまとめて整理してみました。  
 [ドキュメント](https://graphql.org/learn/)を一読してここを見れば備忘録としてわかりやすいかと思います。
 
-```javascript:(サンプル)クエリ
+```js:(サンプル)クエリ
 /*Operation Type*/query /*Operation Name*/HeroNameAndFriends(/*Variables*/$episode: Episode = JEDI,   /*Variables*/$withFriends: Boolean!
 ) {
   /*Aliases*/jediHero: /*Fields*/hero(/*Arguments*/episode: $episode) {
@@ -70,7 +70,7 @@ REST と GraphQL は何が違うのかよく論じられているのでまとめ
 クエリは REST でいうところの GET リクエストでデータ取得するための操作です。それに対してミューテーションは POST リクエストや PUT リクエストなどで、データ変更のための操作です。構造的にはクエリが分かれば理解は容易です。操作としての違いを抑えておきましょう。
 ちなみに Variables についている`!`は必須という意味です。なのでちゃんと渡さないとエラーになりますのでご注意を。
 
-```javascript:(サンプル)ミューテーション
+```js:(サンプル)ミューテーション
 mutation CreateReviewForEpisode($ep: Episode!, $review: ReviewInput!) {
   createReview(episode: $ep, review: $review) {
     stars
@@ -83,7 +83,7 @@ mutation CreateReviewForEpisode($ep: Episode!, $review: ReviewInput!) {
 
 データ取得をサブスクしたクライアントに対して、GraphQL サーバーからデータをプッシュする方法です。特定イベント(データ更新など)をクライアントに向けて通知するのに利用されます。データが変更されるたびに、新たな結果をクライアントへ送信するようにします。
 
-```javascript:(サンプル)サブスクリプション
+```js:(サンプル)サブスクリプション
 subscription onCommentAdded($repoFullName: String!){
   commentAdded(repoFullName: $repoFullName){
     id
@@ -96,7 +96,7 @@ subscription onCommentAdded($repoFullName: String!){
 
 GraphQL ではデータの型定義は「GraphQL スキーマ言語(GraphQL SDL)」を用いて表します。早速サンプルのオブジェクトを定義した文法を見てみます
 
-```javascript:サンプルオブジェクト
+```js:サンプルオブジェクト
 type /*Object Type*/Character {
   /*Fields*/id: /*Scalar Type(Non Nullable)*/ID!
   /*Fields*/name: /*Scalar Type(Non Nullable)*/String!
@@ -181,7 +181,7 @@ React を使う場合は@apollo/react-hooks を、Vue を使う場合は vue-apo
 
 ⭐️React の例
 
-```javascript:React
+```js:React
 import gql from 'graphql-tag';
 import { useQuery } from '@apollo/react-hooks';
 
@@ -244,7 +244,7 @@ GraphQL サーバーでクライアントのクエリが実行される際に、
 
 以下リゾルバ関数のサンプルです。
 
-```javascript:(サンプル)リゾルバ関数
+```js:(サンプル)リゾルバ関数
 human(obj, args, context, info) {
   return context.db.loadHumanByID(args.id).then(
     userData => new Human(userData)
@@ -270,7 +270,7 @@ GraphQL サーバー構築に[Apollo Server](https://www.apollographql.com/docs/
 
 Apollo Server インスタンスを定義する際に接続する DB の情報や認証情報などのコンテキストを渡しておきます。以下は Node.js で Apollo Server インスタンスを起動しているサンプルです。
 
-```javascript
+```js
 const { ApolloServer } = require('apollo-server');
 const typeDefs = require('./schema');
 const { createStore } = require('./utils');
