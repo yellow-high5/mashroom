@@ -1,30 +1,34 @@
 ---
 tag:
-  - Web開発
+- Web開発
 date: 2022-03-04T15:00:00Z
 title: Graphql Code GeneratorをGatsbyに導入した時の話
-thumbnail: https://res.cloudinary.com/dso4npatn/image/upload/v1647190522/media/Graphql_Code_Generator%E3%82%92Gatsby%E3%81%AB%E5%B0%8E%E5%85%A5%E3%81%97%E3%81%9F%E6%99%82%E3%81%AE%E8%A9%B1_kn8odb.png
+thumbnail: https://res.cloudinary.com/dso4npatn/image/upload/v1647190522/media/blog/thumbnail/Graphql_Code_Generator%E3%82%92Gatsby%E3%81%AB%E5%B0%8E%E5%85%A5%E3%81%97%E3%81%9F%E6%99%82%E3%81%AE%E8%A9%B1_kn8odb.png
+
 ---
+Graphqlで受け取ったdataに型がないと辛いよねということで、一般的な解決方法を探すと「[GraphQL Code Generator](https://www.graphql-code-generator.com/)が最高だぜ」という記事に行き着く。そこでGatsbyにこれを導入して型の恩恵を授かる方法を模索する。
 
-Graphql で受け取った data に型がないと辛いよねということで、一般的な解決方法を探すと「[GraphQL Code Generator](https://www.graphql-code-generator.com/)が最高だぜ」という記事に行き着く。そこで Gatsby にこれを導入して型の恩恵を授かる方法を模索する。
 
-## Gatsby のプラグイン導入も考えたが...
+## Gatsbyのプラグイン導入も考えたが...
 
-プラグインを探すと以下のプラグインが検索候補に。[Integration | Gatsby](https://www.graphql-code-generator.com/docs/integrations/gatsby)にも書かれているが、これらは GraphQL Code Generator をもとに開発されている。
+プラグインを探すと以下のプラグインが検索候補に。[Integration | Gatsby](https://www.graphql-code-generator.com/docs/integrations/gatsby)にも書かれているが、これらはGraphQL Code Generatorをもとに開発されている。
 
 - [gatsby-plugin-typegen \| Gatsby](https://www.gatsbyjs.com/plugins/gatsby-plugin-typegen/)
 
 - [gatsby-plugin-codegen \| Gatsby](https://www.gatsbyjs.com/plugins/gatsby-plugin-codegen/?=gatsby-plugin-cod)
 
-gatsby-plugin-codegen の開発元が、gatsby-plugin-typegen を使ってねというので導入してみたが、私の場合 graphql のクエリ発行に Gatsby の`graphql`だけでなく、外部データも取得できるために apollo の`gql`も使っており、それとバッティングしてコンソールに以下のようなエラーが出るようになってしまった。。。
+gatsby-plugin-codegenの開発元が、gatsby-plugin-typegenを使ってねというので導入してみたが、私の場合graphqlのクエリ発行にGatsbyの`graphql`だけでなく、外部データも取得できるためにapolloの`gql`も使っており、それとバッティングしてコンソールに以下のようなエラーが出るようになってしまった。。。
 
 [Error: Duplicate "graphql" modules · Issue #211 · graphql-boilerplates/node-graphql-server · GitHub](https://github.com/graphql-boilerplates/node-graphql-server/issues/211)
 
-解決方法も試してみたが私の手元ではうまくいかなかったので、諦めて自分で GraphQL Code Generator を導入することにした。
+解決方法も試してみたが私の手元ではうまくいかなかったので、諦めて自分でGraphQL Code Generatorを導入することにした。
+
+
 
 ## 導入手順
 
-基本的には GraphQL Code Generator のドキュメントに書いてあることを行っていく。
+基本的にはGraphQL Code Generatorのドキュメントに書いてあることを行っていく。
+
 
 #### 1. パッケージインストール
 
@@ -71,13 +75,13 @@ generates:
 
 `@graphql-codegen/add`でアンビエント宣言にしておく。
 
-`typescript-react-apollo`を使えば`config`をいじるだけで Hook を自動生成してくれた。が、生成ファイルの容量が大きくて Gatsby で Warning が出たので一旦不採用にした。
+`typescript-react-apollo`を使えば`config`をいじるだけでHookを自動生成してくれた。が、生成ファイルの容量が大きくてGatsbyでWarningが出たので一旦不採用にした。
 
 #### 3. クエリ名つけておく
 
-以下の例では Gatsby 内臓の`graphql`タグを使って記述している。`SitePage`としておくことで後述の`yarn generate`で `SitePageQuery` という型を生成してくれるようになる。
+以下の例ではGatsby内臓の`graphql`タグを使って記述している。`SitePage`としておくことで後述の`yarn generate`で `SitePageQuery` という型を生成してくれるようになる。
 
-```tsx:LogoLink.tsx
+```ts:LogoLink.tsx
 import { graphql, useStaticQuery } from 'gatsby';
 
 const sitePageQuery = graphql`
@@ -102,15 +106,15 @@ const sitePageQuery = graphql`
 
 const LogoLink = () => {
   ...
-
+  
   // yarn type:generate を実行してから Gatsby.SitePageQuery を使えるようになる
   // const { site, allFile } = useStaticQuery<Gatsby.SitePageQuery>(sitePageQuery);
-
+  
   ...
 }
 ```
 
-#### 4. npm script に型生成を追加して実行
+#### 4. npm scriptに型生成を追加して実行
 
 ```json:package.json
 {
@@ -120,11 +124,13 @@ const LogoLink = () => {
 }
 ```
 
-Gatsby の型生成する際に`http://localhost:8000/___graphql`を参照しているので、`yarn dev`した後に`yarn type:generate`を実行する。そうすると`codgen.yaml`で指定したパスに型ファイルが出来上がる。
+Gatsbyの型生成する際に`http://localhost:8000/___graphql`を参照しているので、`yarn dev`した後に`yarn type:generate`を実行する。そうすると`codgen.yaml`で指定したパスに型ファイルが出来上がる。
+
+
 
 ## 使うにはスキーマが必要
 
-型を生成するには Graphql のスキーマファイルが必要となるので、とりあえずこれらを探す必要がある。Gatsby の場合は`http://localhost:8000/___graphql`を参照すれば良い。
+型を生成するにはGraphqlのスキーマファイルが必要となるので、とりあえずこれらを探す必要がある。Gatsbyの場合は`http://localhost:8000/___graphql`を参照すれば良い。
 
-プラグインが果たして外部 Graphql API に対応しているかはよくわからないが、Gatsby のコミュニティプラグインに頼りすぎるとブラックボックス感が怖いなと思ったので今回は自分で導入した。呼び出すエンドポイントごとに型定義ファイルを分けれているのでとりあえずよしとする。
-型生成前に`yarn dev`をしなくてはならないのが少し嫌だがプラグインはそこを`yanr dev`の実行時に生成してくれているみたい。もしまた開発していて Graphql の型周りで躓いたら直そうと思う。
+プラグインが果たして外部Graphql APIに対応しているかはよくわからないが、Gatsbyのコミュニティプラグインに頼りすぎるとブラックボックス感が怖いなと思ったので今回は自分で導入した。呼び出すエンドポイントごとに型定義ファイルを分けれているのでとりあえずよしとする。
+型生成前に`yarn dev`をしなくてはならないのが少し嫌だがプラグインはそこを`yanr dev`の実行時に生成してくれているみたい。もしまた開発していてGraphqlの型周りで躓いたら直そうと思う。
