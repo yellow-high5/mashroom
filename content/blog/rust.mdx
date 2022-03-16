@@ -1,0 +1,292 @@
+---
+tag:
+- サーバーサイド
+date: 2022-02-25T11:00:00Z
+title: Rustを始めることになりまして
+thumbnail: https://res.cloudinary.com/dso4npatn/image/upload/v1647427894/media/blog/thumbnail/Rust%E5%85%A5%E9%96%80_ghlfys.png
+
+---
+現在の担当している仕事ではバックエンド開発はRustで書いているので、普段フロントエンドの私もAPIの挙動を変えたいとなるとRustを勉強しなくてはならない。ちょうどフィルターやページネーションなどのクエリをつけて細かな挙動を変えたいというタスクからRust開発に参加できた。フロントエンジニアは最近WebAssembly周りとかでRustを勉強している人も増えていると聞くので何かと話題にはなっている言語にちゃっかり入門できてラッキーだった。というわけでRust学習について初歩的なことを書いてみる。
+
+## 学習曲線
+
+何種類かのプログラミング言語に精通していると「プログラミングなんてそれなりにどの言語もできるよ」とドヤ顔して言われるが、個人的な考え方として読めると書けるは全然違う。Rustが他の言語と一線を画している部分は「所有権」にあたるが、それ以外にもmatch文やトレイトとかマクロとか色々な特色がある。あくまで以下のロードマップは私が感じるレベル感である。
+コンパイラを通すのがかなり厳しめなので、曖昧な型を許容できなかったり、所有権や参照を気にして記述しなくてはならない。つまりプログラムを書くのにそれなりの代償を払う。その代わりに実行時の速度と安全性を提供してくれるのがRustという言語なのかもしれない。
+
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1647437354/media/blog/insert/%E6%89%80%E6%9C%89%E6%A8%A9%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B7%E3%82%99_mdotld.png)
+
+開発環境は最初VSCodeでやっていたが、今はIntellij + Rustプラグインという組み合わせで開発している。こちらの方がVSCodeに比べてコード解析が早い気がする。仕事のプロジェクト内でもエディタは何を使っているか尋ねたが、Vim+コンパイラやVSCode+Rustエクステンションなど様々だった。
+
+基本的には書籍を買わなくても[Rust本](\[The Rust Programming Language 日本語版 - The Rust Programming Language 日本語版\](https://doc.rust-jp.rs/book-ja/))を読めばそれなりに文法は理解できる。ただ少しお堅めの記述が多い気はするので真っ向から読み進めると理解するのに時間はかかるかもしれない。
+基本的なデータ構造や所有権を理解する部分だけさらっと読んで、あとは実際にコードを書いて詰まったときに原点回帰で読み直すのが良いやり方な気がする。
+
+## 所有権の理解
+
+書いていく上で一番の「癖」である所有権とか参照について公式に書いてある基本的なことをまとめておく。
+
+> * [所有権とは？](https://doc.rust-jp.rs/book-ja/ch04-01-what-is-ownership.html)
+> * [参照と借用](https://doc.rust-jp.rs/book-ja/ch04-02-references-and-borrowing.html)
+
+### 代入
+
+Rustでは、可変な値(ヒープ)を代入するときに「ムーブ」する。可変な値とは定義時に確保するメモリの領域が不定の値のことを指す。具体的には`String`、`Vec`、`Box`、`Rc`, `Arc`などのデータ構造のことを指す。
+
+一般の言語だと代入するときは「Shallow Copy」だが、Rustは変数に所有権が存在しており、別の変数に代入すると所有権が移り元の変数の値は無効になる。
+
+無効になるのが嫌な場合は、`clone()`すれば「Deep Copy」されるのでムーブされない。(メモリコストは払う)
+
+```rust:代入と所有権
+// 🤔
+let s1 = String::from("hello");
+let s2 = s1;                    //s1の所有権はs2にムーブされた
+
+println!("{}, world!", s1);     
+//コンパイルエラー
+// 2 |     let s1 = String::from("hello");
+//   |         -- move occurs because `s1` has type `String`, which does not implement the `Copy` trait
+// 3 |     let s2 = s1;
+//   |              -- value moved here
+// 4 |
+// 5 |     println!("{}, world!", s1);
+//   |                            ^^ value borrowed here after move
+
+
+// 😆
+let s1 = String::from("hello");
+let s2 = s1.clone();
+
+println!("{}, world!", s1);
+```
+
+所有権の理解は以下の比較を見るとわかりやすい。左側がプログラムの世界で、右側が普段は意識しないメモリの世界である。普段のプログラミング言語で代入は「Shallow Copy」にあたる。「Deep Copy」はJavascriptでいう`Object.assign()`や`JSON.stringify()`にあたる。Rustにガベージコレクション(不要なメモリのお片付けさん)がいない理由がここにある。ライフタイムでも後述するがスコープ(`{ }`で囲まれているブロックのこと)を抜けると所有権は破棄されるので不要にメモリを保持している値が存在しない。
+
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1647437354/media/blog/insert/%E6%88%91%E6%B5%81Rust%E5%AD%A6%E7%BF%92%E3%83%AD%E3%83%BC%E3%83%88%E3%82%99%E3%83%9E%E3%83%83%E3%83%95%E3%82%9A_tbud2j.png)
+
+### 引数渡し
+
+所有権の受け渡しは代入だけでなく、変数(可変な値)を引数として渡すときにも発生する。以下の例は可変な値である`String`を引数として渡しているときに、変数sの所有権が移り(=ムーブという)コンパイルエラーが発生している事例である。
+引数渡しで所有権をムーブさせたくない場合はポインタ(`&`)をつけると良い。
+
+```rust:引数渡しと所有権
+fn say_greeting(some_string: String) {
+    println!("{}", some_string);
+}
+
+// 🤔
+fn main() {
+    let s = String::from("hello, world!");
+    say_greeting(s);      // sの値が関数にムーブされ...
+    // この時点でもうsは有効ではない
+
+    say_greeting(s);      
+    // コンパイルエラー
+    // 2 |     let s = String::from("hello, world!");
+    //  |         - move occurs because `s` has type `String`, which does not implement the `Copy` trait
+    // 3 |     say_greeting(s);
+    //   |                     - value moved here
+    // 4 |
+    // 5 |     say_greeting(s);
+    //   |                     ^ value used here after move
+}
+
+// 😆
+fn main() {
+    let s = String::from("hello, world!");
+    say_greeting(&s);
+
+    say_greeting(&s);
+}
+```
+
+ただし、これでもまだ引数として渡した関数の中で、値を変更しようとするとエラーが起きる。この場合は`mut`を接頭辞につける。(可変参照と呼ぶ)
+`mut`はmutable(可変)を意味しており、`let mut 変数名`で再代入を許容する変数を定義できる。`mut`の可変参照にも可変と不変が交わってはいけないという制約があるので詳しく知る場合はちゃんとドキュメントを読んだ方がいい。
+
+```rust:可変参照
+// 🤔
+fn main() {
+    let s = String::from("hello, world!");
+    say_greeting(&s);
+}
+
+fn say_greeting(some_string: &String) {
+    some_string.push_str("yeah!");   // 借用した値を変更
+    println!("{}", some_string);     // コンパイルエラー
+// 6 | fn say_greeting(some_string: &String) {
+//   |                              ------- help: consider changing this to be a mutable reference: `&mut String`
+// 7 |     some_string.push_str("yeah!");
+//   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `some_string` is a `&` reference, so the data it refers to cannot be borrowed as mutable
+// }
+
+// 😆
+fn main() {
+    let mut s = String::from("hello, world!");
+    say_greeting(&mut s);
+}
+
+fn say_greeting(some_string: &mut String) {
+    some_string.push_str(" yeah!");
+    println!("{}", some_string);
+}
+
+```
+
+### ライフタイムについて
+
+「変数の参照が有効になるスコープ」のことをライフタイムと呼んでいる。(Rustコンパイラは借用チェッカーを使ってこのライフタイムを管理しているらしい)
+
+基本的にスコープを抜けるとその中で定義された変数のライフタイムは終了するので参照できなくなる。
+以下の例だと`&x`のライフタイムはスコープを抜けた時点で終了しているので、`&x` を参照している`r`は使用できない。
+
+```rust:ライフタイム管理
+fn main() {
+    let r;
+
+    {
+        let x = 5;
+        r = &x;
+    }
+
+    println!("r: {}", r); 
+    // コンパイルエラー
+    // 6  |         r = &x;
+    //    |              - borrow occurs here
+    // 7  |     }
+    //    |     ^ `x` dropped here while still borrowed
+}
+
+// コンパイラの借用チェッカーはこんな感じで評価している
+{
+    let r;                // ---------+-- 'a   rのライフタイム
+                          //          |
+    {                     //          |
+        let x = 5;        // -+-- 'b  |        xのライフタイム
+        r = &x;           //  |       |
+    }                     // -+       |
+                          //          |
+    println!("r: {}", r); //          |
+}                         // ---------+
+```
+
+上記の例だとその程度かという話になるが、ジェネリックを使って汎用的にしようとするとライフタイムの理解が重要になってくる。`'a`や`'de`などシングルクォーテーションが出てきたら`ライフタイム注釈`を表しているので要注意だ。
+
+## エラー処理(OptionとResult)
+
+Rustを書いていると必ず出てくるEnumの`Option`と`Result`。基本的に何かの処理の戻り値はこれで返ってくるのでそれらを常に捌いていかなくてはならない。
+Rustのコンパイラに打ち勝つにはここをきちんと理解しておかなくてはならない。
+
+```rust:OptionとResultはただのEnum
+enum Option<T> {
+    None,
+    Some(T),
+}
+
+enum Result<T, E> {
+   Ok(T),
+   Err(E),
+}
+```
+
+> * [Error handling - Rust By Example](https://doc.rust-lang.org/rust-by-example/error.html)
+> * [RustのOptionとResult - Qiita](https://qiita.com/take4s5i/items/c890fa66db3f71f41ce7)
+
+自分はいつもここと悪戦苦闘していて、コードを書く上で丸暗記しておきたいので`Option`と`Result`それぞれの頻出の組み込み関数を備忘録として残しておく。
+できるだけパニックを起こす可能性のメソッド(`unwrap`や`expect`など)はテストコードや絶対にSomeやOkであるという確証のもと使うように心がける。
+
+### [Optionメソッド](https://doc.rust-lang.org/std/option/enum.Option.html)
+
+| メソッド | 説明 |
+| --- | --- |
+| unwrap | Someなら中身を取り出す。Noneならパニック |
+| expect | Someなら中身を取り出す。Noneならパニックが起きその内容メッセージを指定できる |
+| unwrap_or | Someなら中身を取り出す。Noneなら引数の値を返す |
+| unwrap_or_else | Someなら中身を取り出す。Noneなら引数のクロージャーで別の値を返す |
+| unwrap_or_default | Someなら中身を取り出す。NoneらOptionの型Tのデフォルト値を返す |
+| map | Someなら引数の関数を適用。Noneならそのまま返す |
+| map_or | Someなら第二引数の関数を適用。Noneなら第一引数の値を返す |
+| map_or_else | Someなら第二引数の関数を適用。Noneなら第一引数のクロージャーで別の値を返す |
+
+### [Resultメソッド](https://doc.rust-lang.org/std/result/enum.Result.html)
+
+| メソッド | 説明 |
+| --- | --- |
+| ok | Okなら中身をSomeにして返す。ErrならNoneにして返す。 |
+| err | OkならNoneにして返す。Errなら中身をSomeにして返す |
+| unwrap | Okなら中身を取り出す。Errならパニック |
+| expect | Okなら中身を取り出す。Errならパニックが起きその内容メッセージを指定できる |
+| unwrap_or | Okなら中身を取り出す。Errなら引数の値を返す |
+| unwrap_or_else | Okなら中身を取り出す。Errなら引数のクロージャーで別の値を返す |
+| unwrap_or_default | Okなら中身を取り出す。ErrならResultの型Tのデフォルト値を返す |
+| unwrap_err | Okならパニック。Errなら中身を取り出す。 |
+| map | Okなら引数の関数を適用。Errならそのまま返す |
+| map_err | Okならそのまま返す。Errなら引数の関数を適用 |
+
+#### Iteratorの中でのResult処理について
+
+一括処理系のAPI実装時に、iteratorの途中でResultを返す処理を呼ぶ場合どうやって捌くと良いのかわからなかったの以下を読んで納得した。
+
+> [Iterating over Results](https://doc.rust-lang.org/rust-by-example/error/iter_result.html)
+
+要は
+
+* 解決方法1 Resultの中身がエラーでも無視して成功した結果だけ配列にして返すなら`filter_map`を使う
+* 解決方法2 iteratorの途中でエラーだったら、Resultとして返すなら`collect`で回収すれば大丈夫
+* 解決方法3 iteratorの中で成功した処理とエラー処理をそれぞれ別の配列に分けておくなら`partition`を使う
+
+ということらしい。
+
+```rust:iteratorでResultの結果を回収するやり方(公式のまま)
+// 解決方法1. filter_map: エラーは無視、成功結果は配列に
+fn main() {
+    let strings = vec!["tofu", "93", "18"];
+    let numbers: Vec<_> = strings
+        .into_iter()
+        .filter_map(|s| s.parse::<i32>().ok()) // filter_mapのためにok()を使っている
+        .collect();
+    println!("Results: {:?}", numbers);
+}
+
+// 解決方法2. collect: 途中でエラーはエラー、成功したら配列
+fn main() {
+    let strings = vec!["tofu", "93", "18"];
+    let numbers: Result<Vec<_>, _> = strings
+        .into_iter()
+        .map(|s| s.parse::<i32>())
+        .collect();
+    println!("Results: {:?}", numbers);
+}
+
+// 解決方法3. partition: エラーが起きた箇所はエラー配列、成功した箇所は成功した配列のタプル
+fn main() {
+    let strings = vec!["tofu", "93", "18"];
+    let (numbers, errors): (Vec<_>, Vec<_>) = strings
+        .into_iter()
+        .map(|s| s.parse::<i32>())
+        .partition(Result::is_ok);
+    println!("Numbers: {:?}", numbers);
+    println!("Errors: {:?}", errors);
+}
+```
+
+## 考察：モダンプログラミング
+
+> [現代のオブジェクト指向の class の割れ窓化と宣言的プログラミング](https://zenn.dev/mizchi/articles/oop-think-modern)
+>
+> ##### 共感したセンテンス
+>
+> * `現代では class のデータと振る舞いを同時に記述するというやり方から離れて、明確にデータと振る舞いを区別する手法が整理されつつある`
+> * `人間は継承ツリーでコードを管理できるほど賢くなかったと思う。`
+> * `状態を class で表現する OOP はもう古くなっていて、宣言的リソースの時系列管理、そしてリソースの更新手順の分離という風にトレンドが移っており...`
+> * `昔はメモリが希少で、確保したリソース(メモリ)に対して何度も読み書きしていたが、現代では仮想化技術による投機的なコンテナ生成、汎用プログラミング言語に置いては GC による投機的なインスタンス破棄に依存して、宣言的なデータを繰り返し生成しては破棄する、というプログラミングモデルになっている。`
+
+上記のオブジェクト指向プログラミングについて書かれた記事を読んで、モダンプログラミング言語がどういったトレンドになっているのかについてかなり共感した。Component指向のフレームワークやコンテナ周りのインフラ定義踏まえると確かにアプリ側のエンジニアは低レイヤを記述しなくなったし、自分も抽象化されたエコシステムの下開発している。
+使っている技術が古めのエンジニアと話しているとやたら低レイヤの話をされるが、もちろんそれがメインロジックであるなら低レイヤから取り組んでも良いと思うが、すでに誰かがフレームワークやライブラリとして抽象化してくれているなら絶対にそちらを使う方が便利だし安全だと思う。低レイヤに近いほどコードは複雑化するのでサービスのメインロジックでないなら自分は楽したいという考え方だ。
+
+この記事でいう「GCによる投機的な挙動(副作用)」をなくして安全に宣言的なデータを使おうがRustのモットーな気がするが、代替になる所有権やライフタイムを導入した結果が開発者エクスペリエンスとして受け入れられていくのだろうか。。。
+そういった意味でRustも何かの分野でエコシステムを築けると良いのかもしれない。(Goならコンテナ、PythonならML、RubyならRailsみたいに...)
+
+所有権によるメモリ管理のコストを抑えられるのがRust一番の魅力なので、自分はブラウザエンジンとかOSなど低レイヤ領域の開発で使われていることに注目している。言語開発でランタイムとコンパイルタイムはトレードオフで、Rust開発チームが実行速度と安全性を求めてかなりランタイムに比重を置く選択をしているらしい。
+
+> * [Servo](https://servo.org/)
+> * [AndroidRust](https://source.android.com/setup/build/rust/building-rust-modules/overview)
+
+Webとかサービスインフラ領域は割と他の言語の開発しやすいフレームワークが成熟しているし、実際に仕事で[actix-web](https://actix.rs/)などのWebフレームワークを利用しているがコードの記述量が多い。エコシステムが整っておらず抽象化しきれていないだけかもしれないが、まだまだアップデートが必要な言語なのかもしれない。自分みたいに抽象化にかまけて楽しようとしているエンジニアが語れるほどではないが、とりあえずRust人気が国内でも爆発する日が来るのかウォッチしておこうと思った。
