@@ -28,4 +28,5 @@ fields:
   label: tag
 pages:
 - content/blog/graphql-code-generator-gatsby.mdx
+- content/blog/jamstack.mdx
 - content/blog/入門-モダン監視.mdx
