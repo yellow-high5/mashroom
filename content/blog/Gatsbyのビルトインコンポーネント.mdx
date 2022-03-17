@@ -11,13 +11,13 @@ tag:
 
 Gatsby には以下のコンポーネントが組み込まれている(Image は`gatsby-plugin-image`からインポートしてくる)
 
-- \<Link>
-- \<StaticImage>
-- \<GatsbyImage>
+- \<Link\>
+- \<StaticImage\>
+- \<GatsbyImage\>
 
-## \<Link>
+## \<Link\>
 
-Gatsby アプリ内のページに遷移させる場合は\<a>タグではなく基本的にこちらを使う。
+Gatsby アプリ内のページに遷移させる場合は\<a\>タグではなく基本的にこちらを使う。
 ユーザーがページに移動するまでにリソースが利用できるようにページリソースをプリフェッチする(「プリロード」)機能を組み込んでいる。
 そのため高速でページ遷移してレンダリングしてくれる。
 
@@ -43,16 +43,16 @@ const PartialNavLink = props => (
 - `state`...リンク先に state を渡すことができる([参考](https://www.gatsbyjs.com/docs/reference/built-in-components/gatsby-link/#pass-state-as-props-to-the-linked-page))
 - `replace`...true にしておくと戻るボタンでそのリンクをスキップさせることができる(戻らせたくない時に便利)
 - `nvaigate`...`import { navigate } from "gatsby"`を使えば、関数の中でリンク遷移を使える(Next の`useRouter`的な存在)。オプションに`state`や`replace`も指定できる。
-- `withPrefix`...Gatsby の<Link>コンポーネントは開発と本番環境で正しい URL の作成を自動的に処理してくれるが、手動で作成するパス名の場合に本番環境でパスプレフィックスを付加するヘルパー関数として用意される。`import { withPrefix } from "gatsby"`を使う。
+- `withPrefix`...Gatsby の<Link\>コンポーネントは開発と本番環境で正しい URL の作成を自動的に処理してくれるが、手動で作成するパス名の場合に本番環境でパスプレフィックスを付加するヘルパー関数として用意される。`import { withPrefix } from "gatsby"`を使う。
 
-## \<StaticImage>
+## \<StaticImage\>
 
 静的画像専用。サイトのロゴやヒーロー画像など常に同じ画像を表示するものにはこちらを利用する。
 `src`(相対的なパス)と`alt`を必ず指定する。
 
 **`props`や動的な変数は渡せない**、**styled コンポーネントに未対応**など制約が多いので注意。例えば map 内で使ったり、StaticImage の props に state を渡すことはできない
 
-## \<GatsbyImage>
+## \<GatsbyImage\>
 
 動的画像専用。props として渡されるような画像の場合やサムネイルなどはこちらを利用する。
 
@@ -90,4 +90,4 @@ const DynamicImage = () => {
 
 ---
 
-以上まとめつつも、\<StaticImage>も\<GatsbyImage>も基本的に Graphql で取得できる、つまりソース内にある画像の取得に限られているので外部のオブジェクトストレージから取得する画像は結局\<img>を使うことになる。Next の\<Image>もそうだが、プログレッシブフレームワーク系で用意してくれている画像コンポーネントって最適化されることを売りにしているがいまいちその使い所多くないよなーって思ってしまう。
+以上まとめつつも、\<StaticImage\>も\<GatsbyImage\>も基本的に Graphql で取得できる、つまりソース内にある画像の取得に限られているので外部のオブジェクトストレージから取得する画像は結局\<img\>を使うことになる。Next の\<Image\>もそうだが、プログレッシブフレームワーク系で用意してくれている画像コンポーネントって最適化されることを売りにしているがいまいちその使い所多くないよなーって思ってしまう。
