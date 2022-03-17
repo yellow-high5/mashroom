@@ -1,0 +1,93 @@
+---
+date: 2022-03-01T22:34:38.000+00:00
+title: Gatsbyのビルトインコンポーネント
+thumbnail: 'https://res.cloudinary.com/dso4npatn/image/upload/v1647428725/media/blog/thumbnail/gatsby_ghgekz.png'
+tag:
+  - Web開発
+---
+
+> - [Gatsby Link API \| Gatsby](https://www.gatsbyjs.com/docs/reference/built-in-components/gatsby-link/)
+> - [Gatsby Image plugin \| Gatsby](https://www.gatsbyjs.com/docs/reference/built-in-components/gatsby-plugin-image/)
+
+Gatsby には以下のコンポーネントが組み込まれている(Image は`gatsby-plugin-image`からインポートしてくる)
+
+- \<Link>
+- \<StaticImage>
+- \<GatsbyImage>
+
+## \<Link>
+
+Gatsby アプリ内のページに遷移させる場合は\<a>タグではなく基本的にこちらを使う。
+ユーザーがページに移動するまでにリソースが利用できるようにページリソースをプリフェッチする(「プリロード」)機能を組み込んでいる。
+そのため高速でページ遷移してレンダリングしてくれる。
+
+##### オプション
+
+- `activeStyle`, `activeClassName`...アクティブ(URL が to で指定しているパスと一致している)状態の時のスタイルを CSS で指定できる(`partiallyActive`を true にすれば部分一致も可能)
+- `getProps`...現在のリンクの状態に応じたスタイルを適用できる。引数には`isCurrent` `isPartiallyCurrent` `href` `location`を取れる
+
+```ts:getPropsの使い方
+const isPartiallyActive = ({ isPartiallyCurrent }) => {
+  return isPartiallyCurrent
+    ? { className: 'navlink-active navlink' }
+    : { className: 'navlink' }
+}
+
+const PartialNavLink = props => (
+  <Link getProps={isPartiallyActive} {...props}>
+    {props.children}
+  </Link>
+)
+```
+
+- `state`...リンク先に state を渡すことができる([参考](https://www.gatsbyjs.com/docs/reference/built-in-components/gatsby-link/#pass-state-as-props-to-the-linked-page))
+- `replace`...true にしておくと戻るボタンでそのリンクをスキップさせることができる(戻らせたくない時に便利)
+- `nvaigate`...`import { navigate } from "gatsby"`を使えば、関数の中でリンク遷移を使える(Next の`useRouter`的な存在)。オプションに`state`や`replace`も指定できる。
+- `withPrefix`...Gatsby の<Link>コンポーネントは開発と本番環境で正しい URL の作成を自動的に処理してくれるが、手動で作成するパス名の場合に本番環境でパスプレフィックスを付加するヘルパー関数として用意される。`import { withPrefix } from "gatsby"`を使う。
+
+## \<StaticImage>
+
+静的画像専用。サイトのロゴやヒーロー画像など常に同じ画像を表示するものにはこちらを利用する。
+`src`(相対的なパス)と`alt`を必ず指定する。
+
+**`props`や動的な変数は渡せない**、**styled コンポーネントに未対応**など制約が多いので注意。例えば map 内で使ったり、StaticImage の props に state を渡すことはできない
+
+## \<GatsbyImage>
+
+動的画像専用。props として渡されるような画像の場合やサムネイルなどはこちらを利用する。
+
+基本的に**GraphQL の query と`getImage`関数**を使って画像のリソースを引っ張ってくる。
+
+```tsx:GatsbyImageの使用例
+
+const query = graphql`
+    query {
+      allFile {
+        nodes {
+          childrenImageSharp {
+            gatsbyImageData(width: 240, height: 80, quality: 95, layout: FIXED)
+          }
+        }
+      }
+    }
+  `
+
+const DynamicImage = () => {
+  const data = useStaticQuery(query)
+  const logo = getImage(data.allFile?.nodes?.[0].childrenImageSharp?.[0]?.gatsbyImageData);
+
+  return (
+    ...
+      <GatsbyImage
+        image={logo}
+        alt="logo"
+        objectFit="contain"
+      />
+    ...
+  );
+};
+```
+
+---
+
+以上まとめつつも、\<StaticImage>も\<GatsbyImage>も基本的に Graphql で取得できる、つまりソース内にある画像の取得に限られているので外部のオブジェクトストレージから取得する画像は結局\<img>を使うことになる。Next の\<Image>もそうだが、プログレッシブフレームワーク系で用意してくれている画像コンポーネントって最適化されることを売りにしているがいまいちその使い所多くないよなーって思ってしまう。
