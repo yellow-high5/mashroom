@@ -1,23 +1,23 @@
 ---
 date: 2022-03-01T22:34:38.000+00:00
 title: Gatsbyのビルトインコンポーネント
-thumbnail: 'https://res.cloudinary.com/dso4npatn/image/upload/v1647428725/media/blog/thumbnail/gatsby_ghgekz.png'
+thumbnail: https://res.cloudinary.com/dso4npatn/image/upload/v1647428725/media/blog/thumbnail/gatsby_ghgekz.png
 tag:
-  - Web開発
----
+- Web開発
 
+---
 > - [Gatsby Link API \| Gatsby](https://www.gatsbyjs.com/docs/reference/built-in-components/gatsby-link/)
 > - [Gatsby Image plugin \| Gatsby](https://www.gatsbyjs.com/docs/reference/built-in-components/gatsby-plugin-image/)
 
 Gatsby には以下のコンポーネントが組み込まれている(Image は`gatsby-plugin-image`からインポートしてくる)
 
-- \<Link\>
-- \<StaticImage\>
-- \<GatsbyImage\>
+- <Link\>
+- <StaticImage\>
+- <GatsbyImage\>
 
 ## Link
 
-Gatsby アプリ内のページに遷移させる場合は\<a\>タグではなく基本的にこちらを使う。
+Gatsby アプリ内のページに遷移させる場合は<a\>タグではなく基本的にこちらを使う。
 ユーザーがページに移動するまでにリソースが利用できるようにページリソースをプリフェッチする(「プリロード」)機能を組み込んでいる。
 そのため高速でページ遷移してレンダリングしてくれる。
 
@@ -90,4 +90,4 @@ const DynamicImage = () => {
 
 ---
 
-以上まとめつつも、\<StaticImage\>も\<GatsbyImage\>も基本的に Graphql で取得できる、つまりソース内にある画像の取得に限られているので外部のオブジェクトストレージから取得する画像は結局\<img\>を使うことになる。Next の\<Image\>もそうだが、プログレッシブフレームワーク系で用意してくれている画像コンポーネントって最適化されることを売りにしているがいまいちその使い所多くないよなーって思ってしまう。
+以上まとめつつも、<StaticImage\>も<GatsbyImage\>も基本的に Graphql で取得できる、つまりソース内にある画像の取得に限られているので外部のオブジェクトストレージから取得する画像は結局<img\>を使うことになる。Next の<Image\>もそうだが、プログレッシブフレームワーク系で用意してくれている画像コンポーネントって最適化されることを売りにしているがいまいちその使い所多くないよなーって思ってしまう。
