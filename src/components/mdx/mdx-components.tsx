@@ -27,7 +27,7 @@ import {
   Th,
   Tr,
   UnorderedList,
-  useColorModeValue
+  useColorModeValue,
 } from '@chakra-ui/react';
 import { OrbitControls } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
@@ -217,7 +217,10 @@ const SketchFab: React.FC<SketchFabProps> = (props: SketchFabProps) => {
   );
 };
 
-const OriginalPortal: React.FC = () => {
+type OriginalPortalProps = {
+  autoRotate?: boolean;
+};
+const OriginalPortal: React.FC<OriginalPortalProps> = (props: OriginalPortalProps) => {
   return (
     <Box my={8}>
       <Canvas
@@ -227,7 +230,7 @@ const OriginalPortal: React.FC = () => {
         }}
         style={{ width: '100%', height: 360 }}
       >
-        <OrbitControls />
+        <OrbitControls autoRotate={props.autoRotate} />
         <Suspense fallback={null}>
           <BakedPortal />
         </Suspense>
