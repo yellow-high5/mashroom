@@ -1,10 +1,12 @@
 import {
+  AspectRatio,
   Box,
   BoxProps,
   Code,
   CodeProps,
   Divider,
   DividerProps,
+  Flex,
   Heading,
   HeadingProps,
   HStack,
@@ -25,9 +27,13 @@ import {
   Th,
   Tr,
   UnorderedList,
-  useColorModeValue,
+  useColorModeValue
 } from '@chakra-ui/react';
-import React from 'react';
+import { OrbitControls } from '@react-three/drei';
+import { Canvas } from '@react-three/fiber';
+import BakedPortal from 'components/work/model/baked-portal';
+import Portal from 'components/work/model/portal';
+import React, { Suspense } from 'react';
 import SyntaxHighlighter from 'react-syntax-highlighter/dist/esm/default-highlight';
 import { tomorrowNightBlue } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import { getFileIcon, sanitizeBlogIndex } from 'utils/format';
@@ -190,6 +196,78 @@ const ImageContent: React.FC<ImageProps> = (props) => {
   );
 };
 
+type SketchFabProps = {
+  title?: string;
+  src: string;
+};
+const SketchFab: React.FC<SketchFabProps> = (props: SketchFabProps) => {
+  const { title, src } = props;
+  return (
+    <AspectRatio minW="100%" ratio={1} my={8}>
+      <iframe
+        title={title}
+        allow="autoplay; fullscreen; xr-spatial-tracking"
+        xr-spatial-tracking="true"
+        execution-while-out-of-viewport="true"
+        execution-while-not-rendered="true"
+        web-share="true"
+        src={`${src}/embed`}
+      />
+    </AspectRatio>
+  );
+};
+
+const OriginalPortal: React.FC = () => {
+  return (
+    <Box my={8}>
+      <Canvas
+        camera={{
+          position: [3, 2, 5],
+          fov: 45,
+        }}
+        style={{ width: '100%', height: 360 }}
+      >
+        <OrbitControls />
+        <Suspense fallback={null}>
+          <BakedPortal />
+        </Suspense>
+      </Canvas>
+    </Box>
+  );
+};
+
+const DiffPortal: React.FC = () => {
+  return (
+    <Flex my={8}>
+      <Canvas
+        camera={{
+          position: [3, 2, 5],
+          fov: 45,
+        }}
+        style={{ width: '50%', height: 360 }}
+      >
+        <OrbitControls />
+        <Suspense fallback={null}>
+          <pointLight position={[10, 10, 10]} />
+          <Portal />
+        </Suspense>
+      </Canvas>
+      <Canvas
+        camera={{
+          position: [3, 2, 5],
+          fov: 45,
+        }}
+        style={{ width: '50%', height: 360 }}
+      >
+        <OrbitControls />
+        <Suspense fallback={null}>
+          <BakedPortal />
+        </Suspense>
+      </Canvas>
+    </Flex>
+  );
+};
+
 export default {
   wrapper: Wrapper,
   p: Paragraph,
@@ -214,4 +292,8 @@ export default {
   hr: Break,
   a: LinkText,
   img: ImageContent,
+  // Custom Mdx Components
+  SketchFab,
+  OriginalPortal,
+  DiffPortal,
 };

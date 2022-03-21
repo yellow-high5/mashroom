@@ -1,0 +1,182 @@
+---
+date: 2022-03-21T21:00:00.000+00:00
+title: React Three Fiberで表現する世界
+thumbnail: https://res.cloudinary.com/dso4npatn/image/upload/v1647855674/media/blog/thumbnail/React_Three_Fiber_xovzcs.png
+tag:
+  - Web開発
+  - CG活
+---
+
+WebGL は、GPU による並列処理を駆使して`canvas`内で三角形を高速でレンダリングする JavaScriptAPI で、CG などの 3D 表現を可能にする Web 上の技術である。
+ただし WebGL での API を実際に叩くとシェーダーとか低レイヤの GPU によるレンダリングについて詳しくないといけなかったりする。そこで WebGL の API をラップして比較的とっつきやすいようにしてくれるライブラリが[Three.js](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene)にあたる。かれこれ 10 年くらい WebGL と言えば Three.js みたいなポジションで根強い。
+
+今回はその Three.js と、Three.js を React 上で使えるようにしてくれる[React Three Fiber](https://docs.pmnd.rs/react-three-fiber/getting-started/introduction)を使って 3D コンテンツを表現していく方法を模索した話である。
+
+## Three.js への Deep Dive
+
+私は Three.js について体系化した知識として獲得したいと思ったので、[Three.js Journey](https://threejs-journey.com/)という 95 ドルのビデオレッスンに参加した。[Bruno Simon](https://twitter.com/bruno_simon)という[Zenly](https://zen.ly/ja)の web サイトなどを制作しているフランス人クリエイターが基本的なことから実際に応用で 3D コンテンツを表現するアウトプットまでをかなり丁寧に解説してくれている。95 ドル以上の価値がある充実した素晴らしい内容だった。具体的な学習としては以下のような理解が得られた。
+
+- 基本要素の定義と使い方：シーン、オブジェクト、カメラ、ライティング、ジオメトリ、マテリアル、テクスチャ、3D テキスト、パーティクル
+- アニメーションと物理演算
+- レンダリング技術、ポストプロセッシング、カスタムシェーダーの作成
+- CG モデルの作成とインポート
+- Three.js 描画のパフォーマンス Tips
+
+最終的には ↓ のような Blender で作成した CG モデルをアウトプットできる。
+
+<OriginalPortal />
+
+レッスンでは素の Javascript と HTML を使って Webpack でビルドして出力しているので、自分はここから React に統合する方法を知りたくなった。
+
+## Blender でモデリングとベイキングテクスチャを作成
+
+R3F の話をする前にまず実現する 3D コンテンツを用意する。
+
+残念なことに Three.js の基本ジオメトリ(立方体や球体など)を使っているだけでは、見栄えする 3D 表現は難しい。CG ソフトを使ってモデリングし、GLTF ファイル形式で出力して、そのファイルを Three.js で用意されているモデルローダーでインポートすれば、実は作りたい 3D 表現をあっさり叶えられる。Blender は無償なので最近は CG 業界の定番ソフト Maya に置き換わるのかという勢いで開発が進んでいて Three.js Journey でも Blender を使った基本操作やモデリングが紹介されている。Blender を上達するには他のリソースを youtube から漁るのが手っ取り早い。Blender で作るのが面倒な人は[SketchFab](https://sketchfab.com/3d-models?features=downloadable&sort_by=-likeCount)などで公開されているフリーの gltf ファイルや[スザンヌ](<https://en.wikipedia.org/wiki/Blender_(software)#Suzanne>)をダウンロードすれば遊ぶことはできる。
+
+> ##### [glTF(GL Transmission Format)](https://ja.wikipedia.org/wiki/GlTF)
+>
+> Khronos Group によって開発された「3D における JPEG」。他にも 3DCG ファイルのフォーマットはあるが、ほとんどの 3D ソフトウェア、ゲームエンジン、およびライブラリがこれをサポートしている。
+
+ただし gltf ファイルを読み込むだけでは美しい表現はレンダリングされない。実は WebGL のレンダリングは CG ソフトのレンダリングに比べるとレイトレーシングの計算処理能力不足で見劣りする。これを解決するために CG ソフトでモデルにライティングを当てた状態で Bake(焼き付け)して、UV アンラッピングする。(3 次元座標を 2 次元(UV)座標に変換すること、包装紙を剥がすイメージ)
+
+ベイキングにはデメリットもあるが、これで WebGL 上ではインポートしたモデルにこのベイキングテクスチャを貼り付けることで計算コストを抑えて美しいレンダリングを叶えられる。
+
+<br />
+
+↓ 実際のベイキングテクスチャなし(左)とベイキングテクスチャあり(右)
+
+<DiffPortal />
+
+実際のベイキングテクスチャはこのようになっている。実際にどうやってこのテクスチャを作っているかは是非[Three.js Journey](https://threejs-journey.com/)を受講してほしい。
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1647845915/portal-baked_dnedas.jpg)
+
+## R3F(React Three Fiber)とは？
+
+さて、モデル(`model.gltf`)とベイキングテクスチャ(`baked.jpg`)が用意できたのでここから R3F を使ってコンテンツを表示する。ここからは Three.js Joruney の内容にはない React に統合する話である。Create React App でも Next.js などのフレームワークでもあなたの手元に React プロジェクトがあることが前提である。
+
+簡潔に「**React の文法・コンテキストで Three.js を使えるようにした**」のが R3F である。Three.js と React の知識があれば難しい話ではない。
+
+<br />
+<br />
+
+セットアップには以下のコマンドを実行する。(`@types/three`をインストールするかはお好みで。ちなみに
+R3F は Typescript で書かれている 👏)
+
+※ Three.js のバージョンは最新の`0.138.0`を使うと後述の gltfjsx で自動生成されるの型定義と整合性がつかなかったので`0.134.0`を使用した。
+
+```sh
+yarn add three@0.134.0 @types/three@0.134.0 @react-three/fiber @react-three/drei @react-three/a11y
+```
+
+> ##### インポートしたパッケージの紹介
+>
+> - [Three.js](https://threejs.org)...Three.js のコアライブラリ
+> - [React Three Fiber](https://github.com/pmndrs/react-three-fiber)...Three.js を React でレンダリングするためのライブラリ
+> - [Drei](https://docs.pmnd.rs/drei/introduction)...React Three Fiber を補う便利なヘルパークラス(Control や Loader など)を提供してくれるライブラリ。
+> - [A11y](https://github.com/pmndrs/react-three-a11y)...alt テキストやフォーカス表示など R3F のアクセシビリティを向上してくれるライブラリ。
+> - ([React Spring](https://github.com/pmndrs/react-spring)...アニメーションを実現するためのライブラリ。`useSpring`を使ってメッシュに変化を加える。今回は使わなかった)
+
+<br />
+<br />
+
+以下は公式ドキュメントにもあるサンプルである。WebGL を描画するための Canvas をインポートしてその中の子要素でライトとメッシュ(=ジオメトリ(形)+マテリアル(素材))を定義している。
+
+Canvas 内で定義されている要素は Three.js の[THREE.PointLight](https://threejs.org/docs/index.html#api/en/lights/PointLight)や[THREE.Mesh](https://threejs.org/docs/index.html?q=Mesh#api/en/objects/Mesh)、[THREE.SphereGeometry](https://threejs.org/docs/index.html#api/en/geometries/SphereGeometry)、[THREE.MeshStandardMaterial](https://threejs.org/docs/index.html#api/en/materials/MeshStandardMaterial)にあたる。
+
+```tsx:簡単な使用例
+import React from 'react'
+import { Canvas } from '@react-three/fiber'
+
+const App = () => (
+  <Canvas>
+    <pointLight position={[10, 10, 10]} />
+    <mesh>
+      <sphereBufferGeometry />
+      <meshStandardMaterial color="hotpink" />
+    </mesh>
+  </Canvas>
+)
+```
+
+拍子抜けするほど簡単に実装できる。Canvas に props として渡せるカメラの位置やタイプなど細かい挙動、その他いくつかの注意点はドキュメントを読んでほしい。
+
+<br />
+<br />
+
+では用意したモデル(`.glb`)やテクスチャ(`.jpg`, `.png`)を取り込むにはどうするのかについて見ていく。
+
+> ##### 参考
+>
+> - [Loading Models](https://docs.pmnd.rs/react-three-fiber/tutorials/loading-textures)
+> - [Loading Textures](https://docs.pmnd.rs/react-three-fiber/tutorials/loading-textures)
+
+モデルやテクスチャをロードする場合は`useLoader`フックを使う。以下は Three.js の GLTFLoader をインポートして gltf ファイルをインポートしている。モデルローダー使う場合はお作法として`Suspense`でラップする必要があるのもポイントである。
+
+```tsx
+import { useLoader } from '@react-three/fiber';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+
+const Scene = () => {
+  const gltf = useLoader(GLTFLoader, '/Poimandres.gltf');
+
+  return (
+    <Suspense fallback={null}>
+      <primitive object={gltf.scene} />
+    </Suspense>
+  );
+};
+```
+
+ところがすごいのは自分で上記の`useLoader`を使って上記のように React コンポーネントを書かなくても [GLTF -> React Three Fiber](https://gltf.pmnd.rs/)というサイトを使えば GLTF ファイルは一発で React コンポーネントに変換してくれる。このサイトは gltfjsx というライブラリを元に作られている。R3F コミュニティすごい..。
+
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1647861652/media/blog/insert/gltf-to-react_jrp3bs.png)
+
+> #### [gltfjsx](https://github.com/pmndrs/gltfjsx)
+>
+> gltf ファイルを jsx または tsx として React コンポーネントに変換してくれるライブラリ。`useLoader`ではなく、エコシステムライブラリ Drei の`useGLTF`が使われている。
+> CLI が用意されていて、`npx gltfjsx -t model.glb`などで変換したコードのファイルが作成される。
+
+次にテクスチャをロードして、ベイキングテクスチャをモデルに貼り付ける。テクスチャのロードにも`useLoader`は使えるが、Drei で用意されている`useTexture`を使うと早い。どうやら gltfjsx テクスチャを自動で貼り付ける方法までは紹介されていないので生成されたコードの一部を自分で書き直す必要がある。
+
+私の場合は以下のような感じで置換した。`mesh`の`mateiral`指定を消して、`mateiral`の`map`にロードしたベイキングテクスチャを, `map-flipY`に`false`を指定する。`map-flipY`に`false`をセットするのは Blender と Threejs で XYZ 座標空間が異なるためである。
+
+```diff:メッシュのマテリアルをベイキングテクスチャに置換
+...
+
+const bakedTexture = useTexture(`YOUR_TEXTURE_IMAGE_PaTH`);
+
+return (
+...
+- <mesh
+-   geometry={nodes.立方体001.geometry}
+-   material={nodes.立方体001.material}
+-   position={[-0.6, 0.28, 1.87]}
+-   rotation={[0, 0.15, 0]}
+- />
++ <mesh
++   geometry={nodes.立方体001.geometry}
++   position={[-0.6, 0.28, 1.87]}
++   rotation={[0, 0.15, 0]}
++ >
++   <meshBasicMaterial map={bakedTexture} map-flipY={false} />
++ </mesh>
+...
+)
+```
+
+こうして自分の作成した`model.gltf`と`baking.jpg`が React コンポーネントに置き換わったので、あとは`Suspense`でラップするのを忘れずに呼び出せば以下のように canvas に描画された WebGL が現れる。(自分のブログは[MDX](https://mdxjs.com/)を使っているので React コンポーネントを呼び出せる 😏)
+
+<OriginalPortal />
+
+一応今回の話で作成したソースの一部も公開しておく。
+
+> - [GitHub - yellow-high5/mashroom.at/src/components/work/model/baked-portal.tsx](https://github.com/yellow-high5/mashroom.at/tree/main/src/components/work/model/baked-portal.tsx)
+
+## エピローグ：リッチコンテンツ時代
+
+WebGL 自体それほど新しい技術ではない。大学生の時に 3D コンテンツの憧れから少し触っていたこともあって、今実際にもう一度触ってみるとドキュメントやエコシステムも充実してきているなという印象だった。WebGL はさらに XR デバイスと融合した[WebXR Device API](https://developer.mozilla.org/ja/docs/Web/API/WebXR_Device_API)へと拡張されていく動きが見られる。
+
+Web の未来と謳われるメタバースについて賛否両論あるかもしれないが、自分の考えでは、メタバースという形で実現されるかはわからないが間違いなくコンピュータリソースのボトムアップもあって Web 開発者が提供するコンテンツの容量は大きくリッチになっていくと予想している。
+
+宣言的 UI や VirtualDOM による開発体験とエコシステムは一時代を築き成熟した。Web 開発者はパズルのように綺麗なコンポーネント指向の UI をつくることに飽きてきたのではないだろうかと思う。もっと複雑で表現力豊かなリッチコンテンツをつくりたいという流れにいっても不思議ではない。もちろんこういったリッチコンテンツの先駆者はゲーム業界なのだが、Oculus の開発プラットフォームなどを見ていると「Web x 仮想世界」は Meta のプロジェクトがポシャっても前進していくように思う。今まで装飾に過ぎなかった WebGL が機能性を持ち、さらに WebXR の潮流がユーザーに文化として受け入れられれば、フロントエンジニアもコードエディタだけを開いている場合ではないのかもしれない。

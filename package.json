@@ -43,10 +43,14 @@
     "@mdx-js/mdx": "v1",
     "@mdx-js/react": "v1",
     "@n8tb1t/use-scroll-position": "^2.0.3",
+    "@react-three/a11y": "^2.2.3",
+    "@react-three/drei": "^8.18.5",
+    "@react-three/fiber": "^7.0.26",
     "@types/mdx-js__react": "^1.5.5",
     "@types/react-calendar-heatmap": "^1.6.3",
     "@types/react-helmet": "^6.1.5",
     "@types/react-syntax-highlighter": "^13.5.2",
+    "@types/three": "0.134.0",
     "framer-motion": "^6.2.6",
     "gatsby": "^4.7.2",
     "gatsby-plugin-anchor-links": "^1.2.1",
@@ -57,7 +61,8 @@
     "react-helmet": "^6.1.0",
     "react-icons": "^4.3.1",
     "react-syntax-highlighter": "^15.4.5",
-    "recharts": "^2.1.9"
+    "recharts": "^2.1.9",
+    "three": "0.134.0"
   },
   "devDependencies": {
     "@chakra-ui/gatsby-plugin": "^2.0.3",
