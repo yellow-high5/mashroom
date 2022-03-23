@@ -41,10 +41,13 @@ module.exports = {
     {
       resolve: 'gatsby-plugin-manifest',
       options: {
-        icon: 'src/assets/logo.png',
+        icon: 'src/assets/icon.png',
         name: 'm@shroom',
         short_name: 'm@shroom',
         start_url: '/',
+        background_color: `#fff`,
+        theme_color: `#ecc94B`,
+        display: `standalone`,
       },
     },
     'gatsby-plugin-root-import',
