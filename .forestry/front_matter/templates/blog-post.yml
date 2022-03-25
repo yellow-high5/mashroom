@@ -27,6 +27,7 @@ fields:
   default: []
   label: tag
 pages:
+- content/blog/2030.mdx
 - content/blog/graphql-code-generator-gatsby.mdx
 - content/blog/jamstack.mdx
 - content/blog/rust.mdx
