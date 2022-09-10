@@ -34,6 +34,7 @@ import { Canvas } from '@react-three/fiber';
 import BakedPortal from 'components/work/model/baked-portal';
 import Portal from 'components/work/model/portal';
 import React, { Suspense } from 'react';
+import { IoVideocamSharp } from 'react-icons/io5';
 import SyntaxHighlighter from 'react-syntax-highlighter/dist/esm/default-highlight';
 import { tomorrowNightBlue } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import { getFileIcon, sanitizeBlogIndex } from 'utils/format';
@@ -185,6 +186,23 @@ const LinkText: React.FC<LinkProps> = (props) => {
 };
 
 const ImageContent: React.FC<ImageProps> = (props) => {
+  if (props.src && props.src.split('.').slice(-1)[0] === 'mp4') {
+    return (
+      <Box my={8} justifyContent="center" alignItems="center">
+        {props.alt && (
+          <HStack>
+            <Icon boxSize={4} as={IoVideocamSharp} cursor="pointer" />
+            <Text fontWeight="bold">{props.alt}</Text>
+          </HStack>
+        )}
+        <AspectRatio minW="100%" ratio={16 / 9}>
+          <video controls width="100%">
+            <source src={props.src} type="video/mp4" />
+          </video>
+        </AspectRatio>
+      </Box>
+    );
+  }
   return (
     <Image
       my={8}
@@ -203,7 +221,7 @@ type SketchFabProps = {
 const SketchFab: React.FC<SketchFabProps> = (props: SketchFabProps) => {
   const { title, src } = props;
   return (
-    <AspectRatio minW="100%" ratio={1} my={8}>
+    <AspectRatio minW="100%" ratio={16 / 9} my={8}>
       <iframe
         title={title}
         allow="autoplay; fullscreen; xr-spatial-tracking"
