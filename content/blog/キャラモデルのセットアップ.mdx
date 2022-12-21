@@ -1,0 +1,307 @@
+---
+date: 2022-10-16T08:00:00Z
+title: 'キャラモデルのセットアップ'
+thumbnail: 'https://res.cloudinary.com/dso4npatn/image/upload/v1670320772/media/blog/thumbnail/RIGGING_SETUP_owcbxu.png'
+tag:
+  - CG活
+---
+
+ヒューマンキャラのモデルをセットアップして、ポージングさせたりアニメーションさせるためのセットアップ方法をまとめておく。
+今回は「こまつくん」(モデル)を使ってセットアップは Maya でやっている。
+
+## Joint の配置と調整
+
+#### 1. まずは Joint を以下の図の通り配置する
+
+左側半分を後でミラーできるのでとりあえず腕と脚は左側のみ Joint を配置することになるだろう。この時 Joint 名もわかりやすいようにしておくとあとの工程が楽になる。
+ただし、次の手順にもある通り Joint の曲がる方向(Orient Joint)を調整する必要があるので、腕(Clavicle)、脚(Leg)、脊髄(Spine)、骨盤(Pelvis)、尻(Hip:骨盤と同じ位置)は個別に(3 の工程で親子関係にするので、2 の工程のために親子関係は作らず)作成しておく。
+
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1671637622/media/blog/insert/Screenshot_2022-12-22_at_0.41.00_i06upz.png)
+
+#### 2. 配置し終えたら Joint の曲がる方向を確認/調整する
+
+pelvis と hip 以外のすべての Joint を選択して`Skeleton > Orient Joint(オプション) > Toggle Local Axes Visibility`で確認できる
+
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1671637563/media/blog/insert/Screenshot_2022-12-22_at_0.41.46_nkkrzl.png)
+
+ここでは top ジョイント以外は同じ方向に曲がるようにしなくてはいけない。以下に注意しながら調整する。
+
+- X 軸が子 Joint の方向に向く
+- Y 軸 Z 軸は一連の Joint で揃っていれば OK
+
+#### 3. 曲がる方向の調整ができたら、以下のように親子関係にして Joint を接続する
+
+- hip > pelvis
+- clavicle > chest
+- chest > pelvis
+- pinkie > wrist
+- ring > wrist
+- middle > wrist
+- index > wrist
+- thumb > wrist
+- leg > hip
+
+#### 4. 腕と脚の親 Joint を選択してミラーを実施する。
+
+以下の例では左側に作成した Joint を右側にミラーコピーしている。
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1671637563/media/blog/insert/Screenshot_2022-12-22_at_0.42.05_f8asdl.png)
+
+右半分のジョイントの曲がる方向が変わってしまったのでは？と気になるがここは気にしなくて OK。
+最終的に全ての Joint が以下のような階層になっていれば Joint 配置は終了。
+
+```text:💀ヒューマンキャラ基本のJoint階層構造
+pelvis
+|-- hip
+|   |-- leg_L
+|   |   `-- knne_L
+|   |       `-- ankle_L
+|   |           `-- ball_L
+|   |               `-- toe_top_L
+|   `-- leg_R
+|       `-- knne_R
+|           `-- ankle_R
+|               `-- ball_R
+|                   `-- toe_top_R
+`-- spine
+    `-- chest
+        |-- clavicle_L
+        |   `-- shoulder_L
+        |       `-- elbow_L
+        |           `-- wrist_L
+        |               |-- indexA_L
+        |               |   `-- indexB_L
+        |               |       `-- indexC_L
+        |               |           `-- index_top_L
+        |               |-- middleA_L
+        |               |   `-- middleB_L
+        |               |       `-- middleC_L
+        |               |           `-- middle_top_L
+        |               |-- pinkieA_L
+        |               |   `-- pinkieB_L
+        |               |       `-- pinkieC_L
+        |               |           `-- pinkie_top_L
+        |               |-- ringA_L
+        |               |   `-- ringB_L
+        |               |       `-- ringC_L
+        |               |           `-- ring_top_L
+        |               `-- thumbA_L
+        |                   `-- thumbB_L
+        |                       `-- thumbC_L
+        |                           `-- thumb_top_L
+        |-- clavicle_R
+        |   `-- shoulder_R
+        |       `-- elbow_R
+        |           `-- wrist_R
+        |               |-- indexA_R
+        |               |   `-- indexB_R
+        |               |       `-- indexC_R
+        |               |           `-- index_top_R
+        |               |-- middleA_R
+        |               |   `-- middleB_R
+        |               |       `-- middleC_R
+        |               |           `-- middle_top_R
+        |               |-- pinkieA_R
+        |               |   `-- pinkieB_R
+        |               |       `-- pinkieC_R
+        |               |           `-- pinkie_top_R
+        |               |-- ringA_R
+        |               |   `-- ringB_R
+        |               |       `-- ringC_R
+        |               |           `-- ring_top_R
+        |               `-- thumbA_R
+        |                   `-- thumbB_R
+        |                       `-- thumbC_R
+        |                           `-- thumb_top_R
+        `-- neck
+            `-- head
+                |-- chin
+                |   `-- chin_top
+                `-- head_center
+                    |-- eye_L
+                    |-- eye_R
+                    `-- head_top
+```
+
+## スキニング
+
+スキニングする時の設定は`Skin > Bind Skin(オプション)`で以下のように設定しておく。ただし、目など Joint と完全追従させたい場合、`Max Influences`は１に設定しておく。
+
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1671637563/media/blog/insert/Screenshot_2022-12-22_at_0.42.26_dzdu2i.png)
+
+先にスキニング対象の Joint を選択してから、次に対象のオブジェクトを選択して適用する。
+
+#### 1. 上半身のスキニング
+
+`pelvis`, `hip`, `spine`, `chest`, `neck`, `clavicle`, `shoulder`, `wrist`, 各`finger`(ただし`finger_top`は含めない)のジョイントと、上半身のオブジェクトを選択してスキニングを適用。
+
+#### 2. 下半身のスキニング
+
+`pelvis`, `hip`, `leg`, `knee`, `ankle`, `ball`のジョイントと、下半身のオブジェクトを選択してスキニングを適用。
+
+#### 3. 顔のスキニング
+
+`neck`, `head`, `head_center`, `chin`のジョイントと、顔のオブジェクトを選択してスキニングを適用。
+
+目については`Max Influences`を１にして、目に配置した Joint と目のオブジェクトを選択して適用する。(正しくできていれば目をキョロキョロ動かすことができるようになる)
+
+#### 最後にウェイト調整
+
+この時点で Joint を動かすとキャラクターが動くようになるが以下の点でいくつか不自然になる部分が出てくる。
+
+- `shoulder`ジョイントを動かすと脇腹が凹んでしまう
+- `elbow`ジョイントを動かすと腕が凹んでしまう
+- `knee`ジョイントを動かすと膝が凹んでしまう
+
+これらの不自然な点を解消するために、各 Vertex に割り当てられたウェイトを調整してあげる。
+`Skin > Paint Sking Weights(オプション)`でウェイト調整用のペイントツールに持ち替える。
+スキニングをしたことで、各 Vertex は Joint からの影響(つまり Weight)を受けるが、その Weight の合計は 1 になる。
+なので、凹んでいる部分に対しては相対的なウェイト値が下がるように親の Joint にウェイト値を足していく。
+
+たとえば、`shoulder`ジョイントを動かして脇腹が影響を受けるのであれば、その影響を少なくするために`shoulder`ジョイントの親である`clavicle`ジョイントや`chest`ジョイントにウェイト値を足していくといった具合だ。
+
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1671637562/media/blog/insert/Screenshot_2022-12-22_at_0.42.42_qcf1ik.png)
+
+## コントローラの作成
+
+Joint の配置とスキニングができたら最後にキャラクターを動かすために制御点となる Joint に対してコントローラーを作成していく。
+
+### 1. FK/IK
+
+キャラクターの制御の方法として FK と IK が存在する。セットアップでは FK と IK の両方の手法を使いながら、キャラクターに動きの制御を加えていく。
+
+- FK(Forward Kinematics)...親 Joint が動けば子 Joint も追従する、Joint の階層に沿った動かし方。
+- IK(Inverse Kinematics)...複数の Joint を一つの制御点(IK ハンドル)で動かす動かし方。IK ハンドルの位置(translate)によって親 Joint の回転(rotate)が追従する形で制御される。
+
+多くの場合は FK で動かすことが多いが、IK は手首や足首などに IK ハンドルを作成して「手を固定したまま肘を動かす」「足を固定したまま腰やお尻を動かす」などのアニメーションが行いやすくなる。
+
+#### IK ハンドルの設定
+
+FK は Joint の配置で完成していると言えるので IK をキャラクターに設定する。
+手首や足首に対して IK ハンドルを作成する。その前に Maya では優先角(IK ハンドルを設定した時に曲がる方向)を指定してあげる必要があるので、`elbow`, `knee`の Joint に対して曲がる方向に少し曲げた状態で`Set Preferred Angle`を設定する。
+設定できたら、腕なら`shoulder` => `wrist`、脚なら`leg` => `ankle`で左右手足の計 4 箇所に対して IK ハンドルを作成する。作成した 4 つの IK ハンドルに適切な名前をつけておく。
+
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1671637562/media/blog/insert/Screenshot_2022-12-22_at_0.44.07_eoff1b.png)
+
+### 2. コントローラーの作成と配置
+
+#### NURBS Curve でコントローラーを作成
+
+Maya の場合コントローラーは NURBS Curve で作っていく。形状については自分の好みで視覚的にわかりやすい形状を作る。
+
+今回についてはわかりやすいように以下の形状で進める。
+
+- FK(Joint に配置する)コントローラー...`Create > NURBES Primitives > Curve`で作成
+
+- IK(IK ハンドルに配置する)コントローラー...通常の Premitive オブジェクトで Cube を原点に作成して、`Create > Curve Tools > CV Curve Tool(オプション)`で Curve Degree の設定値を`1Linear`にする。あとは`V`キーを押しながら Cube の各頂点にスナップさせて NURBS Curve で Cube を作成
+
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1671637562/media/blog/insert/Screenshot_2022-12-22_at_0.43.22_unpjnh.png)
+
+また、コントローラーのサイズや形状を変更する場合は**必ずカーブやグループのトランスフォームは使わず、カーブを選択して右クリック`Control Vertex`で編集する**ようにする。
+
+#### 作成したコントローラーの配置
+
+次にこのコントローラーを配置していくが、まずはコントローラーをグループ化(`Cmd + G`キー)してオフセット(トランスフォームノードに値が入ってもいいようにしておく)を作っておく。
+
+重要なのは **Curve(=コントローラー)の Translate が 0, Rotate が 0, Scale が 1 になっている**こと。(基本的にコントローラーは数値入力(0 や 1)で初期位置に戻すようにしておきたいので、トランスフォームノードは変化させないようにグループ化したオブジェクトのトランスフォームノードだけで変化させることが大事！)
+
+そして、そのグループを配置したい各 Joint あるいは各 IK ハンドルの位置に Snap to point または`Modify > Match Transformations > Match All Transforms`で配置する。
+
+また IK 制御では、IK ハンドルの向きをコントロールする(肘や膝の曲がり具合を調整する)用の IK コントローラーを肘後ろと膝前に配置しておく。
+
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1671637562/media/blog/insert/Screenshot_2022-12-22_at_0.43.31_nzuqd7.png)
+
+上記のイメージのように配置できたら FK コントローラも Joint の階層構造と同じように階層化する。(offset > ctrl > offset > ...というような並びになる)
+親子階層を作っておくことで Joint の動きと同様、親の FK コントローラーが動くと子の FK コントローラーも追従してくれるようになる。
+ただし**指のコントローラーはこの pelvis 配下の階層構造に含めず**、指のコントローラーをグループ化して(`finger_L_CTRL_offset`, `finger_R_CTRL_offset`と名付けておく)その中で適切に階層化しておく。後述する指に対しての Constraint でグループに対して Constraint をかけるためである。
+
+### 3. Constraint(コントローラーで Joint や IK ハンドルを制御する)
+
+ここからコントローラーの Translate 値や Rotate 値に応じて Joint や IK ハンドルが追従されるように制御していく。(初期値 0 の時に元のポージングに戻る)
+
+FK コントローラーの場合は、コントローラー(NURBS Curve)と Joint を選択して`Constrain > Orient`を実行する。これでコントローラーの Rotate 値と連動して Joint も動いてくれるようになる。
+
+IK コントローラーの場合は、コントローラー(NURBS Curve)と IK ハンドルを選択して`Constrain > Point`を実行する。
+IK ハンドルの向きをコントロールする(肘や膝の曲がり具合を調整する)用の IK コントローラーに対しては`Constrain > Pole Vector`を実行する
+
+#### 手首と足首の Joint にかける Constraint は注意
+
+手首と足首は制御点が多くなるので注意が必要だ。
+
+手首と足首は IK コントローラーを使っても FK コントローラーを使っても回転を制御することになるが、`Constrain > Orient`**は使わず、以下のようにオプションを設定して**`Constrain > Parent`**を実行する**。「IK コントローラーと Joint」&「FK コントローラーと Joint」で 1 つの Joint に 2 回実行して Constraint をかけることになる。
+
+↓ デフォルトの設定から `Translate:☑️All` を外している
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1671637980/media/blog/insert/parent_constraint_options_op7dny.png)
+
+この時点では IK コントローラーか FK コントローラーどちらかの回転にしか追従していないと思うが、後述の IK/FK のスイッチングで制御の切り替えをする。
+
+#### 指に対しての Constraint
+
+指については、
+
+1. `wrist`の FK コントローラーとグループ化した指のコントローラーを選択して`Constrain > Parent`
+2. 手首の IK コントローラーとグループ化した指のコントローラーを選択して`Constrain > Parent`
+
+を実行することで、手首と足首の Joint と同様に 2 重の Constraint がかかる。
+
+後述する IK/FK のスイッチングの説明では省略してしまうが、スイッチングする時は Constraint ノードを選択して、`wrist`の FK コントローラーまたは手首の IK コントローラーにかかっている Constraint の`0` `1`の値を切り替える。
+
+#### リバースフットの Constarint
+
+現状の Joint 構造だと、つま先をつけながらかかとを上げるという動きができない。(`ankle`ジョイントを持ち上げるとつま先も浮いてしまう)そこでリバースフットを作成する。
+
+以下のようにリバースフット用の Joint を作成/配置して Orient Joint を適用した後、Constraint をかけておく。
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1671643137/media/blog/insert/revese_foot_image_xbbuh8.png)
+
+さらに、`ik_leg_L_CTRL`と`foot_CTRL_L_JNT`を選択して`Parent Constraint`をかけてコントローラーと連携させておく。
+
+### 4. IK/FK のスイッチング
+
+ここからは先ほど手首と足首にかけた Constraint 制御をスイッチングして、IK 制御と FK 制御どちらかに切り替えて動かせるようにする。(両方の制御をかけて動かすことは基本的にありえない)
+
+#### コントローラー作成
+
+IK/FK を切り替えるためのコントローラーを(これも Curve で)作る。
+`Create > Type`で「IKFK」と書いたあと`Create Curves from Type`で文字のカーブを生成する。Outliner の Display から`Shape`を表示する。4 つの CurveShape を選択してから格納先のグループを１つ選択し、以下のようなスクリプトを実行する。
+
+```
+parent -r -s
+```
+
+すると、「I」「K」「F」「K」の分離していた 4 つのカーブが 1 つのカーブとしてまとまる。作成したら`Lock and Hide Selected`で Channel の Attribute を全部隠しておく。その他色などはお好みで調整する。
+
+#### コントローラーにアトリビュートを追加して他のアトリビュートと接続
+
+このコントローラーと IK ハンドルの IK Blend と、Joint の Blend Parent を紐付けてスイッチングを行う。
+コントローラーを選択して`Modify > Add Attribute`を実行して、以下のように IK、FK の Enum を持つアトリビュートを追加する。
+
+<img
+  src="https://res.cloudinary.com/dso4npatn/image/upload/v1671637562/media/blog/insert/Screenshot_2022-12-22_at_0.43.11_frnwmg.png"
+  width="360px"
+/>
+
+メニューセットを Animation にして、`Key > Set Driven Key > Set`で接続ウィンドウを開く
+
+Driver にコントローラー、Driven に IK Blend を持つ IK ハンドラーを選択する。
+IK の時に IK Blend が 1 で`Key`ボタン、FK の時に IK Blend が 0 で`Key`ボタンを押すことでアトリビュート同士を接続する。
+
+次に Driver にコントローラー、Driven に Blend Parent を持つ Joint を選択する。
+IK の時に Blend Parent が 0 で`Key`ボタン、FK の時に Blend Parent が 1 で`Key`ボタンを押すことでアトリビュート同士を接続する。
+
+最後に FK の時に必要なコントローラーと IK の時に必要なコントローラーの visibility を切り替えられるようにしておくとわかりやすくなる。
+
+<br />
+
+↓ 最終的なイメージ(腕と脚が IK/FK を切り替えられるようになった)
+
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1671637562/media/blog/insert/Screenshot_2022-12-22_at_0.43.50_cowolm.png)
+
+<br />
+<br />
+<br />
+
+「maya rig controller」で検索するとかっこいいコントローラーがたくさん出てくるので、Curve の形状を変更すれば自分好みのコントローラーを完成できるみたい。
+以上リギングとコンローラー作成についてまとめてみたが、からくり仕込みみたいでなかなかにギミックで楽しいではないか。
+
+それにしても、こういった CG 系の投稿とか解説って文章だといまいち説明が難しい...
+
+誰かに説明するなら動画のほうがわかりやすそうだ。

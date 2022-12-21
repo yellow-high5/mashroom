@@ -1,0 +1,367 @@
+---
+date: 2022-12-03T23:00:00Z
+title: 'Dartの非同期処理 ~FutureとStream~'
+thumbnail: 'https://res.cloudinary.com/dso4npatn/image/upload/v1670179867/media/blog/thumbnail/Flutter_%E9%9D%9E%E5%90%8C%E6%9C%9F%E5%87%A6%E7%90%86_bfkmuw.png'
+tag:
+  - ネイティブ開発
+---
+
+Dart では非同期処理の単一的な結果は Future、シーケンスデータのような連続的結果はは Stream を返す。
+それぞれのクラスに用意された関数の使い方や Builder Widget について公式を読みながら確認した。
+
+## Future
+
+> - [Asynchronous programming: futures, async, await \| Dart](https://dart.dev/codelabs/async-await#exercise-practice-handling-errors)
+> - [Dart Futures - Flutter in Focus - YouTube](https://www.youtube.com/watch?v=OTS-ap9_aXc)
+>   <iframe
+>     width="100%"
+>     style="aspect-ratio: 16 / 9"
+>     src="https://www.youtube.com/embed/OTS-ap9_aXc"
+>     title="Dart の Future - Flutter in Focus"
+>     frameborder="0"
+>     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+>     allowfullscreen
+>   />
+
+- `Future`...完了(成功すれば`<T>`(値)を返し、エラーの場合はエラーを返す)か未完了の状態。`Future`を返す関数を呼び出すと、関数は実行する作業をキューに入れて未完了の`Future`を返す。
+- future...Future クラスで生成されたインスタンス
+- `async`...`Future<T>`を返す非同期関数の前につける
+- `await`...`async`が付いた関数内で、非同期処理の完了結果を取得する
+
+```dart
+Future<String> createOrderMessage() async {
+  var order = await fetchUserOrder();
+  return 'Your order is: $order';
+}
+
+Future<String> fetchUserOrder() =>
+    // Imagine that this function is
+    // more complex and slow.
+    Future.delayed(
+      const Duration(seconds: 2),
+      () => 'Large Latte',
+    );
+
+Future<void> main() async {
+  print('Fetching user order...');
+  print(await createOrderMessage());
+}
+```
+
+### エラー処理
+
+エラー処理については try-catch 構文または then メソッドを使う。
+
+> - [Futures and error handling \| Dart](https://dart.dev/guides/libraries/futures-error-handling)
+
+```dart
+// try-catch
+try {
+  print('Awaiting user order...');
+  var order = await fetchUserOrder();
+} catch (err) {
+  print('Caught error: $err');
+}
+
+// then
+fetchUserOrder().then((value) => print('Order is $value'), onError: (e) => print('Caught error: $err')
+// catchErrorの方が捕捉範囲は広い(onErrorはonValueで発生したエラーのみの捕捉)
+fetchUserOrder().then((value) => print('Order is $value')).catchError((e) => print('Caught error: $err')
+```
+
+`onError`と`catchError`の異なる点は、then の`onValue`(then メソッドの最初の引数)や`onError`で発生した例外を処理できるかどうかに違いある。`onError`だと`onValue`で発生したエラーは捕捉できないが、`catchError`を使えば捕捉するすることができる。
+
+```dart:onErrorのエラーをcatchErrorが捕捉する例
+funcThatThrows().then(successCallback, onError: (e) {
+  handleError(e);           // Original error.
+  anotherFuncThatThrows();  // Oops, new error.
+}).catchError(handleError); // Error from within then() handled.
+```
+
+以下のようにエラーの内容を識別して捕捉できるので`onError`より`catchError`を使う頻度の方が多そうなイメージ。
+
+```dart
+void main() {
+  handleAuthResponse(const {'username': 'dash', 'age': 3})
+      .then((_) => ...)
+      .catchError(handleFormatException, test: (e) => e is FormatException)
+      .catchError(handleAuthorizationException, test: (e) => e is AuthorizationException);
+}
+```
+
+### whenComplete
+
+`try-catch-finally`でいうところの`finally`にあたる。エラーに関係なく確実に最後に実行されるメソッド。
+
+```dart
+final server = connectToServer();
+server
+    .post(myUrl, fields: const {'name': 'Dash', 'profession': 'mascot'})
+    .then(handleResponse)
+    .catchError(handleError)
+    .whenComplete(server.close);
+```
+
+### Future クラスで用意されているメソッド
+
+- `Future.value()`...Future の実行結果が成功だった場合の値を返す。
+- `Future.error()`...Future の実行結果が失敗だった場合のエラーを返す。
+- `Future.delayed()`...実行する関数を指定した時間だけ遅らせる(Flutter で読み込みスピナーを表示したいときなどに便利)
+
+```dart
+Future.delayed(const Duration(milliseconds: 500), () {
+    future.then(...).catchError(...);
+  });
+}
+```
+
+- `Future.sync()`...1 つの関数の中に同期エラーと非同期エラーが混じる場合に、同期エラーによってエラーが捕捉できないことを防ぐ。
+
+```dart
+Future<int> parseAndRead(Map<String, dynamic> data) {
+  return Future.sync(() {
+    final filename = obtainFilename(data); // Could throw synchronous error.
+    final file = File(filename);
+    return file.readAsString().then((contents) {
+      return parseFileData(contents); // Could throw asynchronous error.
+    });
+  });
+}
+
+void main() {
+  parseAndRead(data).catchError((e) {
+    print('Inside catchError');
+    print(e);
+    return -1;
+  });
+}
+
+// 実行結果:
+// Inside catchError  <=もしFuture.syncでラップしていなければ `Unhandled exception`になってしまう
+// <error from obtainFilename>
+```
+
+### FutureBuilder
+
+Flutter で非同期処理の結果(取得中(未完了)、完了、エラー)に応じて Widget を表示したい場合に使う。
+`future`に非同期関数と`builder`に表示したい Widget を指定する。
+
+> - [FutureBuilder class - widgets library - Dart API](https://api.flutter.dev/flutter/widgets/FutureBuilder-class.html)
+
+```dart
+class _MyStatefulWidgetState extends State<MyStatefulWidget> {
+  final Future<String> _calculation = Future<String>.delayed(
+    const Duration(seconds: 2),
+    () => 'Data Loaded',
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTextStyle(
+      style: Theme.of(context).textTheme.headline2!,
+      textAlign: TextAlign.center,
+      child: FutureBuilder<String>(
+        future: _calculation, // この例ではFuture<String> or nullを返す非同期処理
+        builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+          List<Widget> children;
+          if (snapshot.hasData) {
+            // データ取得完了時
+          } else if (snapshot.hasError) {
+            // データ取得エラー時
+          } else {
+            // 取得中状態(ローディングスピーなどのWidgetを表示)
+        },
+      ),
+    );
+  }
+}
+```
+
+## Stream
+
+↓ Future や Stream とは何かを表現した同期データや単一データとの比較表
+
+| 同期/非同期 |       単一       |     シーケンス     |
+| :---------- | :--------------: | :----------------: |
+| Sync        |     **int**      | **Iterator<int\>** |
+| Async       | **Future<int\>** |  **Stream<int\>**  |
+
+> - [Asynchronous programming: Streams \| Dart](https://dart.dev/tutorials/language/streams)
+> - [Dart Streams - Flutter in Focus - YouTube](https://www.youtube.com/watch?v=nQBpOIHE4eE)
+>   <iframe
+>     width="100%"
+>     src="https://www.youtube.com/embed/nQBpOIHE4eE"
+>     style="aspect-ratio: 16 / 9"
+>     title="Dart Streams - Flutter in Focus"
+>     frameborder="0"
+>     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+>     allowfullscreen
+>   />
+
+- `*async`...イテレーターからストリームを生成する関数(実際はネットワークライブラリなどに実装されているのでアプリ開発者はこれを呼び出すイメージ)
+
+```dart
+Stream<int> countStream(int to) async* {
+  for (int i = 1; i <= to; i++) {
+    yield i;
+  }
+}
+```
+
+- `listen`...データのストリームを受信する stream subscription を生成する。(生成された subscription は)
+
+```dart
+final myStream = NumberCreator().stream;
+
+final subscription = myStream.listen(
+  (data) => print('Data: $data'),
+  onError: (err) => print('Error!'),
+  cancelOnError: false,
+  onDone: () => print('Done!'),
+);
+
+// subscriptionに用意されたメソッド
+subscription.puase();
+subscription.resume();
+subscription.cancel();
+```
+
+ストリームでは、シーケンスデータを取得する際に 2 種類のストリーム(`Single subscription streams`(一般的)と`Broadcast streams`)が用意されている。
+
+##### Single subscription streams
+
+一連のデータイベントを正しい順序で欠落せず受け取る。
+
+```dart
+final myStream = NumberCreator().stream;
+
+final subscription = myStream.listen(
+  (data) => print('Data: $data'),
+);
+
+// このsubscriptionは許されない🙅‍
+final subscription2 = myStream.listen(
+  (data) => print('Data again: $data'),
+);
+```
+
+##### Broadcast streams
+
+複数のリスナーで同時にイベントを受け取ることができるようになる。
+
+```dart
+final myStream = NumberCreator()
+    .stream
+    .asBroadcastStream; // これでブロードキャスト化
+
+//
+final subscription = myStream.listen(
+  (data) => print('Data: $data'),
+);
+
+// 複数のListenerを持つことができる🙆
+final subscription2 = myStream.listen(
+  (data) => print('Data again: $data'),
+);
+```
+
+### Stream 操作関数
+
+イテレーター関数同様、`map`や`where`といったストリームを加工したりフィルターする関数が用意されている。
+
+```dart
+// 加工処理系
+Future<T> get first;
+Future<bool> get isEmpty;
+Future<T> get last;
+Future<int> get length;
+Future<T> get single;
+Future<bool> any(bool Function(T element) test);
+Future<bool> contains(Object? needle);
+Future<E> drain<E>([E? futureValue]);
+Future<T> elementAt(int index);
+Future<bool> every(bool Function(T element) test);
+Future<T> firstWhere(bool Function(T element) test, {T Function()? orElse});
+Future<S> fold<S>(S initialValue, S Function(S previous, T element) combine);
+Future forEach(void Function(T element) action);
+Future<String> join([String separator = '']);
+Future<T> lastWhere(bool Function(T element) test, {T Function()? orElse});
+Future pipe(StreamConsumer<T> streamConsumer);
+Future<T> reduce(T Function(T previous, T element) combine);
+Future<T> singleWhere(bool Function(T element) test, {T Function()? orElse});
+Future<List<T>> toList();
+Future<Set<T>> toSet();
+
+// 変更系
+Stream<R> cast<R>();
+Stream<S> expand<S>(Iterable<S> Function(T element) convert);
+Stream<S> map<S>(S Function(T event) convert);
+Stream<T> skip(int count);
+Stream<T> skipWhile(bool Function(T element) test);
+Stream<T> take(int count);
+Stream<T> takeWhile(bool Function(T element) test);
+Stream<T> where(bool Function(T event) test);
+```
+
+### StreamBuilder
+
+> [StreamBuilder class - widgets library - Dart API](https://api.flutter.dev/flutter/widgets/StreamBuilder-class.html)
+
+`stream`に非同期ストリーム関数と`builder`に表示したい Widget を指定する。
+`builder`の内部では`snapshot.connectionState`に応じて Widget の表示を変更している。
+
+```dart:StreamBuilderの使い方(例ではStreamControllerを使ってStreamを作成している)
+class _MyStatefulWidgetState extends State<MyStatefulWidget> {
+  final Stream<int> _bids = (() {
+    late final StreamController<int> controller;
+    controller = StreamController<int>(
+      onListen: () async {
+        await Future<void>.delayed(const Duration(seconds: 1));
+        controller.add(1);
+        await Future<void>.delayed(const Duration(seconds: 1));
+        await controller.close();
+      },
+    );
+    return controller.stream;
+  })();
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<int>(
+      stream: _bids,
+      builder: (BuildContext context, AsyncSnapshot<int> snapshot) {
+        List<Widget> children;
+        if (snapshot.hasError) {
+          children = <Widget>[...];
+        } else {
+          switch (snapshot.connectionState) {
+            case ConnectionState.none:
+              children = <Widget>[...];
+              break;
+            case ConnectionState.waiting:
+              children <Widget>[...];
+              break;
+            case ConnectionState.active:
+              children = <Widget>[...];
+              break;
+            case ConnectionState.done:
+              children = <Widget>[...];
+              break;
+          }
+        }
+
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: children,
+        );
+      },
+    );
+  }
+}
+```
+
+<br />
+<br />
+<br />
+
+`Future`は Node.js でいうところの`Promise`や`async/await`とあまり変わらないなと言った印象だった一方、`Stream`についてはリアクティブプログラミングを知らなかった自分にとっては「なるほどな(簡潔でわかりやすいなー)」という印象だった。

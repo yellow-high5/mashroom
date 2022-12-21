@@ -1,0 +1,576 @@
+---
+date: 2022-11-14T23:00:00Z
+title: 'Decoding Flutterのまとめ'
+thumbnail: 'https://res.cloudinary.com/dso4npatn/image/upload/v1670180376/media/blog/thumbnail/Decoding_Flutter_hcbbh9.png'
+tag:
+  - ネイティブ開発
+---
+
+Flutter 公式が Flutter 内部の仕組みを説明している Youtube の動画リスト[Decoding Flutter](https://www.youtube.com/playlist?list=PLjxrf2q8roU1fRV40Ec8200rX6OuQkmnl)を視聴して気になった動画を自分で振り返るために記事にまとめてみた。仕組み編と実装編と文法編で分けている。
+
+## 仕組み編
+
+### ・[ホットリロード？？](https://www.youtube.com/watch?v=sgPQklGe2K8&list=PLjxrf2q8roU1fRV40Ec8200rX6OuQkmnl&index=24)
+
+ホットリロードは Widget ツリー全体ですべての Widget の`build`メソッドが実行されること。
+
+- **`build`メソッド内を更新した場合**は、`r`コマンドでホットリロードして画面の更新が適用される。
+- Widget を Stateless から Statefull に変更したり、`initState`メソッドや`dispose`メソッド内を更新したり **`build`メソッド以外を更新した場合** は、`R`コマンドでホットリスタートが必要になる。
+
+### ・[BuildContext とは？](https://www.youtube.com/watch?v=rIaaH87z1-g&list=PLjxrf2q8roU1fRV40Ec8200rX6OuQkmnl&index=22)
+
+```dart:色々な場面で使われるBuildContext
+Widget build(BuildContext context) {
+  Navigator.of(context) ...
+  MediaQuery.of(context) ...
+  ListView.builder(
+    itemBuilder: (context, index) {}
+  ),
+}
+```
+
+`build`メソッドでよく目にする`BuildContext`とは「Widget がツリー全体のどこに存在するかを把握できるようにする」ためのもの。
+
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1670180723/media/blog/insert/Screenshot_2022-12-05_at_4.05.00_ghemaf.png)
+
+そもそも Widget 自身は作成されたインスタンスがツリー全体のどこに存在するかを把握していない。
+
+内部的には StatelessWidget や StatefulWidget には`createElement()`メソッドが実装されており、この Element は Widget の場所や親子関係を追跡するための Element ツリーを構築する。それらの追跡情報(Element)が BuildContext になっている。(`abstract class Element implements BuildContext`)
+ちなみに Element は State を保持している。
+
+### ・["Viewport was given unbounded height" エラーの話](https://www.youtube.com/watch?v=jckqXR5CrPI&list=PLjxrf2q8roU1fRV40Ec8200rX6OuQkmnl&index=20)
+
+```dart:ListViewをColumnに入れるとよくエラーが起きる例
+Column(
+  children: [
+    MyWidget(),
+    ListView(children ...), // ListViewは無限の高さ(inifinity)を親WidgetのColumnに要求
+  ],
+),
+```
+
+なぜ親 Widget(`Column`)は子 Widget の要求を聞いて受け入れようとするのか？子 Widget たち(`MyWidget`や`ListView`)に「お前たちのサイズは俺の高さまでが限界だ」といってやらない(Fluuter の仕様)ようにしなかったのか？
+
+答えは、そのようにしてしまうと Flutter 内部の実装として ① エラーは出なくなるが開発者がなぜそいういうレイアウトになるのかを理解しづらくなる ② 仮に親子間でレイアウトを調整する計算処理を入れるなら速度が遅くなってしまうことによる。
+この例だと、`ListView`が親の高さを指定した場合`MyWidget`が消滅して開発者からするとなぜ`MyWidget`が消滅したかわからなくなる。
+
+Flutter ではこの解決策として、「**子 Widget が要求するサイズを明示する**」ことを推奨している。
+
+最大限のサイズを要求する場合は`Expanded`や`Flexible`、一定のサイズを要求する場合は`SizedBox`をラップする。
+
+```dart
+Column(
+  children: [
+    MyWidget(),
+    SizedBox(
+      height: 42,
+      ListView(children ...),
+    ),
+  ],
+),
+```
+
+### ・[Flutter での packaget と plugin が示すもの](https://www.youtube.com/watch?v=Y9WifT8aN6o&list=PLjxrf2q8roU1fRV40Ec8200rX6OuQkmnl&index=19)
+
+- **package** ... Dart コードで書かれた便利な追加機能。
+- **plugin** ... Java, Kotlin, Objective-C, Swift, Javascript などで書かれたプラットフォームに依存する package のことを指す。
+
+### ・[RenderObject について](https://www.youtube.com/watch?v=zmbmrw07qBc&list=PLjxrf2q8roU1fRV40Ec8200rX6OuQkmnl&index=17)
+
+Widget で抽象化されていて Flutter 開発では開発中にソースコード上目にすることは少ないが画面上には RenderObject が生成されている。
+RenderObject はレイアウト、描写、ヒットテスト、アクセシビリティの処理を行う。
+
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1670180724/media/blog/insert/Screenshot_2022-12-05_at_4.04.45_zgagrh.png)
+
+`Widget - Element - RenderObject`でツリー構造が連動している。Widget ツリーが変更されたら Element ツリーも RenderObject ツリーも連動しようとする。
+Widget にキーを割り当てる理由はこれらの連動を維持するためである。([When to Use Keys](https://www.youtube.com/watch?v=kn0EOS-ZiIc)に詳しい説明がある)
+
+<img
+  src="https://res.cloudinary.com/dso4npatn/image/upload/v1670180723/media/blog/insert/Screenshot_2022-12-05_at_4.04.27_y6xj8h.png"
+  width="540px"
+/>
+<br />
+<br />
+
+`RenderObjectElement`クラスや`RenderObjectWidget`クラスを拡張して描画をカスタムできるがかなり複雑なクラスなので、基本は抽象化された Widget を使うことが推奨。Flutter アプリ内でキャンパスにペイント(自由なお絵描き)をしたいのであれば [CustomPaint](https://api.flutter.dev/flutter/widgets/CustomPaint-class.html) Widget を使うと良い。
+
+### ・[レンダリングの仕組み](https://www.youtube.com/watch?v=54yoCqkew6g&list=PLjxrf2q8roU1fRV40Ec8200rX6OuQkmnl&index=16)
+
+1~3 にあるユーザー入力 → アニメーション →Widget の build メソッドを受けて、レンダリング(ツリーの描画)が始まる。
+レンダリング時に発生するレイアウト、描画、合成、ラスタライズ化などの機能を RenderObject が担う。最適化するにあたって`Layer Tree`というのを構築して RenderObject の再計算を少なくする。
+
+![73d40570.png](https://res.cloudinary.com/dso4npatn/image/upload/v1670180723/media/blog/insert/Screenshot_2022-12-05_at_4.04.11_gga6lc.png)
+
+### ・[ジェスチャー検出の裏側](https://www.youtube.com/watch?v=Q85LBtBdi0U&list=PLjxrf2q8roU1fRV40Ec8200rX6OuQkmnl&index=1)
+
+タップ・クリック・ドラッグなどジェスチャの認識には[GestureDetector](https://api.flutter.dev/flutter/widgets/GestureDetector-class.html)を使ってリスナーを登録するが、その際に`GestureRecognizer`が適用される。`GestureRecognizer`では画面上でユーザーが操作した生の座標が取得される。
+
+```dart:ユーザーの操作座標を取得する例
+Listener(
+  onPointerDown: (PointerEvent event) {},
+  onPointerUp: (PointerEvent event) {},
+  onPointerMove: (PointerEvent event) =>
+    print('${event.position} @ ${event.timeStamp}'),
+)
+```
+
+そして`GestureDetector`は`GestureRecognizer`からのユーザー操作のデータストリームを見てそれらが、タップなのかダブルタップなのか長押しなのかを判断している。
+
+1. ジェスチャーの認識機能はいつでも敗北宣言できる
+2. ジェスチャーの認識機能はいつでも勝利宣言できる
+3. 最後の 1 つのジェスチャーが残るまで戦いは続く
+
+↓ ダブルタップ(doubleTapRecogniner)がタップ(tapRecognizer)を破り勝利した様子の疑似コード(最初のタップ操作後タイマーを仕込んでそれ以内にまたタップ操作が行われたのでダブルタップだと検出された)
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1670180723/media/blog/insert/Screenshot_2022-12-05_at_4.04.00_ktslu5.png)
+
+### おまけ: Flutter 内部の仕組みについてわかりやすく書かれた記事
+
+> - [Inside Flutter \| Flutter](https://docs.flutter.dev/resources/inside-flutter)
+> - [Flutter architectural overview \| Flutter](https://docs.flutter.dev/resources/architectural-overview#architectural-layers)
+> - [Flutter の Widget ツリーの裏側で起こっていること. Widget・State・Element・RenderObject… \| by mono  | Flutter 🇯🇵 | Medium](https://medium.com/flutter-jp/dive-into-flutter-4add38741d07)
+
+## 実装編
+
+### ・[ネストした ListView](https://www.youtube.com/watch?v=LUqDNnv_dh0&list=PLjxrf2q8roU1fRV40Ec8200rX6OuQkmnl&index=15)
+
+ListView の中に ListView を定義すると表示領域サイズが無制限になりエラーが起きてしまうことがある。ListView Widget の`shrinkWrap`を`true`にすると子リストに含まれる Widget を強制的に見積もることができるようになる。しかし子リストに多くの Widget が含まれているとパフォーマンスが低下してしまう。
+
+```dart:shrinkWrapを使った場合
+final outerListChildren = <ListView>[
+  ListView(
+    shrinkWrap: true,
+    physics: const NeverScrollableScrollPhysics(),
+    children: <Widget>[...]
+  ),
+  ...
+];
+
+return ListView.builder(
+  itemCount: outerListChildren.length,
+  itemBuilder: (context, index) {
+    return outerListChildren[index];
+  }
+);
+```
+
+このリスクを解決するために以下のように ListView を変更すると良い。
+
+1. ListView.builder を CustomScrollView に置き換える
+2. ネストされる子の ListView(`outerListChildren`)を SliverList に変更する
+3. 子の ListView のアイテムを`SliverChildBuilderDelegate`(または`SliverChildListDelegate`)で生成する
+
+```dart:Sliverを使った場合
+final outerListChildren = <SliverList>[
+  SliverList(
+    delegate: SliverChildBuilderDelegate(
+      (context, index) => _myWidgets[index],
+      childCount: _myWidets.length,
+    ),
+  ),
+  ...
+];
+
+return CustomScrollView(
+  children: outerListChildren
+);
+```
+
+### ・[クラス Widget(個別 Widget) vs 関数 Widget(ヘルパーメソッド)](https://www.youtube.com/watch?v=IOyq-eTRhvo&list=PLjxrf2q8roU1fRV40Ec8200rX6OuQkmnl&index=14)
+
+繰り返されるリストアイテムを切り出す際に、クラス Widget あるいは関数 Widget どちらで返すべきなのか？
+
+```dart:クラスWidget vs 関数Widget
+// クラスWidget
+Class MyListTile extends StatelessWidget {
+  const MyListWidget({
+    key?: key,
+    required this.title,
+  }) : super(key: key);
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Text(title),
+    );
+  }
+}
+
+// 関数Widget
+Widet _builderWidget(String title) {
+  return ListTile(
+    title: Text(title),
+  );
+}
+```
+
+関数 Widget の方が記述量が少なく効率的に見えるかもしれないが、**クラス Widget がデフォルトで推奨である**。
+関数 Widget の場合、リストアイテム内の state に変化が起こる場合にそのリストアイテムだけでなく、リスト Widget 全体をリビルドすることになりパフォーマンスを低下させてしまう。他にもテストのしやすさやコンテキストへのアクセスのしやすさの面からもクラス Widget を使った方が良い。
+
+### ・[仮想キーボード入力に対応する](https://www.youtube.com/watch?v=ceCo8U0XHqw&list=PLjxrf2q8roU1fRV40Ec8200rX6OuQkmnl&index=12)
+
+```dart
+final MediaQueryData mediaQueryData = MediaQuery.of(context);
+```
+
+`MediaQueryData`の中に`padding`, `viewPadding`, `viewInsets`の 3 つのプロパティが存在する。
+
+- `padding`...キーボードが表示されると`padding.bottom`は消滅する
+- `viewPadding`...キーボードが表示されると`viewPadding.bottom`は維持される
+- `viewInsets`...キーボードの高さ領域分を指定する
+
+> ###### サンプルコード
+>
+> https://dartpad.dev/?id=b0d016329a88863670d9e9a8f0789245
+
+### ・[MaterialStateProperty について](https://www.youtube.com/watch?v=CylXr3AF3uU&list=PLjxrf2q8roU1fRV40Ec8200rX6OuQkmnl&index=10)
+
+[MaterialState (material_state.dart ファイル) ](https://github.com/flutter/flutter/blob/master/packages/flutter/lib/src/material/material_state.dart)とは`hovered`, `pressed`, `focused`, `disabled`などのインタラクティブな State を Enum で表現したもの。
+
+```dart
+// MaterialStatePropertyを使った基本的な書き方
+Color? getColor(Set<MaterialState> states) => Colors.blue;
+TextButton(
+  style: ButtonStyle(
+    backgroundColor: MaterialStateProperty.resolveWith(
+      getColor,
+    ),
+  )
+)
+
+// (すべてのMaterialStateに対して背景色青色を適用する場合の書き方)
+Color? getColor(Set<MaterialState> states) => Colors.blue;
+TextButton(
+  style: ButtonStyle(
+    backgroundColor: MaterialStateProperty.all(Colors.blue),
+  )
+)
+
+// MaterialStateに応じたgetColorの書き分け
+@override
+Widget build(BuildContext context) {
+  Color? getColor(Set<MaterialState> states) {
+    if (state.contains(MaterialState.focused) && states.contains(MaterialState.hovered)) {
+      return mySpecialColor;
+    } else if (state.contains(MaterialState.focused)) {
+      return myFocusedColor;
+    } else if (states.contains(MaterialState.hovered)) {
+      return myHoveredColor;
+    }
+    return myDefaultColor;
+  }
+
+  return TextButton(
+    style: ButtonStyle(
+      backgroundColor: MaterialStateProperty.resolveWith(
+        getColor,
+      ),
+    )
+  );
+}
+
+// buildメソッド内にgetColorを書きたくないのでこうする
+class ButtonBackGroundColor implements MateraiStateProperty<Color?> {
+  ButtonBackgroundColor(this.context);
+
+  final BuildContext context;
+
+  @override
+  Color? resolve(Set<MaterialState> states) {
+    if (state.contains(MaterialState.focused) && states.contains(MaterialState.hovered)) {
+      return mySpecialColor;
+    } else if (state.contains(MaterialState.focused)) {
+      return myFocusedColor;
+    } else if (states.contains(MaterialState.hovered)) {
+      return myHoveredColor;
+    }
+    return myDefaultColor;
+  }
+}
+TextButton(
+  style: ButtonStyle(
+    backgroundColor: ButtonBackGroundColor(context),
+  )
+)
+
+```
+
+### ・[ThemeExtension について](https://www.youtube.com/watch?v=8-szcYzFVao&list=PLjxrf2q8roU1fRV40Ec8200rX6OuQkmnl&index=9)
+
+基本的には Widget のスタイルは ①Widget に直接指定したスタイル ② テーマで指定したスタイルの順で適用される。テーマに沿ったデザインになるものの難点としてはほとんどの Widget がテーマのパターンになってしまう。
+そこでどうしてもカスタムウィジェットのスタイルと Widget 情報を分離して扱いたい場合は、`ThemeData`の`extensions`を使う。
+
+```dart
+// カスタムウィジェット(HeroCard)のスタイル
+class HeroCardStyle extends ThemeExtension<HeroCardStyle> {
+  const HeroCardStyle((
+    required this.backgroundColor,
+    required this.borderRadius,
+  ))
+
+  final Color backgroundColor;
+  final double borderRadius;
+
+  @override
+  HeroCardStyle copyWith({
+    Color?: backgroundColor,
+    double?: borderRadius,
+  }) => HeroCardStyle(
+    backgroundColor: backgrounColor ?? this.backgrounColor,
+    borderRadius: borderRadius ?? this.borderRadius,
+  );
+
+  @override
+  HeroCardStyle lerp(ThemeExtension<HeroCardStyle>? other, double t) {
+    if (other is! HeroCardStyle) {
+      return this
+    }
+
+    return HeroCardStyle(
+      backgroundColor: Color.lerp(backgroundColor, other.backgroundColor, t),
+      borderRadius: lerpDouble(borderRadius, other.borderRadius, t),
+    )
+  }
+}
+
+// テーマの拡張
+ThemeData(
+  extensions: ThemeExtensions<dynamic>(
+    HeroCardStyle(
+      backgroundColor: Colors.gray[100],
+      borderRadius: 20,
+    )
+  )
+)
+
+// カスタムウィジェット
+Class HeroCard extends StatelessWidget {
+  const HeroCard({
+    key?: key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    HeroCardStyle defaultStyle = Theme.of(context).extension<HeroCardStyle>();
+
+    Color backgroundColor = style?.backgroundColor ?? defaultStyle?.backgroundColor;
+    borderRadius borderRadius = style?.borderRadius ?? defaultStyle?.borderRadius;
+
+    return Widgets(
+      backgroundColor: backgrounColor,
+      borderRadius: borderRadius,
+      child: ...,
+    )
+  }
+}
+```
+
+### ・[inheritedWidget について](https://www.youtube.com/watch?v=og-vJqLzg2c&list=PLjxrf2q8roU1fRV40Ec8200rX6OuQkmnl&index=7)
+
+inheritedWidget とは、BuildContext を使って AppState の情報を取得できる Widget のことである。(代表的な例としては`MeidaQuery.of(context)`や`Theme.of(context)`など)
+
+```dart:MeidaQuery.ofの例
+static MediaQueryData of(BuildContext context) {
+  assert(context != null);
+  assert(debugCheckHasMediaQuery(context));
+  return context.dependOnInheritedWidgetOfExactType<MediaQuery>()!.data; //このdependOnInheritedWidgetOfExactTypeメソッドで依存性にdidChangeDependencies()が反応する
+}
+```
+
+注意点としては`initState`や`dispose`内では呼び出せない。(フレームワークとして正当ではないとエラーになってしまう)
+`of`メソッドの配置場所は通常`build()`に記述するのが 99%標準パターンだが、inheritedWidget によって重い計算(アニメーションなど)を実行している場合は`didChangeDependencies()`に記述する。
+
+### ・[非同期処理をした後の BuildContext について](https://www.youtube.com/watch?v=bzWaMpD1LHY&list=PLjxrf2q8roU1fRV40Ec8200rX6OuQkmnl&index=6)
+
+Flutter の Linter では以下のようなコードが[use_build_context_synchronously](https://dart-lang.github.io/linter/lints/use_build_context_synchronously.html)エラーになる。
+
+```dart
+ElevatedButton(
+  onPressed: () async {
+    final result = await stateManagement.apiRequest();
+    if(result is Success) {
+      ScaffoldMessenger.of(context).showSnackBar( // 🚫use_build_context_synchronously
+        SnackBarSuccess(),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar( // 🚫use_build_context_synchronously
+        SnackBarError(result.error),
+      );
+    }
+  }
+)
+
+```
+
+前提として**Flutter のビルドは 100%同期処理で行われる(=BuildContext は常に同期的)**。
+ユーザー操作で Widget がツリーから既に削除される可能性があるため、結果が不確定な非同期処理を挟むとアプリがクラッシュする可能性が出てしまう。
+
+解決策の手段としては
+
+1. `if(!mounted) return;`で Widget がツリーから既に削除されていれば早期リターンする
+2. BuildContext を使う場合は先に変数に格納するなどして、その後に非同期処理を行うようにする
+3. `didChangeDependencies`を使う
+
+```dart
+// 1. if(!mounted) return;を使う。
+@override
+Widget build(BuildContext context) {
+  return ElevatedButton(
+    onPressed: () async {
+      final result = await stateManagement.submit();
+      if(!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(result.error),
+      )
+    },
+    child: child
+  );
+}
+
+// 2. 先に変数に格納するなどして、その後に非同期処理を行うようにする
+@override
+Widget build(BuildContext context) {
+  return ElevatedButton(
+    onPressed: () async {
+      final messenger = ScaffoldMessenger.of(context); // 先に格納
+      final result = await stateManagement.submit();
+      messenger.showSnackBar(
+        SnackBar(result.error),
+      )
+    },
+    child: child
+  );
+}
+
+// 3. `didChangeDependencies`を使う
+@override
+void didChangeDependencies() {
+  final ScreenSize = MediaQeuery.of(context).size;
+  // only run calculations when necessary
+  final cachedLayoutValues = calculations(screenSize);
+  super.didChangeDependencies();
+}
+
+@override
+Widget build(BuildContext context) {
+  return ElevatedButton(
+    onPressed: () => Future.delayed(const Duration(seconds: 3)),
+    child: child
+  );
+}
+```
+
+### ・[Widget のプロパティをデバッグしたいとき](https://www.youtube.com/watch?v=DnC7eT-vh1k&list=PLjxrf2q8roU1fRV40Ec8200rX6OuQkmnl&index=5)
+
+カスタム Widget のプロパティを見つけるには、Developer ツールの「Widget Details Tree」から探していけばできるが[debugFillProperties](https://api.flutter.dev/flutter/widgets/State/debugFillProperties.html)を使うともっと便利に出力できる。
+
+```dart:FocusableListTileWidgetにデバッグプロパティを追加している例
+@override
+void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  properties.add(IntProperty("index", index));
+  super.debugFillProperties(properties);
+}
+```
+
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1670181661/media/blog/insert/Screenshot_2022-12-05_at_4.20.36_cyvm4n.png)
+
+### ・[Intrinsic Widget について](https://www.youtube.com/watch?v=Si5XJ_IocEs&list=PLjxrf2q8roU1fRV40Ec8200rX6OuQkmnl&index=4)
+
+Flutter がレイアウトを決める通常の原則は「**① 制約は下位へ ② サイズは上位へ ③ レイアウトは親が決定する**」である。
+が、時には子 Widget が兄弟 Widget と同じサイズになりたい場合がある。そこで`IntrinsicWidth`や`INtrinsicHeight`を使う。
+
+```dart: InstrinsicHeight
+IntrinsicHeight( // 👈これだけで子Widget達は一番大きいWidgetにサイズを合わせるようになる。
+  child: Row(
+    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    children: <Widget>[
+      Align(
+        alignment: Alignment.topCenter,
+        child: Container(
+          color: const Color(0xFF005BBB),
+          height: 50,
+          width: 50,
+        ),
+      ),
+      Container(
+        color: const Color(0xFFFFD500),
+        height: 100,
+        width: 100,
+      ),
+      Align(
+        alignment: Alignment.bottomCenter,
+        child: Container(
+          color: const Color(0xFF005BBB),
+          height: 75,
+          width: 25,
+        ),
+      ),
+    ],
+  ),
+),
+```
+
+レイアウト全体を計算してから取り掛かるので、負荷も考えるとアニメーションを繰り返す ListTile などでは使用を避けた方が良い。
+
+### ・[PrimaryScrollController について](https://www.youtube.com/watch?v=33_0ABjFJUU&list=PLjxrf2q8roU1fRV40Ec8200rX6OuQkmnl&index=3)
+
+> 👉 デスクトップアプリや Web 版など複数の ListView が画面に同時に存在する UI を作成する開発者向けの話
+> ![](https://res.cloudinary.com/dso4npatn/image/upload/v1670180723/media/blog/insert/Screenshot_2022-12-05_at_4.03.46_etutyv.png)
+
+`ScrollController`の`primary`プロパティでスクロールコントローラがどの ListView と紐付いているのかを明示してあげる必要がある。
+
+> https://api.flutter.dev/flutter/widgets/ScrollView/primary.html
+
+## 文法編
+
+### ・[型プロモーションについて](https://www.youtube.com/watch?v=2Cl0C-9dK48&list=PLjxrf2q8roU1fRV40Ec8200rX6OuQkmnl&index=8)
+
+![](https://res.cloudinary.com/dso4npatn/image/upload/v1670180724/media/blog/insert/Screenshot_2022-12-05_at_4.03.38_cpnrua.png)
+
+上記の例のようになぜ`maybeString`は型プロモーション(`maybeString`が String 型として認識されること)が行われないのか？
+理由は**オブジェクトプロパティは 2 回目の呼び出しで異なる型を返す可能性があるから**である。
+
+```dart:右側のコードを修正すると...
+class UnreliableProvider {
+  String? get maybeString =>
+  /* Implementation of
+    maybeString getter */
+
+  void someMethod() {
+    String? maybeStringLocal = maybeString; // 👈オブジェクトプロパティはローカル変数に格納して型判定をする
+
+    if (maybeStringLocal is String) {
+      print(maybeStringLocal.length)
+    } else {
+      print("it wasn't a string!")
+    }
+  }
+}
+```
+
+### ・[オブジェクトの等価について](https://www.youtube.com/watch?v=DCKaFaU4jdk&list=PLjxrf2q8roU1fRV40Ec8200rX6OuQkmnl&index=2)
+
+[equatable パッケージ](https://pub.dev/packages/equatable)を使う。内部的には各オブジェクトのプロパティから計算されるハッシュコードを比較している。
+
+```dart
+import 'package:equatable/equatable.dart';
+
+class X extends Equatable {
+  const X(this.value, this.label, this.flag);
+
+  final int value;
+  final String label;
+  final bool flag;
+
+  @override
+  List<Object?> props => [value, label, flag]
+}
+
+final x1 = X(1, 'abc', true);
+final x2 = X(1, 'abc', true);
+
+print(x1 == x2); // true
+```
+
+オブジェクトのリストに対象のオブジェクトが含まれるかを判定する時にも有用なので`Equatable`を活用しよう。

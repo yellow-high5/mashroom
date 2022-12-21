@@ -1,10 +1,4 @@
-import {
-  IoBrushOutline,
-  IoCubeOutline,
-  IoDocumentText,
-  IoFileTrayOutline,
-  IoLaptopOutline,
-} from 'react-icons/io5';
+import { IoBrushOutline, IoCubeOutline, IoFileTrayOutline, IoLaptopOutline } from 'react-icons/io5';
 import { IconType } from 'react-icons/lib';
 import {
   SiCss3,
@@ -44,7 +38,7 @@ export const getFileIcon = (language?: string): IconType | undefined => {
     css: SiCss3,
     graphql: SiGraphql,
   } as Record<string, IconType>;
-  return icons[language] || IoDocumentText;
+  return icons[language] || undefined;
 };
 
 export const getWorkIcon = (tag: string): IconType => {
@@ -65,5 +59,9 @@ export const getMinutesToRead = (wc?: number | null): string => {
 };
 
 export const sanitizeBlogIndex = (title: string): string => {
-  return title.replace(/\s+/g, '');
+  return title.replace(/\s+/, '');
+};
+
+export const sanitizeMdxCode = (children?: React.ReactNode): string | undefined => {
+  return children?.toString().replace(/\n$/, '');
 };

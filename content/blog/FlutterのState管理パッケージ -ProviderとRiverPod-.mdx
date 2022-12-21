@@ -1,0 +1,176 @@
+---
+date: 2022-11-21T15:00:00Z
+title: 'FlutterのState管理パッケージ ~ProviderとRiverPod~'
+thumbnail: 'https://res.cloudinary.com/dso4npatn/image/upload/v1670179865/media/blog/thumbnail/Flutter_State%E7%AE%A1%E7%90%86_o6ctv5.png'
+tag:
+  - ネイティブ開発
+---
+
+![ui-equals-function-of-state.png](https://docs.flutter.dev/assets/images/docs/development/data-and-backend/state-mgmt/ui-equals-function-of-state.png)
+
+React 開発者からの観点で Flutter の State 管理について考えてみる。
+
+## Flutter の state の考え方
+
+- **Ephemeral state**...1 つの Stateful Widget に含めることができる(基本的に`setState`で解決できる)state
+- **App state**...複数の Widget で共有しておくべき state
+
+> ###### state 設計の決定木
+>
+> ![ephemeral-vs-app-state.png](https://docs.flutter.dev/assets/images/docs/development/data-and-backend/state-mgmt/ephemeral-vs-app-state.png)
+
+## ・Provider
+
+https://pub.dev/packages/provider
+
+### 構成要素
+
+- `ChangeNotifier`...App State のデータモデルを定義したデータストア
+
+```dart
+class CartModel extends ChangeNotifier {
+  final List<Item> _items = [];
+
+  UnmodifiableListView<Item> get items => UnmodifiableListView(_items);
+
+  int get totalPrice => _items.length * 42;
+
+  void add(Item item) {
+    _items.add(item);
+    notifyListeners(); // このCartModelを購読しているWidgetに変更を通知する
+  }
+
+  void removeAll() {
+    _items.clear();
+    notifyListeners(); // このCartModelを購読しているWidgetに変更を通知する
+  }
+}
+```
+
+- `ChangeNotifierProvider`...これを必要な Widget にラップすることで Widget が App State の値にアクセス(`Consumer`や`Provider.of`)できるようになる
+
+```dart
+void main() {
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => CartModel(),
+      child: const MyApp(),
+    ),
+  );
+}
+```
+
+- `Consumer`...これをラップすることで反映される(変更があった場合リビルドが走る)ようになる。
+
+```dart
+return Consumer<CartModel>( // ChangeNotifierをジェネリクスに使う
+  builder: (context, cart, child) {
+    return Text('Total price: ${cart.totalPrice}');
+  },
+);
+```
+
+- `Provider.of`...リビルドが必要ない場合はこちらを使ってデータにアクセスしたり変更のメソッドを呼び出したりする
+
+```dart
+Provider.of<CartModel>(context, listen: false).removeAll();
+```
+
+`listen`を`true`にすると`context.dependOnInheritedWidgetOfExactType`を呼び出す。つまり監視機能と自動リビルド機能が有効になる。
+`false`にすると`context.getElementForInheritedWidgetOfExactType`を呼び出す。
+
+## ・Riverpod
+
+https://riverpod.dev/ja/docs/getting_started/
+
+### 構成要素
+
+- `Provider`...Riverpod では様々な用途に応じた Provider が用意されている
+
+使用する際は`final`で宣言する。`ref`は依存する他の Provider を参照したり、state が破棄される際のコールバック関数を登録できる。
+
+```dart
+// ProviderパッケージでいうProvider.of(context)にあたるっぽい
+final myProvider = Provider((ref) {
+  return MyValue();
+});
+```
+
+`ref`には 3 つの使い方が存在する。([Ref クラスのドキュメント](https://pub.dev/documentation/riverpod/latest/riverpod/Ref-class.html))
+
+- `ref.watch`...値を取得してその変更を監視・Wiget のリビルド・Provider の値更新を実施する。
+- `ref.listen`...値を監視して、変化する度に登録したコールバック関数を呼び出す。
+- `ref.read`...値の取得のみ(監視はしない)
+- `ref.refresh`...Provider の値のリセット
+
+Widget の更新回数を抑えるために`ref.read`を使うという心配は不要(`ref.watch`の方がコストが高いという内部実装をしているわけではない)で最初から **`ref.watch`を使うことが推奨** されている。
+
+他の Provider を参照する場合は以下のようになる。
+
+```dart:weatherProviderはcityProviderに依存する
+final cityProvider = Provider((ref) => 'London');
+
+final weatherProvider = FutureProvider((ref) async {
+  // `ref.watch` により他のプロバイダの値を取得・監視します。
+  // 利用するプロバイダ（ここでは cityProvider）を引数として渡します。
+  final city = ref.watch(cityProvider);
+
+  // 最後に `cityProvider` の値をもとに行った計算結果を返します。
+  return fetchWeather(city: city);
+});
+```
+
+###### 👉Provider の各種用途
+
+| プロバイダの種類                                                                          | 生成されるステートの型      | 具体例                                                                     |
+| ----------------------------------------------------------------------------------------- | --------------------------- | -------------------------------------------------------------------------- |
+| [Provider](https://riverpod.dev/ja/docs/providers/provider/)                              | 任意                        | サービスクラス / 算出プロパティ（リストのフィルタなど）                    |
+| [StateProvider](https://riverpod.dev/ja/docs/providers/state_notifier_provider)           | 任意                        | フィルタの条件 / シンプルなステートオブジェクト                            |
+| [FutureProvider](https://riverpod.dev/ja/docs/providers/future_provider)                  | 任意の Future               | API の呼び出し結果                                                         |
+| [StreamProvider](https://riverpod.dev/ja/docs/providers/stream_provider)                  | 任意の Stream               | API の呼び出し結果の Stream                                                |
+| [StateNotifierProvider](https://riverpod.dev/ja/docs/providers/state_provider)            | StateNotifier のサブクラス  | イミュータブル（インタフェースを介さない限り）で複雑なステートオブジェクト |
+| [ChangeNotifierProvider](https://riverpod.dev/ja/docs/providers/change_notifier_provider) | ChangeNotifier のサブクラス | ミュータブルで複雑なステートオブジェクト                                   |
+
+- `ProviderScope`...**アプリのルート**を ProviderScope でラップすることで Provider の利用ができるようになる。
+
+```dart
+void main() {
+  runApp(ProviderScope(child: MyApp()));
+}
+```
+
+- `Provider.autoDispose`...監視終了時(Provider が参照されなくなった時)に State の値を自動で廃棄させるようにする
+
+autoDipose 関数を定義すると`ref.keepAlive`が使えるようになる。`ref.keepAlive`は Provider が参照されなくなった際にも State を維持できるようになる。
+
+```dart:リクエスト完了後に別画面に遷移してから戻ってきた時に、Stateを維持している(再リクエストしない)例
+final myProvider = FutureProvider.autoDispose((ref) async {
+  final response = await httpClient.get(...);
+  ref.keepAlive(); // autoDipose関数内でref.keepAliveが使えるようになる
+  return response;
+});
+```
+
+- `Provider.family`...外部のパラメータをもとに一意の Provider を作成する
+
+```dart
+final messagesFamily = FutureProvider.family<Message, String>((ref, id) async {
+  return dio.get('http://my_api.dev/messages/$id');
+});
+
+// Widgetで利用する
+Widget build(BuildContext context, WidgetRef ref) {
+  final response = ref.watch(messagesFamily('id'));
+}
+```
+
+## 結論：とりあえず Riverpod を使ってみる
+
+個人的に以下の 2 点が Riverpod を使うことで享受できそうなメリットだと感じた。
+
+- 定義した Provider の State 同士の依存関係が実装しやすそう
+- API で取得したレスポンスデータと State の連携が取りやすそう
+
+自分の React の開発では普段 AppState で管理しているデータのことを「ストア」と呼んでいるが、そのストアのデータが他のストアに依存して変更が行われることは開発していてよく起きる。例えばアプリに複数参加できるグループ機能を実装していて別グループに切り替えた際に、そのグループストアの変更に伴って他のストアたちの値も初期化したり API リクエストが再発生するなどである。
+
+さらに Component(Flutter なら Widget)の State の値は API のレスポンスデータに影響を受けてリビルドが走ることもよく起きる。例えば表示しているリストの情報を変更して保存 → 成功のスナックバーを表示 → リストを更新(mutate)みたいなパターン。State の値もその結果と連携して影響を受けることはあるので Riverpod だとそこら辺の API レスポンスデータと State の更新がうまくいきそうなイメージが湧いた。

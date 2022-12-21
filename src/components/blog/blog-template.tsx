@@ -75,8 +75,8 @@ const BlogTemplate: React.FC<Props> = ({ data }) => {
             slug={data.mdx?.id}
             frontmatter={data.mdx?.frontmatter}
             headings={data.mdx?.headings}
-            mt={4}
-            ml={4}
+            mx={4}
+            my={4}
             p={4}
             display={{ base: 'none', md: 'block' }}
             position="fixed"

@@ -3,9 +3,9 @@ date: 2022-03-01T22:34:38.000+00:00
 title: Gatsbyのビルトインコンポーネント
 thumbnail: https://res.cloudinary.com/dso4npatn/image/upload/v1647428725/media/blog/thumbnail/gatsby_ghgekz.png
 tag:
-- Web開発
-
+  - Web開発
 ---
+
 > - [Gatsby Link API \| Gatsby](https://www.gatsbyjs.com/docs/reference/built-in-components/gatsby-link/)
 > - [Gatsby Image plugin \| Gatsby](https://www.gatsbyjs.com/docs/reference/built-in-components/gatsby-plugin-image/)
 
@@ -26,7 +26,7 @@ Gatsby アプリ内のページに遷移させる場合は<a\>タグではなく
 - `activeStyle`, `activeClassName`...アクティブ(URL が to で指定しているパスと一致している)状態の時のスタイルを CSS で指定できる(`partiallyActive`を true にすれば部分一致も可能)
 - `getProps`...現在のリンクの状態に応じたスタイルを適用できる。引数には`isCurrent` `isPartiallyCurrent` `href` `location`を取れる
 
-```ts:getPropsの使い方
+```tsx:getPropsの使い方
 const isPartiallyActive = ({ isPartiallyCurrent }) => {
   return isPartiallyCurrent
     ? { className: 'navlink-active navlink' }

@@ -73,7 +73,6 @@ ENTRYPOINT ["java","-Dspring.profiles.active=gke","-jar","app.jar"]
 # ARG JAR_FILE=target/*.jar
 # COPY ${JAR_FILE} app.jar
 # ENTRYPOINT ["java","-Dspring.profiles.active=gke","-jar","app.jar"]
-
 ```
 
 DB 接続情報については、Spring Boot の定義ファイルの resources フォルダ配下の application.yml(application.properties)に記載します。docker で構築する場合と gke で構築する場合で接続情報を分けておき、`-Dspring.profiles.active`プロパティで起動環境を指定する形にしています。

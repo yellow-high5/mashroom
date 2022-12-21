@@ -1,5 +1,4 @@
 import {
-  AspectRatio,
   Box,
   BoxProps,
   chakra,
@@ -26,9 +25,14 @@ const BlogIndex: React.FC<Props> = (props: Props) => {
 
   return (
     <Box {...boxProps}>
-      <AspectRatio ratio={16 / 9} width="100%" mb={6}>
-        {frontmatter?.thumbnail && <chakra.img src={frontmatter.thumbnail} />}
-      </AspectRatio>
+      {frontmatter?.thumbnail && (
+        <chakra.img
+          w="240px"
+          mb={6}
+          style={{ aspectRatio: '16 / 9' }}
+          src={frontmatter.thumbnail}
+        />
+      )}
 
       <Box ml={4}>
         <Heading size="sm">Index</Heading>

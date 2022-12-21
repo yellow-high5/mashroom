@@ -1,37 +1,34 @@
 ---
 tag:
-- Web開発
+  - Web開発
 date: 2022-04-05T09:00:00Z
 title: Contentfulの使い勝手を検証
 thumbnail: https://res.cloudinary.com/dso4npatn/image/upload/v1649152624/media/blog/thumbnail/Contentful%E3%81%AE%E4%BD%BF%E3%81%84%E5%8B%9D%E6%89%8B%E3%82%92%E6%A4%9C%E8%A8%BC_xarnym.png
-
 ---
 
-Next.jsのアプリ開発でリリースノートが欲しいという依頼を受けて、LPやアプリドキュメントなどのWebサイトも構築することを考えるとこういったコンテンツ系は外出し(マイクロサービス化)した方がいいと思い、コンテンツをAPIで配信してくれるCMSヘッドレス、[Contentful](https://www.contentful.com/)の導入を検討した。一応Graphqlで取得している例もあるが今回はRESTを対象にしている。
+Next.js のアプリ開発でリリースノートが欲しいという依頼を受けて、LP やアプリドキュメントなどの Web サイトも構築することを考えるとこういったコンテンツ系は外出し(マイクロサービス化)した方がいいと思い、コンテンツを API で配信してくれる CMS ヘッドレス、[Contentful](https://www.contentful.com/)の導入を検討した。一応 Graphql で取得している例もあるが今回は REST を対象にしている。
 
-この手のサービスはかなり充実していてContenful以外に気になったものをあげておく。
+この手のサービスはかなり充実していて Contenful 以外に気になったものをあげておく。
 
-> ##### 他にも良さそうに見えたCMS
-> - [Sanity.io](https://www.sanity.io/)...管理ダッシュボードのUIが綺麗で見やすそう。
-> - [Prismic](https://prismic.io/)...こちらもドキュメント類が綺麗に整理されている。FREEでも多言語対応が無制限なのが嬉しいかも。
-> - [DatoCMS](https://www.datocms.com/)...ドキュメントにJAMStackとして統合できる例が豊富っぽい。
+> ##### 他にも良さそうに見えた CMS
+>
+> - [Sanity.io](https://www.sanity.io/)...管理ダッシュボードの UI が綺麗で見やすそう。
+> - [Prismic](https://prismic.io/)...こちらもドキュメント類が綺麗に整理されている。FREE でも多言語対応が無制限なのが嬉しいかも。
+> - [DatoCMS](https://www.datocms.com/)...ドキュメントに JAMStack として統合できる例が豊富っぽい。
 
+## Contentful の基本
 
+公式のドキュメントによると、主に以下のようなサービスが API として用意されている。
 
-## Contentfulの基本
+- ContentDeliveryAPI(CDA)...Contentful からアプリ、Web サイト、およびその他のメディアにコンテンツを配信するための読み取り専用 API。コンテンツは JSON データとして配信され、画像、ビデオ、その他のメディアはファイルとして配信可能。
+- ContentManagementAPI(CMA)...コンテンツを読み取り/書き込みするための管理 API。
+- Content Preview API...実際に配信する前のプレビュー用の読み取り専用 API。ステータスが未公開のコンテンツを表示してくれる。(CDA はステータスが公開になっているものだけを返却する)
+- Image API...画像変換&最適化用 API。(画像のサイズ変更とトリミング、背景色の変更、さまざまな形式への変換を提供)
+- Graphql API...REST じゃなくて Graphql で取得したい人向けのスキーマ API
 
-公式のドキュメントによると、主に以下のようなサービスがAPIとして用意されている。
+コンテンツのスキーマ定義や、静的コンテンツ CDN として配信、Graphql 対応、多言語対応ら辺が最近のヘッドレス CMS のマスト機能になっているようだ。
 
-- ContentDeliveryAPI(CDA)...Contentfulからアプリ、Webサイト、およびその他のメディアにコンテンツを配信するための読み取り専用API。コンテンツはJSONデータとして配信され、画像、ビデオ、その他のメディアはファイルとして配信可能。
-- ContentManagementAPI(CMA)...コンテンツを読み取り/書き込みするための管理API。
-- Content Preview API...実際に配信する前のプレビュー用の読み取り専用API。ステータスが未公開のコンテンツを表示してくれる。(CDAはステータスが公開になっているものだけを返却する)
-- Image API...画像変換&最適化用API。(画像のサイズ変更とトリミング、背景色の変更、さまざまな形式への変換を提供)
-- Graphql API...RESTじゃなくてGraphqlで取得したい人向けのスキーマAPI
-
-コンテンツのスキーマ定義や、静的コンテンツCDNとして配信、Graphql対応、多言語対応ら辺が最近のヘッドレスCMSのマスト機能になっているようだ。
-
-
-例えば、ContentDeliveryAPIを使ってリリースノートに掲載する情報を取得する場合は以下のようにアクセスする。(実際にAPIを叩く場合はアクセストークンをヘッダーかクエリに入れておく必要あり)クエリの`content_type`に作成したモデルのIDを指定する。この例ではリリースノートに`release`というモデルIDを指定している。クエリに`order`や`filter`など指定できるようにAPIとしての基本機能も充実している。
+例えば、ContentDeliveryAPI を使ってリリースノートに掲載する情報を取得する場合は以下のようにアクセスする。(実際に API を叩く場合はアクセストークンをヘッダーかクエリに入れておく必要あり)クエリの`content_type`に作成したモデルの ID を指定する。この例ではリリースノートに`release`というモデル ID を指定している。クエリに`order`や`filter`など指定できるように API としての基本機能も充実している。
 
 ```text:コンテンツ取得をGETする
 https://cdn.contentful.com/spaces/{{SPACE_ID}}/environments/{{ENV_ID}}/entries?content_type=release&order=-fields.createdAt
@@ -39,12 +36,11 @@ https://cdn.contentful.com/spaces/{{SPACE_ID}}/environments/{{ENV_ID}}/entries?c
 
 ## コンテンツの取得を実装
 
-Contentfulのダッシュボードでいい感じにコンテンツモデルを定義できてそれらのコンテンツ投稿が完了したら、Next.jsにContentfulからコンテンツを取得するための機能を実装していく。
+Contentful のダッシュボードでいい感じにコンテンツモデルを定義できてそれらのコンテンツ投稿が完了したら、Next.js に Contentful からコンテンツを取得するための機能を実装していく。
 
-### Typescript対応したクライアントSDKの導入
+### Typescript 対応したクライアント SDK の導入
 
-React x TypescriptでAPIレスポンスに型がなくて自分で型を実装するというのは辛い。Contentfulで型を自動型生成する方法を模索した。すると、[contentful-typescript-codegen](https://github.com/intercom/contentful-typescript-codegen)があったのでこちらをREADMEの手順を参考にしながら導入していく。
-
+React x Typescript で API レスポンスに型がなくて自分で型を実装するというのは辛い。Contentful で型を自動型生成する方法を模索した。すると、[contentful-typescript-codegen](https://github.com/intercom/contentful-typescript-codegen)があったのでこちらを README の手順を参考にしながら導入していく。
 
 #### 1. インストール
 
@@ -58,7 +54,7 @@ yarn add contentful contentful-management contentful-typescript-codegen dotenv
 
 ダッシュボード画面から Settings > API keys の順にクリックし、必要なアクセストークンをコピペして環境変数に定義する。
 
-```.env:text
+```.env:環境変数
 NEXT_PUBLIC_CONTENTFUL_SPACE_ID=[YOUR_SPACE_ID]
 NEXT_PUBLIC_CONTENTFUL_ENVIRONMENT=[YOUR_ENVIRONMENT]
 NEXT_PUBLIC_CONTENTFUL_MANAGEMENT_API_ACCESS_TOKEN=[YOUR_MANAGEMENT_API_ACCESS_TOKEN]
@@ -66,7 +62,7 @@ NEXT_PUBLIC_CONTENTFUL_DELIVERY_TOKEN=[YOUR_DELIVERY_TOKEN]
 NEXT_PUBLIC_CONTENTFUL_PREVIEW_TOKEN=[YOUR_PREVIEW_TOKEN]
 ```
 
-Next.jsやGatsby.jsで参照できる環境変数を定義したいときは`NEXT_PUBLIC_`や`GATSBY_`などのプリフィックスを忘れないように注意する。
+Next.js や Gatsby.js で参照できる環境変数を定義したいときは`NEXT_PUBLIC_`や`GATSBY_`などのプリフィックスを忘れないように注意する。
 
 ちなみに環境変数の方が欲しい場合は以下のように型を宣言しておく
 
@@ -83,7 +79,6 @@ declare namespace NodeJS {
   }
 }
 ```
-
 
 #### 3. `getContentfulEnvironment.js`を作成
 
@@ -106,17 +101,17 @@ module.exports = function () {
 
 ```
 
+#### 4. npm スクリプトに Contentful の自動型生成コマンドを追加
 
-#### 4. npmスクリプトにContentfulの自動型生成コマンドを追加
-以下のnpmスクリプトをpackage.jsonに追加して、`npm run contentful:type`を実行する。
+以下の npm スクリプトを package.json に追加して、`npm run contentful:type`を実行する。
 
 ```diff
 + "contentful:type": "contentful-typescript-codegen --output src/types/contentful/contentful.d.ts",
 ```
 
-これで指定した場所に型定義ファイルが自動生成されているのが確認できていればTypescript対応は完了。
+これで指定した場所に型定義ファイルが自動生成されているのが確認できていれば Typescript 対応は完了。
 
-### useSWRを使ったコンテンツの取得
+### useSWR を使ったコンテンツの取得
 
 `getStaticProps`を使ってコンテンツを取得する場合は以下のような感じになるだろう。
 
@@ -158,8 +153,7 @@ export default ReleaseNote;
 
 ```
 
-
-しかし、自分の担当している開発では[`useSWR`](https://swr.vercel.app/ja)を使って取得しているので、こちらを使ってContenfulから情報を取得するためのカスタムHookを用意した。
+しかし、自分の担当している開発では[`useSWR`](https://swr.vercel.app/ja)を使って取得しているので、こちらを使って Contenful から情報を取得するためのカスタム Hook を用意した。
 
 ```ts:useSWRをラップしたカスタムフック
 import { createClient } from 'contentful';
@@ -187,33 +181,28 @@ const useLwContentful = <T>(contentType: CONTENT_TYPE, query?: { [key: string]: 
 export default useLwContentful;
 ```
 
-これで以下のようにフックとして便利にContentfulからデータ取得ができるようになった。
+これで以下のようにフックとして便利に Contentful からデータ取得ができるようになった。
 
 ```ts:使用例
 const { data, error} = useLwContentful<IReleaseFields>('release', {order: '-fields.createdAt'});
 ```
 
-
 ## 実用する上で気になっている点
 
 以下気になった点を少しあげておく。
 
-- FREEだと多言語対応が2カ国
-> [Pricing \| Contentful](https://www.contentful.com/pricing/)
+- FREE だと多言語対応が 2 カ国
 
+  > [Pricing \| Contentful](https://www.contentful.com/pricing/)
 
-- 階層構造のドキュメントを作る場合は少しめんどくさそう。(課金するとReferenceという階層構造をビジュアライズしてくれる機能がつくっぽい)
-> [Learn about the new way to edit structured content \| Contentful](https://www.contentful.com/blog/2018/05/31/edit-structured-content/)
+- 階層構造のドキュメントを作る場合は少しめんどくさそう。(課金すると Reference という階層構造をビジュアライズしてくれる機能がつくっぽい)
 
-- content-typeのidは一度定義すると変更できないらしい
-> [Is there a way to modifiy a content-type id? - #5 by rnolan - APIs - Contentful Community](https://www.contentfulcommunity.com/t/is-there-a-way-to-modifiy-a-content-type-id/1023/5)
+  > [Learn about the new way to edit structured content \| Contentful](https://www.contentful.com/blog/2018/05/31/edit-structured-content/)
 
-
+- content-type の id は一度定義すると変更できないらしい
+  > [Is there a way to modifiy a content-type id? - #5 by rnolan - APIs - Contentful Community](https://www.contentfulcommunity.com/t/is-there-a-way-to-modifiy-a-content-type-id/1023/5)
 
 <br />
 <br />
 
-他のCMSも検討してみたかったが今日はここまで。CMSやBaaSもそうだが、ここら辺のサービスが便利すぎるのでバックエンドを作る能力が著しく低下していく今日この頃である。またContentfulの実装を進めるにあたって進展あれば更新しようと思う。
-
-
-
+他の CMS も検討してみたかったが今日はここまで。CMS や BaaS もそうだが、ここら辺のサービスが便利すぎるのでバックエンドを作る能力が著しく低下していく今日この頃である。また Contentful の実装を進めるにあたって進展あれば更新しようと思う。

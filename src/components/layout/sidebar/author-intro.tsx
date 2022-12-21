@@ -26,8 +26,7 @@ const AuthorIntro: React.FC<Props> = ({ isFlex, ...props }) => {
             yellow-high5
           </Text>
           <Text fontSize="xs" lineHeight="8">
-            # モダンWeb探求者 ⚡️ <br /> # ウィスキー愛好家 🥃 <br /> # ただの釣り好き 🎣 <br /> #
-            Stop War 🇺🇦
+            # アプリ開発者 ⚡️ <br /> # 週末はビールかウィスキーか 🌾 <br /> # 海に出ては釣り坊主 🎣
           </Text>
         </Box>
       </Flex>

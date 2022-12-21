@@ -19,6 +19,7 @@ import {
   ListItemProps,
   ListProps,
   OrderedList,
+  Skeleton,
   Table,
   TableProps,
   Td,
@@ -28,6 +29,7 @@ import {
   Tr,
   UnorderedList,
   useColorModeValue,
+  useDisclosure,
 } from '@chakra-ui/react';
 import { OrbitControls } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
@@ -35,9 +37,10 @@ import BakedPortal from 'components/work/model/baked-portal';
 import Portal from 'components/work/model/portal';
 import React, { Suspense } from 'react';
 import { IoVideocamSharp } from 'react-icons/io5';
+import ImageViewer from 'react-simple-image-viewer';
 import SyntaxHighlighter from 'react-syntax-highlighter/dist/esm/default-highlight';
 import { tomorrowNightBlue } from 'react-syntax-highlighter/dist/esm/styles/hljs';
-import { getFileIcon, sanitizeBlogIndex } from 'utils/format';
+import { getFileIcon, sanitizeBlogIndex, sanitizeMdxCode } from 'utils/format';
 
 const Wrapper: React.FC<BoxProps> = (props) => {
   return <Box {...props} />;
@@ -143,11 +146,13 @@ const CodeContent: React.FC<CodeProps> = ({ className, ...props }) => {
       {fileName && (
         <HStack
           alignItems="center"
-          ml={2}
+          // ml={2}
           py={2}
           px={4}
-          bgColor="#09192e"
+          bgColor="#002451"
           borderBottom="1px"
+          borderColor="#fff"
+          borderTopRadius="12px"
           maxW="fit-content"
         >
           {fileIcon && <Icon color="white" boxSize={4} as={fileIcon} mr={1} />}
@@ -159,15 +164,17 @@ const CodeContent: React.FC<CodeProps> = ({ className, ...props }) => {
       <SyntaxHighlighter
         language={language}
         style={tomorrowNightBlue}
+        // showLineNumbers={true}
+        wrapLines
         customStyle={{
           fontSize: '0.75rem',
           lineHeight: 2,
-          background: '#09192e',
-          borderRadius: 8,
           padding: 12,
         }}
         {...props}
-      />
+      >
+        {sanitizeMdxCode(props.children)}
+      </SyntaxHighlighter>
     </Box>
   );
 };
@@ -186,6 +193,8 @@ const LinkText: React.FC<LinkProps> = (props) => {
 };
 
 const ImageContent: React.FC<ImageProps> = (props) => {
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
   if (props.src && props.src.split('.').slice(-1)[0] === 'mp4') {
     return (
       <Box my={8} justifyContent="center" alignItems="center">
@@ -204,13 +213,23 @@ const ImageContent: React.FC<ImageProps> = (props) => {
     );
   }
   return (
-    <Image
-      my={8}
-      objectFit="cover"
-      // fallback
-      fallbackSrc="https://via.placeholder.com/480x160?Text=NoImage"
-      {...props}
-    />
+    <>
+      <Image
+        my={8}
+        objectFit="cover"
+        fallback={<Skeleton height="320px" />}
+        onClick={onOpen}
+        {...props}
+      />
+      {props.src && isOpen && (
+        <ImageViewer
+          src={[props.src]}
+          closeOnClickOutside={true}
+          onClose={onClose}
+          backgroundStyle={{ backgroundColor: 'rgba(0, 0, 0, 0.36)' }}
+        />
+      )}
+    </>
   );
 };
 
