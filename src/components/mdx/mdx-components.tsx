@@ -233,6 +233,25 @@ const ImageContent: React.FC<ImageProps> = (props) => {
   );
 };
 
+type YoutubeProps = {
+  title?: string;
+  embededSrc: string;
+};
+
+const Youtube: React.FC<YoutubeProps> = (props: YoutubeProps) => {
+  const { title, embededSrc } = props;
+  return (
+    <AspectRatio minW="100%" ratio={16 / 9} my={8}>
+      <iframe
+        src={embededSrc}
+        title={title}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      />
+    </AspectRatio>
+  );
+};
+
 type SketchFabProps = {
   title?: string;
   src: string;
@@ -332,8 +351,10 @@ export default {
   hr: Break,
   a: LinkText,
   img: ImageContent,
-  // Custom Mdx Components
+  // Embeded exeternal service Components
+  Youtube,
   SketchFab,
+  // Custom 3D Object Components
   OriginalPortal,
   DiffPortal,
 };
