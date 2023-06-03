@@ -1,0 +1,151 @@
+---
+date: 2023-06-03T10:00:00.000+00:00
+title: SupabaseのDatabase FunctionsとTriggerで、クライアント側から呼び出す実装を削減する
+thumbnail: 'https://res.cloudinary.com/dso4npatn/image/upload/v1685767652/media/blog/thumbnail/supabase_pkilxp.png'
+tag:
+  - 実装ネタ帳
+---
+
+例えば、Supbase x Flutter で開発していてユーザーとルームを作成するボタンにおいて以下のような Flutter のコードがあったとする。
+
+```dart
+// テーブル定義
+  +-----------------+        +-----------------+
+  |      Room       |        |       User      |
+  +-----------------+        +-----------------+
+  |   * id (PK)     |        |   * id (PK)     |
+  |    roomKey      |        |      name       |
+  |    hostId       |------->|   roomId (FK)   |
+  |   createdAt     |        |     isHost      |
+  +-----------------+        |   createdAt     |
+                             +-----------------+
+
+// ユーザー(主催者)の作成と同時にルームも作成するボタン
+TextButton(
+  onPressed: () async {
+    supabase
+        .from('user')
+        .insert([
+          {'name': 'ユーザー名', 'is_host': true, 'room_id': null}
+        ])
+        .select()
+        .single()
+        .then((value) {
+          final user = User.fromMap(map: value);
+          supabase // 🔫 ユーザー(主催者)作成に成功したらルームを作成する
+              .from('room')
+              .insert([
+                {'host_id': user.id}
+              ])
+              .select()
+              .single()
+              .then((value) {
+                final room =
+                    Room.fromMap(map: value, myUserId: user.id);
+                supabase // 🔫 ルーム作成に成功したらルームIDをユーザー(主催者)に紐付ける
+                    .from('user')
+                    .update({'room_id': room.id})
+                    .eq('id', user.id)
+                    .then((_) {
+                      PushNavigator(context)
+                          .push(route: RoomPage.route());
+                      context.showSuccessSnackBar(
+                        message: 'ルームを作成しました',
+                      );
+                    });
+              });
+        })
+        .catchError((e) {
+          context.showErrorSnackBar(message: 'ルームの作成に失敗しました');
+          return null;
+        });
+  },
+  child: const Text(
+    '作成',
+    style: TextStyle(fontSize: 16),
+  ),
+),
+```
+
+やっていることとしては以下の通り。
+
+1. `INSERT`: ユーザー(主催者)を作成
+2. `INSERT`: ユーザーの id を host_id になるようにしてルームを作成
+3. `UPDATE`: ユーザーの room_id に作成したルームの id をセットして更新する
+
+DB に対する非同期処理を 3 回やっているので、`then` が 3 回出現している。。みたいな感じ。
+
+この実装でもいいが、このような 1 つの処理を契機に処理をまたぐ場合は、[Database Functions](https://supabase.com/docs/guides/database/functions) と [Trigger](https://supabase.com/docs/guides/auth/managing-user-data#using-triggers) を使うのが便利。
+
+Database Functions と Trigger 自体は、従来からある PostgreSQL の機能。Supabase はそれをラップして抽象化しているだけである。(なのでこの話自体は PostgreSQL 標準の機能を使ったお話)
+
+以下のような SQL クエリを Supabase の SQL エディタ上で実行する。
+
+```sql
+-- ルームを作成するFunction
+create or replace function public.handle_create_room() returns trigger as $$
+    begin
+        insert into public.room(host_id) values(new.id);
+
+        return new;
+    end;
+$$ language plpgsql security definer;
+
+-- ホストユーザー作成時にルームを作成するするTrigger
+drop trigger if exists on_new_host_user_created on public.user;
+create trigger on_new_host_user_created
+    after insert on public.user
+    for each row
+    when(new.is_host = true)
+    execute function handle_create_room();
+
+-- ユーザーにroom_idをセットするFunction
+create or replace function public.handle_set_host() returns trigger as $$
+    begin
+        update public.user set room_id = new.id where id = new.host_id;
+
+        return new;
+    end;
+$$ language plpgsql security definer;
+
+-- ルーム作成時にユーザーにroom_idを紐付けるTrigger
+drop trigger if exists on_new_room_created on public.room;
+create trigger on_new_room_created
+    after insert on public.room
+    for each row
+    execute function handle_set_host();
+```
+
+これを適用すると先ほど Flutter 側のコードは以下のように簡潔になる。
+
+```dart
+TextButton(
+  onPressed: () async {
+    supabase
+        .from('user')
+        .insert([
+          {'name': 'ユーザー名', 'is_host': true, 'room_id': null}
+        ])
+        .select()
+        .single()
+        .then((value) {
+          // この時点でルーム作成とユーザーのroom_idの紐付けは完了している
+          PushNavigator(context).push(route: RoomPage.route());
+          context.showSuccessSnackBar(
+            message: 'ルームを作成しました',
+          );
+        })
+        .catchError((e) {
+          context.showErrorSnackBar(message: 'ルームの作成に失敗しました');
+          return null;
+        });
+},
+```
+
+一応補足で Functions の方は「Remote Procedure Call」として単体で呼び出せる。が、以下の例の場合、関数内で使用されいているトリガーイベントによって挿入された`new`レコードが見つからないためエラーになる。
+
+```dart
+final room_data = await supabase.rpc('handle_create_room');
+```
+
+> https://supabase.com/docs/reference/dart/rpc
