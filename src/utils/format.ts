@@ -1,4 +1,9 @@
-import { IoBrushOutline, IoCubeOutline, IoFileTrayOutline, IoLaptopOutline } from 'react-icons/io5';
+import {
+  IoColorPaletteOutline,
+  IoCubeOutline,
+  IoFileTrayOutline,
+  IoLaptopOutline,
+} from 'react-icons/io5';
 import { IconType } from 'react-icons/lib';
 import {
   SiCss3,
@@ -45,7 +50,7 @@ export const getWorkIcon = (tag: string): IconType => {
   const icons = {
     App: IoLaptopOutline,
     CG: IoCubeOutline,
-    Illust: IoBrushOutline,
+    Illust: IoColorPaletteOutline,
   } as Record<string, IconType>;
   return icons[tag] || IoFileTrayOutline;
 };

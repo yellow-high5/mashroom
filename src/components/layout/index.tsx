@@ -1,5 +1,6 @@
 import { Grid, GridItem } from '@chakra-ui/react';
 import { useScrollPosition } from '@n8tb1t/use-scroll-position';
+import { Analytics } from '@vercel/analytics/react';
 import Footer from 'components/layout/footer';
 import Header from 'components/layout/header';
 import Sidebar from 'components/layout/sidebar';
@@ -23,6 +24,7 @@ const Layout: React.FC<Props> = ({ children }) => {
 
   return (
     <AppProvider>
+      <Analytics />
       <Header display={showHeader ? 'flex' : 'none'} />
 
       <Grid templateColumns="repeat(4, 1fr)" gap={4} maxW="62em" pt={28} m="auto">
