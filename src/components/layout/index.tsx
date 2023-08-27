@@ -12,20 +12,20 @@ type Props = {
 };
 
 const Layout: React.FC<Props> = ({ children }) => {
-  const [showHeader, setShowHeader] = useState(true);
+  const [hideHeader, setHideHeader] = useState(false);
   useScrollPosition(({ prevPos, currPos }) => {
     if (currPos.y > -20) {
-      setShowHeader(true);
+      setHideHeader(false);
       return;
     }
-    const visible = currPos.y > prevPos.y;
-    setShowHeader(visible);
+    const hidden = currPos.y < prevPos.y;
+    setHideHeader(hidden);
   }, []);
 
   return (
     <AppProvider>
       <Analytics />
-      <Header display={showHeader ? 'flex' : 'none'} />
+      <Header isHide={hideHeader} />
 
       <Grid templateColumns="repeat(4, 1fr)" gap={4} maxW="62em" pt={28} m="auto">
         <GridItem colSpan={[4, 4, 3, 3]}>{children}</GridItem>

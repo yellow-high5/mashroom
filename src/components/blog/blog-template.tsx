@@ -39,21 +39,21 @@ type Props = {
 };
 
 const BlogTemplate: React.FC<Props> = ({ data }) => {
-  const [showHeader, setShowHeader] = useState(true);
+  const [hideHeader, setHideHeader] = useState(false);
   useScrollPosition(({ prevPos, currPos }) => {
     if (currPos.y > -20) {
-      setShowHeader(true);
+      setHideHeader(false);
       return;
     }
-    const visible = currPos.y > prevPos.y;
-    setShowHeader(visible);
+    const hidden = currPos.y < prevPos.y;
+    setHideHeader(hidden);
   }, []);
 
   return (
     <ChakraProvider theme={theme}>
       <Helmet title={data.mdx?.frontmatter?.title} />
 
-      <Header display={showHeader ? 'flex' : 'none'} showScrollProgress />
+      <Header isHide={hideHeader} showScrollProgress />
 
       <Grid templateColumns="repeat(4, 1fr)" gap={4} maxW="62em" pt={28} m="auto">
         <GridItem colSpan={[4, 4, 3, 3]}>
@@ -80,7 +80,7 @@ const BlogTemplate: React.FC<Props> = ({ data }) => {
             p={4}
             display={{ base: 'none', md: 'block' }}
             position="fixed"
-            top={!showHeader ? 0 : undefined}
+            top={hideHeader ? 0 : undefined}
           />
         </GridItem>
       </Grid>

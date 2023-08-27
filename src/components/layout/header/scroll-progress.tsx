@@ -22,6 +22,7 @@ const ScrollProgress: React.FC = () => {
       style={{
         scaleX,
       }}
+      zIndex={10000}
     />
   );
 };
