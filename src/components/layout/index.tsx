@@ -1,10 +1,10 @@
 import { Grid, GridItem } from '@chakra-ui/react';
-import { useScrollPosition } from '@n8tb1t/use-scroll-position';
 import { Analytics } from '@vercel/analytics/react';
 import Footer from 'components/layout/footer';
 import Header from 'components/layout/header';
 import Sidebar from 'components/layout/sidebar';
-import React, { useState } from 'react';
+import { useScrollToggleHeader } from 'hooks';
+import React from 'react';
 import AppProvider from 'store';
 
 type Props = {
@@ -12,15 +12,7 @@ type Props = {
 };
 
 const Layout: React.FC<Props> = ({ children }) => {
-  const [hideHeader, setHideHeader] = useState(false);
-  useScrollPosition(({ prevPos, currPos }) => {
-    if (currPos.y > -20) {
-      setHideHeader(false);
-      return;
-    }
-    const hidden = currPos.y < prevPos.y;
-    setHideHeader(hidden);
-  }, []);
+  const [hideHeader] = useScrollToggleHeader();
 
   return (
     <AppProvider>

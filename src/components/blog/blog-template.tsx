@@ -1,7 +1,6 @@
 import theme from '@chakra-ui/gatsby-plugin/theme';
 import { Box, ChakraProvider, Grid, GridItem } from '@chakra-ui/react';
 import { MDXProvider } from '@mdx-js/react';
-import { useScrollPosition } from '@n8tb1t/use-scroll-position';
 import BlogHeading from 'components/blog/blog-heading';
 import BlogIndex from 'components/blog/blog-index';
 import Footer from 'components/layout/footer';
@@ -10,7 +9,8 @@ import AuthorIntro from 'components/layout/sidebar/author-intro';
 import mdxComponents from 'components/mdx/mdx-components';
 import { graphql } from 'gatsby';
 import { MDXRenderer } from 'gatsby-plugin-mdx';
-import React, { useState } from 'react';
+import { useScrollToggleHeader } from 'hooks';
+import React from 'react';
 import { Helmet } from 'react-helmet';
 
 export const getBlogData = graphql`
@@ -39,15 +39,7 @@ type Props = {
 };
 
 const BlogTemplate: React.FC<Props> = ({ data }) => {
-  const [hideHeader, setHideHeader] = useState(false);
-  useScrollPosition(({ prevPos, currPos }) => {
-    if (currPos.y > -20) {
-      setHideHeader(false);
-      return;
-    }
-    const hidden = currPos.y < prevPos.y;
-    setHideHeader(hidden);
-  }, []);
+  const [hideHeader] = useScrollToggleHeader();
 
   return (
     <ChakraProvider theme={theme}>

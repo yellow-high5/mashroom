@@ -31,7 +31,6 @@ const Header: React.FC<Props> = (props) => {
           <Flex
             flexGrow={1}
             maxW={{ sm: '62em' }}
-            mb={2}
             borderBottom="1px"
             borderBottomColor="gray.500"
             {...flexProps}

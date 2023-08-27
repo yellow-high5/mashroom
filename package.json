@@ -42,7 +42,6 @@
     "@graphql-codegen/typescript-react-apollo": "^3.2.8",
     "@mdx-js/mdx": "v1",
     "@mdx-js/react": "v1",
-    "@n8tb1t/use-scroll-position": "^2.0.3",
     "@react-three/a11y": "^2.2.3",
     "@react-three/drei": "^8.18.5",
     "@react-three/fiber": "^7.0.26",
