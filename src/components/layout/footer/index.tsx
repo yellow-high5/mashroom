@@ -6,18 +6,16 @@ const Footer: React.FC<FlexProps> = (props) => {
   const { colorMode, toggleColorMode } = useColorMode();
 
   return (
-    <Flex
-      as="nav"
-      wrap="wrap"
-      px={8}
-      py={6}
-      borderTop="1px"
-      borderTopColor="gray.500"
-      justifyContent="center"
-      alignItems="center"
-      {...props}
-    >
-      <Flex flexGrow={1} maxW="62em" alignItems="center">
+    <Flex as="nav" wrap="wrap" justifyContent="center" alignItems="center" {...props}>
+      <Flex
+        flexGrow={1}
+        maxW="62em"
+        alignItems="center"
+        borderTop="1px"
+        borderTopColor="gray.500"
+        px={8}
+        py={6}
+      >
         {colorMode === 'light' ? (
           <IoSunny onClick={toggleColorMode} cursor="pointer" />
         ) : (

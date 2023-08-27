@@ -53,7 +53,7 @@ const BlogTemplate: React.FC<Props> = ({ data }) => {
     <ChakraProvider theme={theme}>
       <Helmet title={data.mdx?.frontmatter?.title} />
 
-      <Header display={showHeader ? 'flex' : 'none'} />
+      <Header display={showHeader ? 'flex' : 'none'} showScrollProgress />
 
       <Grid templateColumns="repeat(4, 1fr)" gap={4} maxW="62em" pt={28} m="auto">
         <GridItem colSpan={[4, 4, 3, 3]}>
