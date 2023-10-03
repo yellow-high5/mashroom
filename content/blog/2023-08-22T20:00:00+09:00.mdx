@@ -1,0 +1,48 @@
+---
+date: 2023-08-22T20:00:00+09:00
+title: Browserslist `caniuse-lite is outdated`の意味
+thumbnail: 'https://res.cloudinary.com/dso4npatn/image/upload/v1696337170/media/blog/thumbnail/panda-pc-play_pllelc.png'
+tag:
+  - Web開発
+---
+
+`npm install` した時によく見かけるメッセージの意味を理解しておく。
+
+> https://dev.classmethod.jp/articles/asked-to-update-the-browserslist-when-building-react-app/
+
+```bash
+Browserslist: caniuse-lite is outdated. Please run:
+  npx browserslist@latest --update-db
+  Why you should do it regularly: https://github.com/browserslist/browserslist#browsers-data-updating
+```
+
+## 用語のチェック
+
+### [Browserslist](https://github.com/browserslist/browserslist)とは
+
+異なるフロントエンドツール間でターゲットブラウザと Node.js バージョンを共有する設定
+
+- Autoprefixer…CSS ルールにベンダープレフィックス(-moz-や-webkit-や-ms-など)を追加する PostCSS プラグイン
+- Babel…ES6 の JS コードを古いブラウザや環境で動作させるための JS コンパイラ
+- PostCSS…最新の CSS をほとんどのブラウザが理解できるように変換し、ターゲットとするブラウザや実行環境に応じて最新の CSS を利用できるように変換してくれるツール
+- ESLint…静的コード分析ツール
+- Webpack…モジュールバンドラー
+
+package.json か.browserlistrc のどちらかに記載して設定できる。
+
+### **[caniuse-lite](https://caniuse.com/)とは**
+
+HTML や CSS3 などの各ブラウザごとのサポートテーブルを提供するサービス
+
+最新のブラウザや古いブラウザで HTML や CSS の指定プロパティが対応されているかを確認するのに便利
+
+## つまり警告の意味は？
+
+Browserslist によりターゲットブラウザのバージョンを指定しているが、そのターゲットブラウザで caniuse-lite が outdated になっているため、`npx browserslist@latest --update-db`を実行してターゲットブラウザを最新バージョンにすることを促している。
+
+フロントエンドツールのターゲットブラウザが最新になったことにより、古いバージョンのブラウザへの後方互換を排除できるようになったということ。
+
+> [Supported Browsers | Next.js](https://nextjs.org/docs/architecture/supported-browsers)
+>
+> Next.js では基本的に browserslist 設定せずともデフォルトでターゲットブラウザを最新にしてくれる
+> (もちろん指定することも可能)

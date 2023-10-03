@@ -1,0 +1,306 @@
+---
+date: 2023-09-28T19:30:00+09:00
+title: Antd v4からv5への移行について
+thumbnail: 'https://res.cloudinary.com/dso4npatn/image/upload/v1696335949/media/blog/thumbnail/antdv5migration_feohrs.png'
+tag:
+  - Web開発
+---
+
+Next.js プロジェクトの UI ライブラリに Antd を使っている。
+ずっと使っていると「そろそろ v5 に移行しないと継続が厳しくなるかも」という状況が来たので移行対応したまとめ。
+
+> **Ant Design 公式ガイド** > https://ant.design/docs/react/migration-v5 > https://ant.design/docs/react/migrate-less-variables
+
+> **antd での CSS-in-JS のソリューション** > https://ant.design/docs/blog/css-in-js
+
+> **Next.js で antd を使う** > https://ant.design/docs/react/use-with-next
+
+> **v4 > v5 移行に役立ちそうなガイド** > https://github.com/ant-design/ant-design/discussions/40317 > https://ant-design.github.io/antd-style/guide/migrate-less-codemod
+
+## Antd v5 についてのまとめ
+
+コンポーネントの props の指定方法の変更もあるが、大きく変わったことは`Remove less, adopt CSS-in-JS`である。つまり、「**less ファイルなどで定義していたスタイルは tsx ファイルで定義するように変更しよう**」という大きな変更がある。Next.js で antd v4 を使っている場合は、less ファイルを読み込むための専用プラグインなどを使っていたので、v5 にすればこれが外せるようになる。
+
+> 一般的な CSS-in-JS では、`<style>`タグが挿入(シリアライズ)されたかを識別するのに、ハッシュ値を使用する。
+> よく挙げられる CSS-in-JS の問題点として、コンポーネントに渡した props の変更に伴ってスタイルも変更されることでハッシュ値の再計算が高頻度に行われてパフォーマンスに影響が挙げられる。(ライブラリとブラウザの二重解析)
+> ![](https://storage.googleapis.com/zenn-user-upload/9604a98afcd3-20230929.png)
+> 各種ライブラリではこれらに対処する様々なアプローチを持っている。(ex: ゼロランタイム CSS-in-JS)
+
+antd は前提として props の変更がコンポーネントのスタイルに影響を与えることはない。スタイルの変更が起きるのは、
+
+1. テーマ変数(Token)の変更
+2. antd のバージョン(Version)変更
+
+の２つの場合のみである。
+それ以外はスタイルは最初のマウント時に一度だけ生成され、必要なスタイルはキャッシュから与えられる。これを「コンポーネントレベルの CSS-in-JS」だと謳っている。
+
+![](https://mdn.alipayobjects.com/huamei_7uahnr/afts/img/A*yZMNSYVtxnAAAAAAAAAAAAAADrJ8AQ/original)
+
+さらにテーマデザインの概念的なものも確認してみる。
+
+### Design Token
+
+テーマやコンポーネント全体のスタイルに影響を与える最小の要素。less 時代はテーマ変数(ex: `@primary-color`)を使っていたが、v5 からはデザイントークン指向になっていく。
+
+![](https://gw.alipayobjects.com/mdn/rms_08e378/afts/img/A*uF3kTrY4InUAAAAAAAAAAAAAARQnAQ)
+
+[Seed Token](https://ant.design/docs/react/customize-theme#seedtoken)…デザイン意図の基本単位
+
+[Map Token](https://ant.design/docs/react/customize-theme#maptoken)…Seed Token から派生したベースになるトークン
+
+[Alias Token](https://ant.design/docs/react/customize-theme#aliastoken)…Map Token から派生したコンポーネント向けトークン
+
+### Component Token
+
+各コンポーネントのスタイルをカスタマイズ(グローバルトークンを上書き)するためのトークン。
+
+> https://ant.design/docs/react/migrate-less-variables#component-token
+
+### Algorithm
+
+Seed Token から Map Token へ派生させる際の計算方式。プリセットで３種類のテーマが用意されている。
+
+- defaultAlgorithm
+- darkAlgorithm
+- compactAlgorithm
+
+### ConfigProvider
+
+antd のコンポーネント群を扱えるようにする UI ライブラリではお決まりの Provider コンポーネント。v4 と異なる点は`theme`props を渡せるようになったこと。ちなみに ConfigProvider はネストできる。
+
+ただし、注意点として message.xxx や Modal.xxx や notification.xxx などの静的関数にはコンテキスト情報が共有されていないためこれらで設定したスタイルが適用されない。
+解決策として、[App.useApp()](https://ant.design/components/app#app-demo-config)を使う。
+
+> 私が修正したケースでは、以下を参考にして、antd から直接 notification や Modal や message をインポートするのを ESLint のルール(`no-restricted-imports`)で封じた
+> https://ant.design/components/app#global-scene-redux-scene
+
+## v5 からの CSS の書き方
+
+### 基本
+
+各コンポーネントファイルでは、[antd-style](https://www.npmjs.com/package/antd-style)の`createStyles`を使って`useStyles`を定義。コンポーネント内で useStyles を使用して、styles を取得して className に割り当てる。tsx に書いていた less のインポート文は削除する
+
+token を使うことで、ダークモードやコンパクトモードで余計なデザイン調整を挟まずに済むので、useStyles の定義時にはなるべく token を使うと動的テーマにも綺麗に対応できる。
+
+```tsx
+import { createStyles } from 'antd-style';
+
+const useStyles = createStyles(({ token, css }) => {
+  return {
+    button: css`
+      padding: ${token.paddingSM}px;
+    `,
+  };
+});
+
+const TestButton: React.FC = observer(() => {
+  const { styles, theme } = useStyles();
+
+  return <Button className={styles.button} />;
+});
+```
+
+### less 時代の :global (局所カスタマイズ)について
+
+less 時代に:global で antd コンポーネントのクラス名を指定してスタイルを上書きしていた部分は、createStyles を使うとそのままクラス内で指定するだけでよさそうだ。場合によっては`!important`をつける必要があるかもしれない。
+以前のように antd のクラス名指定のために「:global を追加して...」という手間が減った。
+
+```less:before
+.inactiveMenu {
+  :global {
+    .ant-menu-item-icon {
+      opacity: 0.4;
+    }
+  }
+}
+```
+
+```tsx:after
+const useStyles = createStyles(({ token, css }) => {
+  return {
+      inactiveMenu: css`
+        .ant-menu-item-icon {
+          opacity: 0.4;
+        }
+      `,
+  }
+}
+```
+
+### メディアクエリや擬似要素の扱い
+
+メディアクエリや擬似要素については、基本的に[CSS Nesting Module](https://www.w3.org/TR/css-nesting-1/)を活用して`useStyles`内部で定義したクラスの中で指定するようにした。
+
+> CSS Nesting Module が使えるようになっていたのは割と最近で驚いた。
+
+```less:before
+.content {
+  padding: 32px 48px;
+}
+@media screen and (max-width: @screen-sm-max) {
+  .content {
+    padding: 32px 0;
+  }
+}
+
+.newDate {
+  font-size: @font-size-sm;
+}
+
+.newDate::before {
+  content: 'New';
+  margin-right: @margin-xs;
+}
+```
+
+```tsx:after
+const useStyles = createStyles(({ token, css }) => {
+  return {
+    content: css`
+      padding: 32px 48px;
+      @media screen and (max-width: ${token.screenSMMax}px) {
+        padding: 32px 0px;
+      }
+    `
+    newDate: css`
+      font-size: ${token.fontSize}px;
+      &::before {
+        content: 'New';
+        margin-right: ${token.marginXS}px;
+      }
+    `
+  };
+});
+```
+
+### createStyles を使わず、コンポーネント内でトークンを使う
+
+createStyles を使って useStyles を定義していれば `useStyles().theme.token` でトークンを抽出できるが、定義していない場合は`useToken`を使うと取得できる。(コンポーネント内でトークンを使う場合は`useToken`に統一した方が綺麗になりそう)
+
+```tsx
+import { theme, Typography } from 'antd';
+
+const HelloText: React.FC = () => {
+  const { token } = theme.useToken();
+
+  return <Typography.Text style={{ fontSize: token.fontSizeLG }}>Hello</Typography.Text>;
+};
+```
+
+&nbsp;
+&nbsp;
+
+ただ、message.xxx や Modal.xxx などの静的関数で`style`でトークンを使ったり局所カスタマイズする方法がわからなかったので、これは今後修正されていくかもしれない。(すでにあれば教えてほしい)
+
+## 移行のために実施したこと
+
+移行においては、いきなり置き換えると less ファイルが読み込めず、動作確認ができず大ダメージを受けるので、v4 と v5 両方のパッケージをインストールして、less ファイルも読み込める状態にしてから`antd-style`を使った記法に置換していく。
+
+1. パッケージのインストール
+
+以下のように package.json を変更する(`npm install and@^5.9.0 antd-style antd-v4@npm:antd@^4.20.6`)
+
+```diff
+...
+- "antd": "^4.20.6",
++ "antd": "^5.9.0",
++ "antd-style": "^3.4.5",
++ "antd-v4": "npm:antd@^4.20.6",
+...
+```
+
+2. \_app.tsx で v4 と v5 の ConfigProvider を両方ラップして、`import 'antd/dist/reset.css';`を追加する
+
+```tsx
+import { Auth0Provider } from '@auth0/auth0-react';
+import { ConfigProvider as V5ConfigProvider } from 'antd';
+import { ConfigProvider } from 'antd-v4';
+import 'antd/dist/reset.css';
+
+...
+
+const App: React.FC<Props> = ({ Component, pageProps }) => {
+
+  return (
+    ...
+        <ConfigProvider
+          dropdownMatchSelectWidth={true}
+          form={{ validateMessages }}
+        >
+          <V5ConfigProvider
+            popupMatchSelectWidth={true}
+            form={{ validateMessages }}
+            theme={{
+              token: {
+                colorPrimary: '#00b96b', // 反映確認のため分かりやすい色
+              },
+            }}
+          >
+            <AppLayout Component={Component} />
+          </V5ConfigProvider>
+        </ConfigProvider>
+
+    ...
+  );
+};
+
+export default App;
+```
+
+3. antd v5 で props の指定や import 先が変わったところを修正(後述の`移行時の修正記録メモ`を参照)
+4. CSS module のファイルを createStyles()を使った記法に置き換える。(自前のスクリプトを作成して実行して、置換が失敗した部分は手直し)
+5. `next.config.js`内にある[next-plugin-antd-less](https://www.npmjs.com/package/next-plugin-antd-less)の設定など、less のために施していた設定をすべて削除
+
+## 移行時の修正記録メモ
+
+色々修正した時の記録。基本ワーニングに書いてあることはわかりやすいので直しやすいとは思う。
+参考になればぜひ。
+
+### スタイルの修正
+
+- body にユーザーエージェントスタイルが設定されてしまうので、`import 'antd/dist/reset.css';`を追加する
+
+### ワーニングが出た箇所の修正
+
+- Modal の`visible`は`open`に変える
+- Slider の`tooltipVisible={false}`を`tooltip={{open: false}}`に変える
+- Drawer の`className`を`rootClassName`に変える
+- message の`warn`は`warning`を使う
+- notification の`close`は`destroy`を使う
+- Locale の import は`antd/lib/locale`を使う
+- `TypographyProps`ではなく、`ComponentProps<typeof Typography>`を使う
+- Dropdown では`overlay`ではなく、`menu`を使う
+
+```bash
+<Dropdown
+  menu={{
+    items: myMenuItems,
+    className: styles.menu,
+  }}
+  trigger={['click']}
+>
+```
+
+- DatePicker の`generatePicker`は V5 では以下のように定義する
+
+```tsx
+import { DatePicker as CustomDatePicker } from 'antd';
+...
+
+const DatePicker = CustomDatePicker.generatePicker<Dayjs>(dayjsGenerateConfig);
+```
+
+- TabsPane は Tabs の`items`を使って表現する
+- Select の`dropdownMatchSelectWidth` は `popupMatchSelectWidth`を代わりに使う
+
+&nbsp;
+&nbsp;
+&nbsp;
+
+## 移行を終えて
+
+プロジェクト内に less ファイルが 100 個以上あったので、v5 に追従するのは大変だった。
+`npx @chenshuai2144/less2cssinjs less2js -i src`でワンライナーで修正できるみたいなのも目にしたがうまく動かなかった。さすがに中規模以上になるとワンライナーで置換するのは難しいのかもしれない。
+結論的には「**自前で less ファイルから`createStyles`を使って tsx ファイルに`useStyles`を定義するスクリプトを用意した**」が、完璧な精度ではなかったので、変換がうまくいかない部分は手直しした。「完璧な精度のスクリプトをつくる vs 多少の精度を犠牲に手直しもする」というタイパで葛藤して後者を選択した。
+
+Next.js を v13.4.7 より上に上げると、カスタムしたはずのテーマトークンが効かずデフォルトのテーマトークンになるという事象が発生したので、Next.js を一番最新にすることはまだできなかった。antd のマイナーバージョンやパッチバージョンが上がるだけでも仕様が変わったりもしているように見えるので小さいバージョン変化もウォッチしておいた方がいいのかもしれない。
