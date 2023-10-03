@@ -7,5 +7,8 @@
   "editor.formatOnType": true,
   "editor.codeActionsOnSave": ["source.fixAll.eslint", "source.organizeImports"],
   "files.eol": "\n",
-  "typescript.preferences.importModuleSpecifier": "non-relative"
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "[shellscript]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format"
+  }
 }
